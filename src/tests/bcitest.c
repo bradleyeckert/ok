@@ -3,7 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdio.h>
-#include "../bci.h"
+#include "../bci/bci.h"
 
 /*
 Test parser format:
