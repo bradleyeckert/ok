@@ -1,86 +1,101 @@
 /*
-H1 simulator
+Ok initialization
+
+Start each simulated CPU core in its own thread
 */
 
 #include <stdio.h>
-#include <stdlib.h>
-#ifdef WIN32
-#include <windows.h>
-#include <processthreadsapi.h>
-#else
-#include <unistd.h>
 #include <pthread.h>
-#endif  
-#include "config.h"
-#include "simcpu.h"
-#include "tools.h"
-#include "forth.h"
+#include <stdlib.h>
+#include <string.h>
+#include "quit.h"
 
-struct SimStateStruct* CPUinstance[CPUCORES];
-struct SimStateStruct* g_core;
+struct QuitStruct vm_internal_state;
 
-#ifdef WIN32
-DWORD dwThreadIdArray[CPUCORES];
-HANDLE  hThreadArray[CPUCORES];
-
-static DWORD WINAPI StartThread(LPVOID lpParameter)
-{
-    RunSimThread(lpParameter);
-    return 0;
+#ifdef STANDALONE
+int quitloop(char *line, int maxlength, struct QuitStruct *state) {
+    printf("\n'quitloop' function not found in project\n*state=%p", state);
+    printf("\n%d VMs use %d kB of RAM", CPUCORES, (unsigned)(sizeof(vm_internal_state)/1024));
+    printf("\ntext = [%s] of %d", line, maxlength);
+    return 2;
 }
-
-static int LaunchThreads(void)
-{
-    for (int i = 0; i < CPUCORES; i++) {
-        struct SimStateStruct* core = 
-            HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct SimStateStruct));
-        CPUinstance[i] = core;
-        if (core == NULL) return 0;     // allocation failure
-        core->corenum = i;
-    }
-    for (int i = 0; i < CPUCORES; i++) {
-        hThreadArray[i] =
-            CreateThread(NULL, 0, StartThread, CPUinstance[i], 0, &dwThreadIdArray[i]);
-    }
-    for (int i = 0; i < CPUCORES; i++) {
-        while (CPUinstance[i]->simstate != simSTOPPED) { Sleep(1); }
-    }
-    g_core = CPUinstance[0];            // default to core 0
-    return 1;
-}
-
-static void RetireThreads(void)
-{
-    for (int i = 0; i < CPUCORES; i++) {
-        CPUinstance[i]->simstate = simDEAD;
-        Sleep(2);
-        CloseHandle(hThreadArray[i]);
-        if (CPUinstance[i] != NULL)
-            HeapFree(GetProcessHeap(), 0, CPUinstance[i]);
-    }
-}
-
+static void printID(int id) {printf("\nStarting VM %d", id);}
 #else
-void* StartThread(void* vargp)
-{
-    RunSimThread(g_core);
-    return 0;
-}
+static void printID(int id) {}
 #endif
 
-static char linebuf[LineBufferSize];    // a line buffer for Forth
+static uint8_t  responseBuf[CPUCORES][MaxReceiveBytes];
+static uint16_t responseLen[CPUCORES];
+// These functions are used by the BCI to return a response
+SV mySendChar(int id, uint8_t c) {
+    responseBuf[id][responseLen[id]++] = c;
+}
+SV mySendInit(int id) {
+    responseLen[id] = 0;
+}
+SV mySendFinal(int id) {
+    BCIreceive(id, (const uint8_t*)&responseBuf[id], responseLen[id]);
+}
+
+static int g_begun;
+
+void* SimulateCPU(void* threadid) {
+    int id = (size_t) threadid & 0xFFFF;
+    vm_ctx *ctx = &vm_internal_state.VMlist[id].ctx;
+    ctx->InitFn = mySendInit;           // output initialization function
+    ctx->putcFn = mySendChar;           // output putc function
+    ctx->FinalFn = mySendFinal;         // output finalization function
+    BCIinitial(ctx);
+    ctx->id = id;
+    printID(id);
+    g_begun++;
+    while  (ctx->status != BCI_STATUS_SHUTDOWN) {
+        if (ctx->status == BCI_STATUS_RUNNING) {
+            // int ior =
+            BCIstepVM(ctx, 0);
+        }
+        sched_yield();
+    }
+    pthread_exit(NULL);
+    return (void*)0;
+}
+
+static char linebuf[LineBufferSize];
+
+void StrCat(char* dest, char* src) {    // safe strcat
+    unsigned int i = strlen(dest);
+    while (i < sizeof(linebuf)) {
+        char c = *src++;
+        dest[i++] = c;
+        if (c == 0) return;             // up to and including the terminator
+    }
+    dest[--i] = 0;                      // max reached, add terminator
+}
 
 int main(int argc, char* argv[]) {
-    int ior = 100;
-    if (LaunchThreads()) {
-        linebuf[0] = 0;
-        // concatenate everything on the linebuf line to the line buffer
-        for (int i = 1; i < argc; i++) {
-            strkitty(linebuf, argv[i], LineBufferSize);
-            if (i != (argc - 1))  strkitty(linebuf, " ", LineBufferSize);
+    pthread_t tid[CPUCORES];
+    g_begun = 0;
+    for (int i = 0; i < CPUCORES; i++) {
+        if (pthread_create(&tid[i], NULL, SimulateCPU, (void *)(size_t)i)) {
+            return 1;
         }
-        ior = forth(linebuf, LineBufferSize);
     }
-    RetireThreads();
+    sched_yield();
+    linebuf[0] = 0;
+    // concatenate all arguments to the line buffer
+    for (int i = 1; i < argc; i++) {
+        StrCat(linebuf, argv[i]);
+        if (i != (argc - 1))  StrCat(linebuf, " ");
+    }
+    while (g_begun != CPUCORES) {       // wait for all tasks to start
+        sched_yield();
+    }
+    int ior = quitloop(linebuf, sizeof(linebuf), &vm_internal_state);
+    for (int i = 0; i < CPUCORES; i++) {
+        vm_internal_state.VMlist[i].ctx.status = BCI_STATUS_SHUTDOWN;
+    }
+    for (int i = 0; i < CPUCORES; i++) {
+        pthread_join(tid[i], NULL);
+    }
     return ior;
 }

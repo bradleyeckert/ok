@@ -27,15 +27,15 @@ BCI data is 32-bit regardless of the cell size of the VM.
 
 | *Fn* | *Description* | *Parameters to BCI* | *Parameters from BCI* |
 | :--- | :------------ | :------------------ | :-------------------- |
-| 0 | Boilerplate      | | *n(1), data(n), ack(1)* |
-| 1 | Execute word (xt) | *base(1), state(1), n(1), stack(n\*4), xt(4)* | *mark(1), base(1), state(1), m(1), stack(m\*4), ack(1)* |
-| 2 | Read from memory | *n(1), addr(4)* | *n(1), data(n\*4), ack(1)* |
-| 3 | Get CRC of memory | *n(2), addr(4)* | *CRC32(4), ack(1)* |
-| 4 | Store to memory  | *n(1), addr(4), data(n\*4)* | *ack(1)* |
-| 5 | Read register    | *id(4)* | *data(4), ack(1)* |
-| 6 | Write register   | *id(4), data(4)* | *ack(1)* |
+| 0 | Boilerplate      | | *n(1), data(n) |
+| 1 | Read from memory | *n(1), addr(4)* | *n(1), data(n\*4)* |
+| 2 | Write to memory  | *n(1), addr(4), data(n\*4)* |  |
+| 3 | Execute word (xt) | *base(1), state(1), n(1), stack(n\*4), xt(4)* | *mark(1), base(1), state(1), m(1), stack(m\*4)* |
+| 4 | Get CRC of memory | *n(2), addr(4)* | *CRC32(4)* |
 
-If a function fails, it will send a *nack* and the host will ignore the remaining data in the buffer.
+All parameters from the BCI begin with a 0xFC tag and function number, and end with a 2-byte *ior*. 
+
+If a function fails, the *ior* will be nonzero and the host may ignore the remaining data in the buffer.
 
 **Fn 0: Read Boilerplate**
 
@@ -48,7 +48,15 @@ sw\_rev(2): Software revision
 timescale(4): timer ticks per second  
 timer(8): Real-time up-counter
 
-**Fn 1: Execute**
+**Fn 1: Read from memory**
+
+Read a run of data from memory. The address range splits the memory into different types such as RAM, internal Flash, external Flash, peripherals, etc.
+
+**Fn 2: Write to memory**
+
+Store a run of data to memory using the same addressing as Fn 6 and Fn 7\. When writing to Flash (internal or external), writing to the first 256-byte page of a sector will pre-erase the sector. The number of bytes to be written may be less than 256, but the run must not cross page boundaries
+
+**Fn 3: Execute**
 
 Execution starts with an empty stack and ends with an empty stack. The BCI:
   
@@ -60,54 +68,10 @@ When a word is executed, if the xt is positive, it is a code address. Execution 
 
 If the VM does not have a stack pointer, the BCI first fills the stack with "empty" tokens such as 0x55555555. After execution, the "empty" token indicates that the stack is empty. 
 
-`Fn1` sets up the return message with `hermesSendInit`. Words like `emit` may append to the output with `hermesSendChar`. `Fn1` uses *mark* to mark the end of text returned by the function, sends parameters, and ends the response with `hermesSendFinal`. The API does not offer direct access to the UART, so encryption cannot be bypassed.
-
-```C
-void hermesSendInit(port_ctx *ctx, 0);
-void hermesSendChar(port_ctx *ctx, uint8_t c);
-void hermesSendFinal(port_ctx *ctx);
-```
-
-As long as the host has a nicely-sized rxbuf, it can handle long messages produced by executing `dump`, etc. The messages flowing over the UART are encrypted and authenticated.
-
-**Fn 2: Read from data space**
-
-Read a run of data from memory. The address range splits the memory into different types such as RAM, internal Flash, external Flash, peripherals, etc.
-
-**Fn 3: Get CRC32 of data**
+**Fn 4: Get CRC32 of data**
 
 Similar to Fn 2 but returns the CRC32.
 
-**Fn 4: Store to memory**
-
-Store a run of data to memory using the same addressing as Fn 6 and Fn 7\. When writing to Flash (internal or external), writing to the first 256-byte page of a sector will pre-erase the sector. The number of bytes to be written may be less than 256, but the run must not cross page boundaries
-
-**Fn 5: Read register**
-
-Read from a VM register if possible.
-
-**Fn 6: Write register**
-
-Write to a VM register if possible. If the VM supports it, special registers are:
-
-253: pause execution  
-254: resume execution  
-255: single-step
-
-## BCI artifacts
-
-| *Byte* | *Meaning* | *Parameters from BCI* |
-| :----- | :-------- | :-------------------- |
-| FFh    | POR       |  |
-| FEh    | Ack       |  |
-| FDh    | Nack      |  |
-| FCh    | Command underflow      |  |
-| FBh    | Throw                  | *data(4)* |
-| FAh    | Write data to log file | *length (1), data (length)* |
-
-Anything that isn’t an artifact is sent to stdout. Artifacts are numbered F8 to FFh, which are not used by UTF-8.
-
-In a single-threaded system, artifacts would appear after Execute, so there is no need to handle them asynchronously with a separate task. Throw codes are looked up on the host side and output as text messages to stderr. The terminal can treat stderr differently than stdout, such as with a split pane.
 
 ## Tethered Forth
 

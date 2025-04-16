@@ -32,12 +32,34 @@ void DUMP(const uint8_t *src, uint8_t len) {}
 #define PRINTF(...) do { } while (0)
 #endif
 
+static const uint8_t boilerplate[] = {
+    0,                          // format 0
+    VM_CELLBITS,                // bits per data cell
+    VM_INSTBITS,                // bits per instruction
+    STACKSIZE - 1,              // max return stack depth
+    GLOBALSIZE - 1,             // number of global registers less 1
+    (DATASIZE >> 8) - 1,        // 256-byte pages of data memory less 1
+    (CODESIZE >> 8) - 1,        // 256-byte pages of code memory less 1
+    (NVMSIZE >> 12) - 1         // NVM 4K sectors
+};
+
+typedef uint32_t (*APIfn) (vm_ctx *ctx);
+
+const APIfn APIfns[] = {
+    NVMbeginRead, NVMbeginWrite, NVMread, NVMwrite, NVMendRW
+};
+
+void BCIinitial(vm_ctx *ctx) {
+    memset(ctx, 0, 64); // wipe the first 16 longs
+    ctx->DataMem[0] = 10;
+    ctx->status = BCI_STATUS_STOPPED;
+}
+
 /*
 Memory access is mediated by debugAccessFlags, which is 0 for production code.
 Memory sections assume a 24-bit address space, where address units are cells.
 String libraries in both C and Forth are overly simplistic, so if strings use
-bytes the custom string functions would adapt as needed. Cell addressing was
-always preferred by Chuck Moore.
+bytes the custom string functions would adapt as needed.
 */
 
 static uint32_t ReadCell(vm_ctx *ctx, uint32_t addr) {
@@ -46,7 +68,7 @@ static uint32_t ReadCell(vm_ctx *ctx, uint32_t addr) {
     #if (BCI_DEBUG_ACCESS & BCI_ACCESS_CODESPACE)
         uint32_t a = addr - DATASIZE;
         if (a < CODESIZE) return ctx->CodeMem[a];
-        if ((addr & ~0x3FFFF) == 0x040000) return BCIVMcodeRead(ctx, addr);
+//        if ((addr & ~0x3FFFF) == 0x040000) return BCIVMcodeRead(ctx, addr);
     #endif
     #if (BCI_DEBUG_ACCESS & BCI_ACCESS_PERIPHERALS)
         return BCIVMioRead(ctx, addr);
@@ -67,6 +89,10 @@ static void WriteCell(vm_ctx *ctx, uint32_t addr, uint32_t x) {
             ctx->CodeMem[a] = x;
             return;
         }
+    #endif
+    #if (BCI_DEBUG_ACCESS & BCI_ACCESS_PERIPHERALS)
+        BCIVMioRead(ctx, addr);
+        return;
     #endif
     ctx->ior = BCI_IOR_INVALID_ADDRESS;
 }
@@ -117,11 +143,6 @@ static uint32_t popReturn(vm_ctx *ctx) {
     return r;
 }
 
-void BCIinitial(vm_ctx *ctx) {
-    memset(ctx, 0, 64); // wipe the first 16 longs
-    ctx->status = BCI_STATUS_STOPPED;
-}
-
 static const uint8_t stackeffects[32] = {
     0x00, 0x00, 0x01, 0x02, 0x02, 0x02, 0x02, 0x02,
     0x00, 0x00, 0x01, 0x02, 0x01, 0x01, 0x01, 0x01,
@@ -130,20 +151,23 @@ static const uint8_t stackeffects[32] = {
 };
 
 // Single-step the VM and set ctx->status to 1 if the PC goes out of bounds.
-// inst = 20-bit instruction. If 0, fetch inst from code memory.
+// inst = instruction. If 0, fetch inst from code memory.
 // ctx->ior should be 0 upon entering the function.
 
-int stepVM(vm_ctx *ctx, uint16_t inst){
+#define SLOTS  ((VM_INSTBITS - 2) / 5)
+#define IMASK  ((1 << (VM_INSTBITS - 2)) - 1)
+
+int BCIstepVM(vm_ctx *ctx, VMinst_t inst){
     PRINTF("\nstepVM inst=0x%x", inst);
     uint32_t pc = ctx->pc;
 #if (VM_CELLBITS == 32)
     uint64_t ud;
 #endif
     if (inst == 0) inst = ctx->CodeMem[pc++];
-    if (inst & 0x8000) {
-        if (inst & 0x4000) pc = popReturn(ctx);
-        inst &= 0x1FFF;             // 3 + 5 + 5 = 13 slot bits
-        for (int i = 10; i >= 0; i -= 5) {
+    if (inst & (1 << (VM_INSTBITS - 1))) {
+        if (inst & (1 << (VM_INSTBITS - 2))) pc = popReturn(ctx);
+        inst &= IMASK;
+        for (int i = (SLOTS - 1) * 5; i >= 0; i -= 5) {
             uint32_t t = ctx->t;
             uint32_t n = ctx->n;
             uint32_t _a = ctx->a;
@@ -188,6 +212,7 @@ int stepVM(vm_ctx *ctx, uint16_t inst){
                 case VMO_UNEXT: ctx->r--;
                     if (ctx->r & VM_SIGN) {popReturn(ctx); break;}
                     else {i = 15; continue;}
+                case VMO_U:          ctx->t = 0;                          break;
                 // memory operations
                 case VMO_ASTORE:     ctx->a = t;                          break;
                 case VMO_A:          ctx->t = ctx->a;                     break;
@@ -209,25 +234,33 @@ store:                               WriteCell(ctx, ctx->a, t);
         }
     } else {
         uint16_t _lex = 0;
-        uint16_t imm9;
-        int32_t immex = (ctx->lex << 13) | (inst & 0x1FFF);
-        switch ((inst >> 13) & 3) {
+        uint32_t imm;
+        int32_t immex = (ctx->lex << (VM_INSTBITS - 3))
+                    | (inst & ((1 << (VM_INSTBITS - 3)) - 1));
+        switch ((inst >> (VM_INSTBITS - 3)) & 3) {
             case 0: pushReturn(ctx, pc);
             case 1: pc = immex;                                     break;
             case 2: dupData(ctx);  ctx->t = immex;                  break;
-            default: imm9 = inst & 0x1FF;
-            immex = imm9;
+            default: imm = inst & ((1 << (VM_INSTBITS - 7)) - 1);
+            immex = imm;
             if (inst & 0x100) immex |= 0xFFFFFE00;
             switch ((inst >> 9) & 15) {
-                case 0: _lex = (ctx->lex << 9) | imm9;              break;
-                case 1: ctx->ior = imm9;                            break;
+                case 0: _lex = (ctx->lex << 9) | imm;               break;
+                case 1: ctx->ior = imm;                             break;
                 case 4: if (ctx->t == 0) pc += immex;               break;
-                case 5: dropData(ctx);                              break;
+                case 5: if (ctx->t == 0) pc += immex;
+                    dropData(ctx);                                  break;
                 case 6: if ((ctx->t & VM_SIGN) == 0) pc += immex;   break;
                 case 7: ctx->r--;
                     if (ctx->r & VM_SIGN) popReturn(ctx);
                     else pc += immex;
                     break;
+                case 9: dupData(ctx);
+                case 8:
+                case 10:
+                case 11:
+                    if (imm < (sizeof(APIfn)/sizeof(APIfns[0]))) ctx->t = -1;
+                    else {ctx->t = APIfns[imm](ctx);}              break;
                 default: break;
             }
         }
@@ -254,12 +287,17 @@ static uint32_t get32(void) {           // 32-bit stream data is big-endian
 }
 
 static void put8(vm_ctx *ctx, uint8_t c) {
-    ctx->putcFn(c);
+    ctx->putcFn(ctx->id, c);
+}
+
+static void put16(vm_ctx *ctx, uint16_t n) {
+    put8(ctx, n>>8);
+    put8(ctx, n);
 }
 
 static void put32(vm_ctx *ctx, uint32_t x) {
     uint8_t n = 4;
-    while (n--) ctx->putcFn(x >> (8*n));
+    while (n--) ctx->putcFn(ctx->id, x >> (8*n));
 }
 
 // VM wrappers
@@ -268,43 +306,44 @@ static void waitUntilVMready(vm_ctx *ctx){
     if (ctx->status == BCI_STATUS_STOPPED) return;
     uint32_t limit = BCI_CYCLE_LIMIT;
     while (limit--) {
-        if (stepVM(ctx, 0)) return;
+        if (BCIstepVM(ctx, 0)) return;
     }
     BCIinitial(ctx);
 }
 
 static int16_t SimXT(vm_ctx *ctx, uint32_t xt){
     int ior;
-    if (xt & (1<<31)) ior = stepVM(ctx, 0x8000 | (xt & 0x1F));
-    else ior = stepVM(ctx, xt);
+    if (xt & (1 << (VM_CELLBITS - 1))) ior = BCIstepVM(ctx, (1 << (VM_INSTBITS - 1)) | (xt & 0x1F));
+    else ior = BCIstepVM(ctx, xt);
     return ior;
 }
 
 /*
 Since the VM has a context structure, these are late-bound in the context to allow stand-alone testing.
+
+To Change: Return IOR (ctx.err) instead of ack/nack
 */
 
 void BCIhandler(vm_ctx *ctx, const uint8_t *src, uint16_t length) {
-    ctx->InitFn();
+    ctx->InitFn(ctx->id);
     cmd = src;  len = length;
+    uint32_t ds[16];
     uint32_t addr;
     uint32_t x;
-    uint8_t n;
-    uint32_t ds[16];
+    uint8_t n = get8();
+    put8(ctx, BCI_BEGIN);               // indicate a BCI response message
+    put8(ctx, n);                       // indicate what kind of response it is
     ctx->ior = 0;
-    switch (get8()) {
+    switch (n) {
     case BCIFN_BOILER:
-        put8(ctx, 1);
-        put8(ctx, 0);                   // minimum boilerplate, format 0
-        put8(ctx, BCI_ACK);
+        put8(ctx, sizeof(boilerplate));
+        for (x = 0; x < sizeof(boilerplate); x++) put8(ctx, boilerplate[x]);
         break;
     case BCIFN_READ:
         n = get8();
         addr = get32();
         put8(ctx, n);
         while (n--) put32(ctx, ReadCell(ctx, addr++));
-ack:    if (ctx->ior) put8(ctx, BCI_NACK);
-        else          put8(ctx, BCI_ACK);
         break;
     case BCIFN_WRITE:
         n = get8();
@@ -313,7 +352,7 @@ ack:    if (ctx->ior) put8(ctx, BCI_NACK);
             x = get32();
             WriteCell(ctx, addr++, x);
         }
-        goto ack;
+        break;
     case BCIFN_EXECUTE:
         waitUntilVMready(ctx);
         WriteCell(ctx, 0, get32());     // packed status at data[0]
@@ -325,25 +364,27 @@ ack:    if (ctx->ior) put8(ctx, BCI_NACK);
             ctx->t = get32();
         }
         ctx->ior = SimXT(ctx, get32()); // xt
+        put8(ctx, BCI_BEGIN);           // indicate end of random chars, if any
         for (n = 0; n < 16; n++) {
             x = ctx->t;
             dropData(ctx);
             ds[n] = x;
             if (x == BCI_EMPTY_STACK) break;
         }
-        put8(ctx, n);
+        put8(ctx, n);                   // stack depth
         while (n--) {
             put32(ctx, ds[n]);
         }
         put32(ctx, ReadCell(ctx, 0));
-        goto ack;
+        break;
     case BCIFN_CRC:
         addr = get32();
         x = get32();
         put32(ctx, crcCells(ctx, addr, x));
-        goto ack;
+        break;
     default:
-        put8(ctx, BCI_NACK);
+        ctx->ior = BCI_BAD_COMMAND;
     }
-    ctx->FinalFn();
+    put16(ctx, ctx->ior);
+    ctx->FinalFn(ctx->id);
 }
