@@ -288,11 +288,11 @@ SV Words(void) {
     parseword(' ');                     // tok is the search key (none=ALL)
     uint16_t i = q->wordlist[CONTEXT[0]];
     while (i) {
-        size_t len = strlen(TOKEN);       // filter by substring
+        size_t len = strlen(TOKEN);     // filter by substring
         char* s = strstr(HEADER[i].name, TOKEN);
         if ((s != NULL) || (len == 0))
             printf("%s ", HEADER[i].name);
-        i = HEADER[i].link;         // traverse from oldest
+        i = HEADER[i].link;             // traverse from oldest
     }
     printf("\n");
 }
@@ -312,6 +312,11 @@ static void BracketTick (void) {
     parseword(' ');
     ForthLiteral(Ctick(TOKEN));
 }
+
+SV SkipToPar (void) { parseword(')'); }
+SV EchoToPar (void) { SkipToPar();  printf("%s", TOKEN); }
+SV Cr        (void) { printf("\n"); }
+SV SkipToEOL (void) { TOIN = (int)strlen(TIB); }
 
 static void Number(char* s) {
     if (BASE == 0) {
@@ -437,6 +442,11 @@ SV AddRootKeywords(void) {
     AddKeyword("forth",      "~search/FORTH --",                    ForthLex,    noCompile);
     AddKeyword("verbosity",  " flags --",                           Verbosity,   noCompile);
     AddKeyword("words",      "~tools/WORDS --",                     Words,       noCompile);
+    AddKeyword("(",          "~core/p ccc<paren> --",               SkipToPar,   SkipToPar);
+    AddKeyword("\\",         "~core/bs ccc<EOL> --",                SkipToEOL,   SkipToEOL);
+    AddKeyword(".(",         "~core/Dotp ccc<paren> --",            EchoToPar,   noCompile);
+    AddKeyword("cr",         "~core/CR --",                         Cr,          noCompile);
+
 }
 
 int quitloop(char * line, int maxlength, struct QuitStruct *state) {

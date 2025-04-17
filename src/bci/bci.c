@@ -37,7 +37,6 @@ static const uint8_t boilerplate[] = {
     VM_CELLBITS,                // bits per data cell
     VM_INSTBITS,                // bits per instruction
     STACKSIZE - 1,              // max return stack depth
-    GLOBALSIZE - 1,             // number of global registers less 1
     (DATASIZE >> 8) - 1,        // 256-byte pages of data memory less 1
     (CODESIZE >> 8) - 1,        // 256-byte pages of code memory less 1
     (NVMSIZE >> 12) - 1         // NVM 4K sectors
@@ -155,7 +154,10 @@ static const uint8_t stackeffects[32] = {
 // ctx->ior should be 0 upon entering the function.
 
 #define SLOTS  ((VM_INSTBITS - 2) / 5)
-#define IMASK  ((1 << (VM_INSTBITS - 2)) - 1)
+#define IMASK2 ((1 << (VM_INSTBITS - 2)) - 1)
+#define APIfs (sizeof(APIfn)/sizeof(APIfns[0]))
+static void ops0001(vm_ctx *ctx, int inst);
+
 
 int BCIstepVM(vm_ctx *ctx, VMinst_t inst){
     PRINTF("\nstepVM inst=0x%x", inst);
@@ -164,9 +166,9 @@ int BCIstepVM(vm_ctx *ctx, VMinst_t inst){
     uint64_t ud;
 #endif
     if (inst == 0) inst = ctx->CodeMem[pc++];
-    if (inst & (1 << (VM_INSTBITS - 1))) {
+    if (inst & (1 << (VM_INSTBITS - 1))) { // MSB
         if (inst & (1 << (VM_INSTBITS - 2))) pc = popReturn(ctx);
-        inst &= IMASK;
+        inst &= IMASK2;
         for (int i = (SLOTS - 1) * 5; i >= 0; i -= 5) {
             uint32_t t = ctx->t;
             uint32_t n = ctx->n;
@@ -184,48 +186,48 @@ int BCIstepVM(vm_ctx *ctx, VMinst_t inst){
                 case VMO_CYSTORE:    ctx->cy = t & 1;
                 case VMO_NOP:
                 case VMO_DUP:
-                case VMO_DROP:                                            break;
-                case VMO_INV:        ctx->t = ~t;                         break;
+                case VMO_DROP:                                          break;
+                case VMO_INV:        ctx->t = ~t;                       break;
                 case VMO_TWOSTAR:    ctx->t = (t << 1) & VM_MASK;
                                      ctx->cy = (t >> (VM_CELLBITS - 1)) & 1;  break;
                 case VMO_TWODIV:     ctx->t = (t & VM_SIGN) | (t >> 1);
-                                     ctx->cy = t & 1;                     break;
+                                     ctx->cy = t & 1;                   break;
                 case VMO_TWODIVC:    ctx->t = (ctx->cy << (VM_CELLBITS - 1)) | (t >> 1);
-                                     ctx->cy = t & 1;                     break;
+                                     ctx->cy = t & 1;                   break;
                 case VMO_PLUS:
 #if (VM_CELLBITS == 32)
                                      ud = (uint64_t)t + (uint64_t)ctx->t;
                                      ctx->t = ud & VM_MASK;
-                                     ctx->cy = (ud >> 32);                break;
+                                     ctx->cy = (ud >> 32);              break;
 #else
                                      t += ctx->t;  ctx->t = t & VM_MASK;
-                                     ctx->cy = (t >> VM_CELLBITS) & 1;    break;
+                                     ctx->cy = (t >> VM_CELLBITS) & 1;  break;
 #endif
-                case VMO_XOR:        ctx->t = t ^ n;                      break;
-                case VMO_AND:        ctx->t = t & n;                      break;
-                case VMO_SWAP:       ctx->t = n;  ctx->n = t;             break;
-                case VMO_CY:         ctx->t = ctx->cy;                    break;
-                case VMO_OVER:       ctx->t = n;                          break;
-                case VMO_PUSH:       pushReturn(ctx, t);                  break;
-                case VMO_R:          ctx->t = ctx->r;                     break;
-                case VMO_POP:        ctx->t = popReturn(ctx);             break;
+                case VMO_XOR:        ctx->t = t ^ n;                    break;
+                case VMO_AND:        ctx->t = t & n;                    break;
+                case VMO_SWAP:       ctx->t = n;  ctx->n = t;           break;
+                case VMO_CY:         ctx->t = ctx->cy;                  break;
+                case VMO_OVER:       ctx->t = n;                        break;
+                case VMO_PUSH:       pushReturn(ctx, t);                break;
+                case VMO_R:          ctx->t = ctx->r;                   break;
+                case VMO_POP:        ctx->t = popReturn(ctx);           break;
                 case VMO_UNEXT: ctx->r--;
                     if (ctx->r & VM_SIGN) {popReturn(ctx); break;}
                     else {i = 15; continue;}
-                case VMO_U:          ctx->t = 0;                          break;
+                case VMO_U:          ctx->t = 0;                        break;
                 // memory operations
-                case VMO_ASTORE:     ctx->a = t;                          break;
-                case VMO_A:          ctx->t = ctx->a;                     break;
+                case VMO_ASTORE:     ctx->a = t;                        break;
+                case VMO_A:          ctx->t = ctx->a;                   break;
                 case VMO_FETCHB:     _b = ctx->a;  _a = ctx->b;
                 case VMO_FETCHA:
 fetch:                               ctx->t = ReadCell(ctx, ctx->a);
-                                     ctx->a = _a;  ctx->b = _b;           break;
+                                     ctx->a = _a;  ctx->b = _b;         break;
                 case VMO_FETCHAPLUS: _a = ctx->a + 1;                goto fetch;
                 case VMO_FETCHBPLUS: _b = ctx->a + 1;  _a = ctx->b;  goto fetch;
                 case VMO_STOREB:     _b = ctx->a;  _a = ctx->b;
                 case VMO_STOREA:
 store:                               WriteCell(ctx, ctx->a, t);
-                                     ctx->a = _a;  ctx->b = _b;           break;
+                                     ctx->a = _a;  ctx->b = _b;         break;
                 case VMO_STOREAPLUS: _a = ctx->a + 1;                goto store;
                 case VMO_STOREBPLUS: _b = ctx->a + 1;  _a = ctx->b;  goto store;
                 default: break;
@@ -237,30 +239,41 @@ store:                               WriteCell(ctx, ctx->a, t);
         uint32_t imm;
         int32_t immex = (ctx->lex << (VM_INSTBITS - 3))
                     | (inst & ((1 << (VM_INSTBITS - 3)) - 1));
-        switch ((inst >> (VM_INSTBITS - 3)) & 3) {
+        switch ((inst >> (VM_INSTBITS - 3)) & 3) { // upper bits 000, 001, 010, 011
             case 0: pushReturn(ctx, pc);
-            case 1: pc = immex;                                     break;
-            case 2: dupData(ctx);  ctx->t = immex;                  break;
-            default: imm = inst & ((1 << (VM_INSTBITS - 7)) - 1);
+            case 1: pc = immex;                                         break;
+            case 2: dupData(ctx);  ctx->t = immex;                      break;
+            default: // inst = 011 oooo imm...
+            imm = inst & ((1 << (VM_INSTBITS - 7)) - 1);
             immex = imm;
-            if (inst & 0x100) immex |= 0xFFFFFE00;
-            switch ((inst >> 9) & 15) {
-                case 0: _lex = (ctx->lex << 9) | imm;               break;
-                case 1: ctx->ior = imm;                             break;
-                case 4: if (ctx->t == 0) pc += immex;               break;
+            if (inst & (1 << (VM_INSTBITS - 8))) { // sign-extend
+                immex |= ~((1 << (VM_INSTBITS - 7)) - 1);
+            }
+            int opcode = (inst >> (VM_INSTBITS - 7)) & 0x0F;
+            switch (opcode) {
+                case 0: _lex = (ctx->lex << (VM_INSTBITS - 7)) | imm;   break;
+                case 1: ops0001(ctx, imm);                              break;
+                case 2: ctx->a = ctx->x + imm;                          break;
+                case 3: ctx->a = ctx->y + imm;                          break;
+                case 4: if (ctx->t == 0) pc += immex;                   break;
                 case 5: if (ctx->t == 0) pc += immex;
-                    dropData(ctx);                                  break;
-                case 6: if ((ctx->t & VM_SIGN) == 0) pc += immex;   break;
+                    dropData(ctx);                                      break;
+                case 6: if ((ctx->t & VM_SIGN) == 0) pc += immex;       break;
                 case 7: ctx->r--;
                     if (ctx->r & VM_SIGN) popReturn(ctx);
                     else pc += immex;
                     break;
-                case 9: dupData(ctx);
-                case 8:
-                case 10:
-                case 11:
-                    if (imm < (sizeof(APIfn)/sizeof(APIfns[0]))) ctx->t = -1;
-                    else {ctx->t = APIfns[imm](ctx);}              break;
+                case 13: dupData(ctx);
+                case 12:
+                case 14:
+                case 15:
+                    if (imm < APIfs) ctx->t = -1;
+                    else {ctx->t = APIfns[imm](ctx);}                   break;
+                default: break;
+            }
+            switch (opcode) {
+                case 15: dropData(ctx);
+                case 14: dropData(ctx);
                 default: break;
             }
         }
@@ -269,6 +282,15 @@ store:                               WriteCell(ctx, ctx->a, t);
     }
     return ctx->ior;
 }
+
+static void ops0001(vm_ctx *ctx, int inst) { // alternate instructions 0110001
+    switch(inst) {
+        case 0: ctx->x = ctx->t;  dropData(ctx);  break;
+        case 1: ctx->y = ctx->t;  dropData(ctx);  break;
+        case 2: ctx->ior = ctx->t;  dropData(ctx);  break;
+    }
+}
+
 
 // Stream interface between BCI and VM
 
@@ -312,8 +334,8 @@ static void waitUntilVMready(vm_ctx *ctx){
 }
 
 static int16_t SimXT(vm_ctx *ctx, uint32_t xt){
-    int ior;
-    if (xt & (1 << (VM_CELLBITS - 1))) ior = BCIstepVM(ctx, (1 << (VM_INSTBITS - 1)) | (xt & 0x1F));
+    int ior = 0;
+    if (xt & (1 << (VM_CELLBITS - 1))) ior = BCIstepVM(ctx, xt);
     else ior = BCIstepVM(ctx, xt);
     return ior;
 }

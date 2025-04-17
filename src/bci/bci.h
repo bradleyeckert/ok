@@ -9,7 +9,6 @@
 #define BCI_CYCLE_LIMIT     10000000    /* number of cycles to wait before resetting the VM */
 #define DATASIZE                1024    /* cells in data space */
 #define CODESIZE                2048    /* cells in code space */
-#define GLOBALSIZE                16    /* global registers */
 #define STACKSIZE                 16    /* depth of stacks */
 #define NVMSIZE                65536    /* size of private NVM storage in bytes */
 
@@ -104,7 +103,6 @@ typedef struct
     uint8_t  sp, rp, status, cy;
     VMcell_t DataStack[STACKSIZE];
     VMcell_t ReturnStack[STACKSIZE];
-    VMcell_t g[GLOBALSIZE];
     VMcell_t DataMem[DATASIZE];
     VMinst_t CodeMem[CODESIZE];
     BCITXinitFn InitFn;         // output initialization function

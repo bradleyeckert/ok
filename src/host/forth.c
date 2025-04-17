@@ -212,7 +212,11 @@ SV AddUop(char* name, char* help, cell value) {
     }
 }
 
-#define IS_UOP (VM_MASK & ~0xFF)
+SV Chere      (void) { DataPush(CP); }
+SV toImmediate(void) { STATE = 0; }
+SV toCompile  (void) { STATE = 1; }
+
+#define IS_UOP (VM_SIGN | (1 << (VM_INSTBITS - 1)))
 
 void AddForthKeywords(struct QuitStruct *state) {
     q = state;
@@ -221,6 +225,9 @@ void AddForthKeywords(struct QuitStruct *state) {
     AddKeyword("@",  "~core/Fetch a -- x",          Fetch,      noCompile);
     AddKeyword("!",  "~core/Store x a --",          Store,      noCompile);
     AddKeyword("boiler",  " --",                    dumpBoiler, noCompile);
+    AddKeyword("chere",  " -- ca",                  Chere,      noCompile);
+    AddKeyword("[",  "~core/Bracket --",            toImmediate, toImmediate);
+    AddKeyword("]",  "~right-bracket --",           toCompile,     toCompile);
     AddUop("over",   "~core/OVER x1 x2 -- x1 x2 x1",IS_UOP + VMO_OVER);
     AddUop("xor",    "~core/XOR x1 x2 -- x3",       IS_UOP + VMO_XOR);
     AddUop("and",    "~core/AND x1 x2 -- x3",       IS_UOP + VMO_AND);
