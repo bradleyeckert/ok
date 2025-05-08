@@ -5,16 +5,24 @@ Use with com0com null-modem emulator
 Single-threaded, macroloop polls for incoming RS232 and steps the VM while waiting.
 */
 
+// Use TRACE = 0 to avoid use of printf.
+#define TRACE 1
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "../../src/mole/src/mole.h"
-//#include "../../src/host/tools.h"
 #include "../../src/bci/bci.h"
 #include "../../src/RS-232/rs232.h"
 
 const uint8_t TargetBoilerSrc[] = {"\x13noyb<TargPortUUID>1"};
 
+#if (TRACE)
+#include <stdio.h>
+#define PRINTF  if (TRACE) printf
+#else
+#define PRINTF(...) do { } while (0)
+#endif
 
 // 32-byte BCI encryption key, 32-byte BCI MAC key, 16-byte admin password,
 // 32-byte file encryption key, 32-byte file MAC key, 16-byte hash
@@ -52,7 +60,7 @@ static int getc_RNG(void) {
 
 // should never happen
 static void BoilerHandler(const uint8_t *src) {
-    printf("\nTarget received %d-byte boilerplate {%s}", src[0], &src[1]);
+    PRINTF("\nTarget received %d-byte boilerplate {%s}", src[0], &src[1]);
 }
 
 
@@ -85,20 +93,20 @@ static int baudrate = DEFAULT_BAUDRATE;
 static uint8_t buffer[4];
 
 static void uartCharOutput(uint8_t c) {
-    printf("t%02X ", c);
-    if (c == 0x0A) printf("\n");
+    PRINTF("t%02X ", c);
+    if (c == 0x0A) PRINTF("\n");
     int r = RS232_SendByte(port, c);
-    if (r) printf("\n*** RS232_SendByte returned %d, ", r);
+    if (r) PRINTF("\n*** RS232_SendByte returned %d, ", r);
 }
 
 static char cmode[] = {'8','N','1',0};
 static void ComList(void) { // list available COM ports
-    printf("Possible serial port numbers at %d,N,8,1 ", baudrate);
+    PRINTF("Possible serial port numbers at %d,N,8,1 ", baudrate);
     for (int i = 0; i < 38; i++) {
         int ior = RS232_OpenComport(i, baudrate, cmode, 0);
         if (!ior) {
             RS232_CloseComport(i);
-            printf("%d ", i);
+            PRINTF("%d ", i);
         }
     }
 }
@@ -106,17 +114,17 @@ static void ComList(void) { // list available COM ports
 static int ComOpen(void) {
     int ior = RS232_OpenComport(port, baudrate, cmode, 0);
     if (ior) {
-        printf("\nError opening port %d\n", port);
+        PRINTF("\nError opening port %d\n", port);
         return 1;
     }
-    printf("\nPort %d opened at %d,N,8,1\n", port, baudrate);
+    PRINTF("\nPort %d opened at %d,N,8,1\n", port, baudrate);
     return 0;
 }
 
 
 
 int main(int argc, char* argv[]) {
-    printf("Remote target for 'ok'\n");
+    PRINTF("Remote target for 'ok'\n");
     if (argc > 1) {
         port = atoi(argv[1]);
     }
@@ -136,15 +144,15 @@ int main(int argc, char* argv[]) {
     int ior = moleAddPort(&TargetPort, TargetBoilerSrc, MOLE_PROTOCOL, "TARGET", 17, getc_RNG,
                   BoilerHandler, BCItransmit, uartCharOutput, my_keys, UpdateKeySet);
     if (ior) {
-        printf("\nError %d, ", ior);
-        printf("MOLE_ALLOC_MEM_UINT32S too small by %d ", -moleRAMunused()/4);
-        printf("or the key has a bad HMAC");
+        PRINTF("\nError %d, ", ior);
+        PRINTF("MOLE_ALLOC_MEM_UINT32S too small by %d ", -moleRAMunused()/4);
+        PRINTF("or the key has a bad HMAC");
         return 1;
     }
     ComList();
     ComOpen();
     BCIinitial(ctx);
-    printf("Raw UART traffic is dumped to console: rXX=receive, tXX=transmit\n");
+    PRINTF("Raw UART traffic is dumped to console: rXX=receive, tXX=transmit\n");
     while  (ctx->status != BCI_STATUS_SHUTDOWN) {
         if (ctx->status == BCI_STATUS_RUNNING) {
             // int ior =
@@ -152,8 +160,8 @@ int main(int argc, char* argv[]) {
         }
         int bytes = RS232_PollComport(port, buffer, 1);
         if (bytes) {
-            printf("r%02X ", buffer[0]);
-            if (buffer[0] == 0x0A) printf("\n");
+            PRINTF("r%02X ", buffer[0]);
+            if (buffer[0] == 0x0A) PRINTF("\n");
             molePutc(&TargetPort, buffer[0]);
         }
     }
