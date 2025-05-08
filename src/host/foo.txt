@@ -1,0 +1,11 @@
+||=== Build: Release in ok (compiler: GNU GCC Compiler) ===|
+C:\Users\Brad\Documents\GitHub\ok\src\host\quit.c|243|warning: 'Include' defined but not used [-Wunused-function]|
+C:\Users\Brad\Documents\GitHub\ok\src\host\quit.c|171|warning: 'SetOrder' defined but not used [-Wunused-function]|
+C:\Users\Brad\Documents\GitHub\ok\src\host\quit.c|165|warning: 'GetOrder' defined but not used [-Wunused-function]|
+C:\Users\Brad\Documents\GitHub\ok\src\host\quit.c|163|warning: 'GetCurrent' defined but not used [-Wunused-function]|
+C:\Users\Brad\Documents\GitHub\ok\src\host\quit.c|162|warning: 'SetCurrent' defined but not used [-Wunused-function]|
+C:\Users\Brad\Documents\GitHub\ok\src\host\quit.c|159|warning: 'PlusOrder' defined but not used [-Wunused-function]|
+C:\Users\Brad\Documents\GitHub\ok\src\host\quit.c|158|warning: 'Definitions' defined but not used [-Wunused-function]|
+C:\Users\Brad\Documents\GitHub\ok\src\host\quit.c|157|warning: 'AsmLex' defined but not used [-Wunused-function]|
+C:\Users\Brad\Documents\GitHub\ok\src\host\quit.c|156|warning: 'ForthLex' defined but not used [-Wunused-function]|
+C:\Users\Brad\Documents\GitHub\ok\src\host\quit.c|122|warning: 'Ctick' defined but not used [-Wunused-function]|

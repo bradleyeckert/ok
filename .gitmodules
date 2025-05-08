@@ -1,0 +1,3 @@
+[submodule "src/mole"]
+	path = src/mole
+	url = https://github.com/bradleyeckert/mole
