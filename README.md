@@ -1,7 +1,7 @@
 # ok
 Another C-based Forth
 
-Status: Preliminary, Under development. Compiles and executes Forth.
+Status: Proof of concept works: Compiles and executes Forth. Execution is on a VM either within `ok` or on a remote [target](./target/PC) connected by serial ports.
 
 This Forth is designed for embedded systems development using a host PC, serial port connection, and a target system based on an MCU or FPGA. To address modern cybersecurity requirements, the serial connection is encrypted.
 
@@ -10,7 +10,6 @@ This Forth is designed for embedded systems development using a host PC, serial 
 Multiple VMs are supported via pthreads, so `ok` can simulate an array of Forth cores (one core per thread).
 Some work would be required to simulate message passing between cores.
 
-The [VM](./doc/VM.md) simulates a MISC-style CPU whose ISA is friendly to synchronous logic design tools and executes well enough on run-of-the-mill MCUs.
 
 ## compiling
 
