@@ -19,7 +19,7 @@ all:	targ
 
 targ:	$(OBJS1)
 	$(CC) -o $@ $^ $(CFLAGS)
-	@echo	To test: ./targ <port> <baudrate>
+	# @echo	To test: ./targ <port> <baudrate>
 
 
 # Phony target for cleaning up
