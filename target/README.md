@@ -13,7 +13,7 @@ The [com0com](https://sourceforge.net/projects/com0com/) Null-modem emulator all
 
 Once it is running, you can use `ok` to connect to it. In ok's console,
 
-`com-list` lists the serial ports in the system
+`com-list` lists the serial ports in the system  
 `port!` word sets the port.  
 `remote` tries to connect to `targ` using the current port.  
 `local` connects to ok's internal VM and closes the serial port.
