@@ -2,11 +2,10 @@
 #include <stdint.h>
 #include <string.h>
 #include <ctype.h>
-#include "../host/tools.h"
 #include "bci.h"
 #include "bciHW.h"
 
-#define TRACE 0
+#define TRACE 1
 
 /*
 BCIhandler takes input from a buffer and outputs to encrypted UART using these primitives:

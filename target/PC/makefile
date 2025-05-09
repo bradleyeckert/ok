@@ -10,7 +10,6 @@ SRCS1 = ../../src/bci/bci.c \
 ../../src/mole/src/mole.c \
 ../../src/mole/src/blake2s/src/blake2s.c \
 ../../src/mole/src/xchacha/src/xchacha.c \
-../../src/host/tools.c \
 main.c
 
 OBJS1 = $(SRCS1:.c=.o)

@@ -63,7 +63,19 @@ VMcell_t API_mudivmod (vm_ctx *ctx) {
     return (VMcell_t)(q >> VM_CELLBITS) & VM_MASK;
 }
 
-
+// Some targets have hardware support for this
+uint32_t CRC32(uint8_t *addr, uint32_t len) {
+    uint32_t crc = 0xFFFFFFFF;
+    while (len--) {
+        uint32_t byte = *addr++;
+        crc = crc ^ byte;
+        for (int j = 7; j >= 0; j--) {
+            uint32_t mask = ~(crc & 1) + 1;
+            crc = (crc >> 1) ^ (0xEDB88320 & mask);
+        }
+    }
+    return ~crc;
+}
 
 VMcell_t NVMbeginRead (vm_ctx *ctx){
     return 0;

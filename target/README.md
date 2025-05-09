@@ -4,7 +4,7 @@ The proof-of-concept target is a VM with a serial-port-based thin client (see `b
 
 ## pc
 
-Code::Blocks compiles it to a 42KB executable, so there is hope it will port to embedded systems based on ARM M-series or RISC-V.
+Code::Blocks compiles it to a 37 KB executable, so there is hope it will port to embedded systems based on ARM M-series or RISC-V.
 
 Once compiled, optional command line arguments change the port and baud rate from their defaults.
 For example, `./targ 4 115200` changes to port 4, 115200 baud. In `main.c`, use `#define TRACE 0` to inhibit the use of `printf` if the environment directs `printf` to the UART.

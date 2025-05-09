@@ -14,7 +14,6 @@ void StrCat(char* dest, char* src, int limit);
 FILE* fopenx(char* filename, char* fmt);
 void ErrorMessage(int error, char* s);
 void cdump(const uint8_t *src, uint16_t len);
-uint32_t CRC32(uint8_t *addr, uint32_t len);
 
 //#define MORESAFE // Linux does not like, but Visual Studio does. Code::Blocks does not care.
 
