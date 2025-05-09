@@ -88,7 +88,7 @@ static void InstExecute(uint32_t xt) {
 
 static void Prim_Exec(void) {
     if (VERBOSE & VERBOSE_TOKEN) {
-        printf(" <exec:%Xh>", my());
+        printf(" <Prim_Exec:%Xh>", my());
     }
     InstExecute(my());
 }
@@ -451,6 +451,7 @@ void AddForthKeywords(struct QuitStruct *state) {
     AddEquate("verbose_token",  "-forth.htm#vtoken -- mask",    VERBOSE_TOKEN);
     AddEquate("verbose_src",    "-forth.htm#vsrc -- mask",      VERBOSE_SRC);
     AddEquate("verbose_source", "-forth.htm#vsource -- mask",   VERBOSE_SOURCE);
+    AddEquate("verbose_cycles", "-forth.htm#vcycles -- mask",   VERBOSE_CYCLES);
     AddEquate("root",           "-forth.htm#root -- wid",       q->root);
     AddKeyword("equ",      "-forth.htm#equ x <name> --",    Constant,   noCompile);
     AddKeyword(".s",       "~tools/DotS wid --",            dotESS,     noCompile);
@@ -515,10 +516,14 @@ void AddForthKeywords(struct QuitStruct *state) {
     AddOp("err!",    "-forth.htm#throw x --",               INST_TAG + VMI_THROW);
     AddOp("y!",      "-forth.htm#ystore x --",              INST_TAG + VMI_YSTORE);
     AddOp("x!",      "-forth.htm#xstore x --",              INST_TAG + VMI_XSTORE);
-    AddAPIcall("semit",    "-forth.htm#semit c --",         VM_SIGN + VMI_APIDROP + 5);
-    AddAPIcall("um*",      "~core/UMTimes u1 u2 -- d1",     VM_SIGN + VMI_API     + 6);
-    AddAPIcall("um/mod",   "~core/UMDivMOD ud u -- q r",    VM_SIGN + VMI_APIDROP + 7);
-    AddAPIcall("mu/mod",   "-forth.htm#mumod ud u -- dq r", VM_SIGN + VMI_API     + 7);
+    AddOp("sp!",     "-forth.htm#spstore x -- x",           INST_TAG + VMI_SPSTORE);
+    AddOp("rp!",     "-forth.htm#rpstore -- x",             INST_TAG + VMI_RPSTORE);
+    AddOp("sp@",     "-forth.htm#spfetch -- x",             INST_TAG + VMI_SPFETCH);
+    AddOp("rp@",     "-forth.htm#rpfetch x --",             INST_TAG + VMI_RPFETCH);
+    AddAPIcall("semit",    "-forth.htm#semit c --",         INST_TAG + VMI_APIDROP + 5);
+    AddAPIcall("um*",      "~core/UMTimes u1 u2 -- d1",     INST_TAG + VMI_API     + 6);
+    AddAPIcall("um/mod",   "~core/UMDivMOD ud u -- q r",    INST_TAG + VMI_APIDROP + 7);
+    AddAPIcall("mu/mod",   "-forth.htm#mumod ud u -- dq r", INST_TAG + VMI_API     + 7);
 
     // compile-only control words, can't be postponed
     AddKeyword("begin",    "~core/BEGIN C: -- dest",        noExecute, doBegin);

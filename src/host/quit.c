@@ -607,7 +607,7 @@ int quitloop(char * line, int maxlength, struct QuitStruct *state) {
             }
 done:       q->elapsed_us = GetMicroseconds() - time0;
             if (File.fp == stdin) {
-                if (q->cycles) {
+                if ((q->cycles) && (VERBOSE & VERBOSE_CYCLES)) {
                     printf("\\ %" PRIu64 " cycles ", q->cycles);
                 }
                 if (SP) {

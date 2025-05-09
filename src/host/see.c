@@ -136,6 +136,7 @@ static char * DisassembleInsn(uint32_t inst) {
             }
             opcode = (inst >> (VM_INSTBITS - 7)) & 0x0F;
             if (opcode == 1) {
+                imm &= 0x7F; // strip stack actions
                 if (imm < sizeof(zooName)/sizeof(zooName[0])) {
                     appendDA(zooName[imm]);
                 } else {

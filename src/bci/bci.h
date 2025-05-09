@@ -23,6 +23,7 @@
 #define BCI_CYCLE_LIMIT     10000000    /* number of cycles to wait before resetting the VM */
 #define BOILERPLATE_SIZE          16
 
+#define VM_STACK_UNDERFLOW        -4
 #define BCI_IOR_INVALID_ADDRESS   -9
 #define BCI_BAD_COMMAND          -84
 
@@ -71,13 +72,6 @@
     "2/c",   "2/",    "0",  "u!", "!a", "!a+",  "!b",  "!b+", \
     "unext", "0<",    "u",  ">r", "cy",   "a",  "r@",   "r>"
 
-#define IMM_NAMES \
-    "pfx", "zoo", "ax", "ay", "if", "bran", "-if", "next", \
-    "?", "?", "?", "?", "APIcall", "APIcall+", "APIcall-", "APIcall–-"
-
-#define OP_NAMES  "call", "jump", "lit"
-#define ZOO_NAMES  "x!", "y!", "throw"
-
 #define VMO_NOP                 0x00
 #define VMO_INV                 0x01
 #define VMO_OVER                0x02
@@ -111,14 +105,31 @@
 #define VMO_R                   0x1E
 #define VMO_POP                 0x1F
 
+#define OP_NAMES  "call", "jump", "lit"
+
 #define VM_IMMBITS              (VM_INSTBITS - 3)
 #define VMI_CALL                0
 #define VMI_JUMP                (1 << VM_IMMBITS)
 #define VMI_LIT                 (2 << VM_IMMBITS)
 #define VMI_PFX                 (3 << VM_IMMBITS)
-#define VMI_XSTORE              (VMI_PFX + (1 << (VM_INSTBITS - 7)) + 0)
-#define VMI_YSTORE              (VMI_PFX + (1 << (VM_INSTBITS - 7)) + 1)
-#define VMI_THROW               (VMI_PFX + (1 << (VM_INSTBITS - 7)) + 2)
+#define VMI_ZOODUP              (1 << (VM_INSTBITS - 8))
+#define VMI_ZOODROP             (1 << (VM_INSTBITS - 9))
+#define VMI_ZOO                 (VMI_PFX + (1 << (VM_INSTBITS - 7)))
+
+#define ZOO_NAMES  "x!", "y!", "sp!", "rp!", "sp@", "rp@", "err!"
+
+#define VMI_XSTORE              (VMI_ZOO + 0 + VMI_ZOODROP)
+#define VMI_YSTORE              (VMI_ZOO + 1 + VMI_ZOODROP)
+#define VMI_SPSTORE             (VMI_ZOO + 2)
+#define VMI_RPSTORE             (VMI_ZOO + 3 + VMI_ZOODROP)
+#define VMI_SPFETCH             (VMI_ZOO + 4 + VMI_ZOODUP)
+#define VMI_RPFETCH             (VMI_ZOO + 5 + VMI_ZOODUP)
+#define VMI_THROW               (VMI_ZOO + 6 + VMI_ZOODROP)
+
+#define IMM_NAMES \
+    "pfx", "zoo", "ax", "ay", "if", "bran", "-if", "next", \
+    "?", "?", "?", "?", "APIcall", "APIcall+", "APIcall-", "APIcall–-"
+
 #define VMI_AX                  (VMI_PFX + (2 << (VM_INSTBITS - 7)))
 #define VMI_AY                  (VMI_PFX + (3 << (VM_INSTBITS - 7)))
 #define VMI_ZBRAN               (VMI_PFX + (4 << (VM_INSTBITS - 7)))
@@ -141,7 +152,7 @@
 #define BCIFN_READREG      11
 #define BCIFN_WRITEREG     12
 
-#define BCI_EMPTY_STACK   0xAAAAAAAA
+//#define BCI_EMPTY_STACK   0xAAAAAAAA
 #define BCI_STATUS_RUNNING         0
 #define BCI_STATUS_STOPPED         1
 #define BCI_STATUS_SHUTDOWN        2

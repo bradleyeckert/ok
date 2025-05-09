@@ -195,5 +195,6 @@ char * GetToken(void);
 #define VERBOSE_TOKEN   2   // show the source token (blank-delimited string)
 #define VERBOSE_SRC     4   // display the remaining source in the TIB
 #define VERBOSE_BCI     8   // trace BCI input and output
+#define VERBOSE_CYCLES 16   // display cycle count of last executed word
 
 #endif // __QUIT_H__

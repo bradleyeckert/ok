@@ -70,7 +70,6 @@ static uint32_t ReadCell(vm_ctx *ctx, uint32_t addr) {
     }
     addr -= TEXTORIGIN;
     if (addr < TEXTSIZE) {
-        PRINTF(" = TextMem[0x%x]", addr);
         return ctx->TextMem[addr];      // Text
     }
     return BCIVMioRead(ctx, addr);      // Peripherals
@@ -102,7 +101,6 @@ static void dupData(vm_ctx *ctx) {
 
 static void dropData(vm_ctx *ctx) {
     ctx->t = ctx->n;
-    ctx->DataStack[ctx->sp] = (VMcell_t)BCI_EMPTY_STACK;
     ctx->sp = (ctx->sp - 1) & (DATA_STACKSIZE - 1);
     ctx->n = ctx->DataStack[ctx->sp];
 }
@@ -115,7 +113,6 @@ static void pushReturn(vm_ctx *ctx, uint32_t x) {
 
 static uint32_t popReturn(vm_ctx *ctx) {
     uint32_t r = ctx->r;
-    ctx->ReturnStack[ctx->rp] = (VMcell_t)BCI_EMPTY_STACK;
     ctx->rp = (ctx->rp - 1) & (RETURN_STACKSIZE - 1);
     ctx->r = ctx->ReturnStack[ctx->rp];
     return r;
@@ -136,17 +133,13 @@ static const uint8_t stackeffects[32] = {
 #define APIfs (sizeof(APIfn)/sizeof(APIfns[0]))
 static void ops0001(vm_ctx *ctx, int inst);
 
-
 int BCIstepVM(vm_ctx *ctx, VMinst_t inst){
     uint32_t pc = ctx->pc;
-#if (VM_CELLBITS == 32)
-    uint64_t ud;
-#endif
     if (inst == 0) {
         inst = ctx->CodeMem[pc++];
         PRINTF("\nPC=%04Xh inst=%04Xh", (pc-1), inst);
     } else {
-        PRINTF("\nSim one inst, %Xh", inst);
+        PRINTF("\nBCIstepVM execute instruction, %Xh", inst);
     }
     if (inst & (1 << (VM_INSTBITS - 1))) { // MSB
         if (inst & (1 << (VM_INSTBITS - 2))) pc = popReturn(ctx);
@@ -165,11 +158,14 @@ int BCIstepVM(vm_ctx *ctx, VMinst_t inst){
             }
             switch(slot) {
                 // basic stack operations
+#if (VM_CELLBITS == 32)
+                uint64_t ud;
+#endif
                 case VMO_CYSTORE:    ctx->cy = t & 1;
                 case VMO_NOP:
                 case VMO_DUP:
                 case VMO_DROP:                                          break;
-                case VMO_INV:        ctx->t = ~t;                       break;
+                case VMO_INV:        ctx->t = ~t & VM_MASK;             break;
                 case VMO_TWOSTAR:    ctx->t = (t << 1) & VM_MASK;
                                      ctx->cy = (t >> (VM_CELLBITS - 1)) & 1;  break;
                 case VMO_TWODIV:     ctx->t = (t & VM_SIGN) | (t >> 1);
@@ -222,7 +218,6 @@ store:                               WriteCell(ctx, ctx->a, t);
     } else {
         uint16_t _lex = 0;
         uint32_t imm;
-        int flag;
         int32_t immex = (ctx->lex << (VM_INSTBITS - 3))
                     | (inst & ((1 << (VM_INSTBITS - 3)) - 1));
         switch ((inst >> (VM_INSTBITS - 3)) & 3) { // upper bits 000, 001, 010, 011
@@ -236,6 +231,7 @@ store:                               WriteCell(ctx, ctx->a, t);
                 immex |= ~((1 << (VM_INSTBITS - 7)) - 1);
             }
             int opcode = (inst >> (VM_INSTBITS - 7)) & 0x0F;
+            int flag;
             switch (opcode) {
                 case 0: _lex = (ctx->lex << (VM_INSTBITS - 7)) | imm;   break;
                 case 1: ops0001(ctx, imm);                              break;
@@ -273,14 +269,20 @@ store:                               WriteCell(ctx, ctx->a, t);
     return ctx->ior;
 }
 
-static void ops0001(vm_ctx *ctx, int inst) { // alternate instructions 0110001
-    switch(inst) {
-        case 0: ctx->x = ctx->t;  dropData(ctx);  break;
-        case 1: ctx->y = ctx->t;  dropData(ctx);  break;
-        case 2: ctx->ior = ctx->t;  dropData(ctx);  break;
+static void ops0001(vm_ctx *ctx, int inst) { // alternate instructions 0110001...
+    int imm = inst & 0x7F;
+    if (inst & VMI_ZOODUP) dupData(ctx);
+    switch(imm) {
+        case 0: ctx->x = ctx->t;    break;
+        case 1: ctx->y = ctx->t;    break;
+        case 2: ctx->sp = ctx->t;   break;
+        case 3: ctx->rp = ctx->t;   break;
+        case 4: ctx->t = (ctx->sp - 1) & (DATA_STACKSIZE - 1); break;
+        case 5: ctx->t = ctx->rp;   break;
+        case 6: ctx->ior = ctx->t;  break;
     }
+    if (inst & VMI_ZOODROP) dropData(ctx);
 }
-
 
 // Stream interface between BCI and VM
 
@@ -337,6 +339,7 @@ static int16_t simulate(vm_ctx *ctx, uint32_t xt){
             BCIstepVM(ctx, 0);          // execute instructions
             if (ctx->ior) break;        // break on error
         }
+        PRINTF("\nDone simulating");
     }
     return ior;
 }
@@ -378,21 +381,19 @@ void BCIhandler(vm_ctx *ctx, const uint8_t *src, uint16_t length) {
         ctx->cycles = 0;
         WriteCell(ctx, 0, get32());     // packed status at data[0]
         n = get8();
-        for (x = 0; x < DATA_STACKSIZE; x++) {
-            dupData(ctx);               // fill the data stack with "empty stack"
-            ctx->t = (VMcell_t)BCI_EMPTY_STACK;
-        }
+        uint16_t sp0 = ctx->sp;
         while (n--) {
             dupData(ctx);
             ctx->t = get32();
         }
         ctx->ior = simulate(ctx, get32()); // xt
         put8(ctx, BCI_BEGIN);           // indicate end of random chars, if any
-        for (n = 0; n < 16; n++) {
+        temp = ctx->sp - sp0;           // bytes on stack
+        if (temp < 0) ctx->ior = VM_STACK_UNDERFLOW;
+        else for (n = 0; n < temp; n++) {
             x = ctx->t;
             dropData(ctx);
             ds[n] = x;
-            if (x == (VMcell_t)BCI_EMPTY_STACK) break;
         }
         put8(ctx, n);                   // stack depth
         while (n--) {
