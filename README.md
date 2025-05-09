@@ -17,7 +17,7 @@ Some work would be required to simulate message passing between cores.
 
 Code::Blocks works under Windows after manually adding files. Add files recursively, then remove all files with a `main` function, except main.c.
 
-I could not make Visual Studio 2022 work with either pthreads or the Windows <thread> library. The magical project settings to avoid a cascade of errors in the library files could not be found. It possibly expects C++, not C.
+I could not make Visual Studio 2022 work with either pthreads or the Windows \<thread\> library. The magical project settings to avoid a cascade of errors in the library files could not be found. It possibly expects C++, not C.
 
 ## submodules
 Note: Contains [submodules](https://www.geeksforgeeks.org/how-to-clone-git-repositories-including-submodules/). Use `git clone --recurse <url>` to clone.
@@ -35,6 +35,8 @@ I've found that this updates submodules:
 The rationale behind using submodules for these is that they can start as forks.
 
 ## code size
+
+`test.f` demonstrates numeric conversion in 117 instructions.
 
 Some examples, `ok` vs `SwiftForth`.
 
