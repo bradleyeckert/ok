@@ -5,7 +5,6 @@
 #include "quit.h"
 #include "forth.h"
 #include "comm.h"
-#include "tools.h"
 #include "../bci/bci.h"
 
 static struct QuitStruct *q;
