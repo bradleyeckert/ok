@@ -24,6 +24,7 @@
 
 #define WRONG_NUM_OF_RESULTS    -88
 #define WRONG_TEST_RESULTS      -89
+#define INVALID_DIRECTORY      -190
 
 struct FileRec {
     char Line[LineBufferSize];          // the current input line

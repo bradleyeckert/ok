@@ -5,7 +5,7 @@
 #include "bci.h"
 #include "bciHW.h"
 
-#define THIRD ctx->DataStack[(ctx->sp - 1) & (DATA_STACKSIZE - 1)]
+#define THIRD ctx->DataStack[(ctx->sp - 1)]
 
 VMcell_t API_Emit (vm_ctx *ctx){
     uint32_t codepoint = ctx->t;
@@ -47,10 +47,6 @@ static VMcell_t API_umstar_x (vm_ctx *ctx, int sign) {
 
 VMcell_t API_umstar (vm_ctx *ctx) {
     return API_umstar_x(ctx, 0);
-}
-
-VMcell_t API_mstar (vm_ctx *ctx) {
-    return API_umstar_x(ctx, 1);
 }
 
 VMcell_t API_mudivmod (vm_ctx *ctx) {

@@ -11,8 +11,8 @@
 
 #define VM_CELLBITS               32    /* simulator bits per cell: 16 to 32 */
 #define VM_INSTBITS               16    /* bits per instruction: 16, 17, 20, 21, 22, 25, 26, or 27 bits */
-#define DATA_STACKSIZE            16    /* depth of stacks */
-#define RETURN_STACKSIZE          16
+#define DATA_STACKSIZE           128    /* depth of stacks */
+#define RETURN_STACKSIZE         128
 #define CODESIZE              0x2000    /* cells in code space: 16KB */
 #define DATASIZE              0x0800    /* cells in data space: 8KB */
 #define TEXTORIGIN            0x1000    /* base address of internal Flash data in cells */
@@ -69,7 +69,7 @@
     "nop",  "inv", "over",  "a!",  "+", "xor", "and", "drop", \
     "swap",  "2*",  "dup", "cy!", "@a", "@a+",  "@b",  "@b+", \
     "2/c",   "2/",    "0",  "u!", "!a", "!a+",  "!b",  "!b+", \
-    "unext",  "?",    "u",  ">r", "cy",   "a",   "r",   "r>"
+    "unext", "0<",    "u",  ">r", "cy",   "a",  "r@",   "r>"
 
 #define IMM_NAMES \
     "pfx", "zoo", "ax", "ay", "if", "bran", "-if", "next", \
@@ -103,6 +103,7 @@
 #define VMO_STOREB              0x16
 #define VMO_STOREBPLUS          0x17
 #define VMO_UNEXT               0x18
+#define VMO_ZEROLESS            0x19
 #define VMO_U                   0x1A
 #define VMO_PUSH                0x1B
 #define VMO_CY                  0x1C

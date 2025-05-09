@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <unistd.h>
 #include <inttypes.h>
 #include "quit.h"
 #include "forth.h"
@@ -381,13 +382,18 @@ static void EndTest(void) { // }t
 
 static void SkipToPar (void) { parseword(')'); }
 static void EchoToPar (void) { SkipToPar();  printf("%s", TOKEN); }
-static void Cr        (void) { printf("\n"); }
 static void SkipToEOL (void) { TOIN = (int)strlen(TIB); }
+static void BaseStore (void) { int n = DataPop(); if (n > 1) BASE = n; }
+static char* Source   (void) { char *src = &TIB[TOIN]; SkipToEOL(); return src; }
+static void EchoToEOL (void) { printf("%s\n", Source()); }
+static void Chdir     (void) { ERROR = chdir(Source()) ? INVALID_DIRECTORY : 0; }
+char * TIBtoEnd       (void) { return Const(Source()); }
 
-char * TIBtoEnd(void) {
-    char *source = &q->tib[q->toin];
-    SkipToEOL();
-    return Const(source);
+void ShowLine(void) {
+    if (File.fp != stdin) {
+        printf("%s, Line %d: ", q->FilePaths[File.FID].filepath, File.LineNumber);
+        printf("%s\n", File.Line);
+    }
 }
 
 static uint32_t CellBitMask(void) {
@@ -509,6 +515,8 @@ static void AddRootKeywords(void) {
     Definitions();
 //                            v--- ~ = https://forth-standard.org/standard/
     AddKeyword("bye",        "~tools/BYE --",                       Bye,         noCompile);
+    AddKeyword("cd",         "-quit.htm#chdir ccc<EOL> --",         Chdir,       noCompile);
+    AddKeyword("base!",      "-quit.htm#basestore n --",            BaseStore,   noCompile);
     AddKeyword("only",       "~search/ONLY --",                     Only,        noCompile);
     AddKeyword("order",      "~search/ORDER --",                    Order,       noCompile);
     AddKeyword("set-current","~search/SET-CURRENT wid --",          SetCurrent,  noCompile);
@@ -523,8 +531,8 @@ static void AddRootKeywords(void) {
     AddKeyword("verbose!",   "-quit.htm#verbsto mask --",           Verbosity,   noCompile);
     AddKeyword("(",          "~core/p ccc<paren> --",               SkipToPar,   SkipToPar);
     AddKeyword("\\",         "~core/bs ccc<EOL> --",                SkipToEOL,   SkipToEOL);
+    AddKeyword("\\.",        "-quit.htm#bsdot ccc<EOL> --",         EchoToEOL,   noCompile);
     AddKeyword(".(",         "~core/Dotp ccc<paren> --",            EchoToPar,   noCompile);
-    AddKeyword("cr",         "~core/CR --",                         Cr,          noCompile);
     AddKeyword("[if]",       "~tools/BracketIF flag --",            BrackIf,     noCompile);
     AddKeyword("[then]",     "~tools/BracketTHEN --",               Nothing,     noCompile);
     AddKeyword("[else]",     "~tools/BracketELSE --",               BrackElse,   noCompile);
@@ -534,6 +542,8 @@ static void AddRootKeywords(void) {
     AddKeyword("->",         "-quit.htm#tmiddle ... --",            DoTest,      noCompile);
     AddKeyword("t{",         "-quit.htm#tbegin ... --",             BeginTest,   noCompile);
 }
+
+const uint8_t BaseChar[] = {"??%.....&.#.....$"};
 
 int quitloop(char * line, int maxlength, struct QuitStruct *state) {
     q = state;
@@ -587,9 +597,7 @@ int quitloop(char * line, int maxlength, struct QuitStruct *state) {
                     default: ErrorMessage (ERROR, TOKEN);
                     }
                     while (FILEDEPTH) {
-                        printf("%s, Line %d: ",
-                            q->FilePaths[File.FID].filepath, File.LineNumber);
-                        printf("%s\n", File.Line);
+                        ShowLine();
                         fclose(File.fp);
                         FILEDEPTH--;
                     }
@@ -603,7 +611,11 @@ done:       q->elapsed_us = GetMicroseconds() - time0;
                     printf("\\ %" PRIu64 " cycles ", q->cycles);
                 }
                 if (SP) {
-                    printf("\\ ");
+                    printf("\\");
+                    if ((BASE != 10) && (BASE < 17)) {
+                        printf("%c", BaseChar[BASE]);
+                    }
+                    printf(" ");
                     PrintDataStack();
                 }
             }

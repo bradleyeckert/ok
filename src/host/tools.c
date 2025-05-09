@@ -7,9 +7,9 @@ Compatibility tools
 #include <stdint.h>
 #include <string.h>
 #include "tools.h"
+#include "../bci/bci.h"
 
 #ifdef _MSC_VER
-#include <conio.h>
 #include <Windows.h>
 uint64_t GetMicroseconds(void) {
     FILETIME ft;
@@ -29,8 +29,6 @@ uint64_t GetMicroseconds(void) {
     return tv.tv_sec * (uint64_t)1000000 + tv.tv_usec;
 }
 #endif
-
-#include "../bci/bci.h"
 
 void cdump(const uint8_t *src, uint16_t len) {
     for (int i = 0; i < len; i++) {
@@ -199,6 +197,7 @@ void ErrorMessage(int error, char* s) {
     case -100: msg = "ALLOCATE failed";                              break;
     case -101: msg = "RESIZE failed";                                break;
     case -102: msg = "FREE failed";                                  break;
+    case -190: msg = "Can't change directory";                       break;
     case -191: msg = "Can't delete file";  /* DELETE-FILE */         break;
     case -192: msg = "Can't rename file";  /* RENAME-FILE */         break;
     case -193: msg = "Can't resize file";  /* RESIZE-FILE */         break;

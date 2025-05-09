@@ -1,21 +1,25 @@
 <html>
-<body>
+<body style="font-family: sans-serif">
 <h1>quit.c words</h1>
 <hr>
-<h2 id="only">only ( wid -- )</h2>
-<p>Clear the search order to "host host".
+<h2 id="basestore">base! ( base -- )</h2>
+<p>Sets the host base if base > 1.
 </p>
 
-<h2 id="porder">+order ( wid -- )</h2>
-<p>Add a wordlist to the search order.
+<h2 id="chdir">cd ( ccc&lt;eol&gt; -- )</h2>
+<p>Sets the current working directory.
+</p>
+
+<h2 id="only">only ( wid -- )</h2>
+<p>Clear the search order to "host host".
 </p>
 
 <h2 id="morder">-order ( -- wid )</h2>
 <p>Remove a wordlist from the search order.
 </p>
 
-<h2 id="verbsto">verbose! ( mask -- )</h2>
-<p>Sets the options for run-time tracing (0 = none).
+<h2 id="porder">+order ( wid -- )</h2>
+<p>Add a wordlist to the search order.
 </p>
 
 <h2 id="tbegin">t{ ( -- )</h2>
@@ -28,6 +32,14 @@
 
 <h2 id="tend">}t ( -- )</h2>
 <p>End an assert statement.
+</p>
+
+<h2 id="verbsto">verbose! ( mask -- )</h2>
+<p>Sets the options for run-time tracing (0 = none).
+</p>
+
+<h2 id="bsdot">\. ( ccc&lt;eol&gt; -- )</h2>
+<p>Echo text until EOL.
 </p>
 
 <hr>

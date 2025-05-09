@@ -13,5 +13,6 @@ void AddEquate(char* name, char* help, uint32_t value);
 void AddForthKeywords(struct QuitStruct *state);
 
 int BitsPerCell(void);
+void ShowLine(void);
 
 #endif // __FORTH_H__

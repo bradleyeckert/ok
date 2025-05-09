@@ -23,6 +23,8 @@ static struct QuitStruct *q;
 #define ME        q->me
 #define VERBOSE   q->verbose
 #define TOKEN     q->token
+#define INST_TAG  0x80000000
+#define IS_UOP (INST_TAG | (1 << (VM_INSTBITS - 1)))
 
 static void dotESS (void) {                      // ( ... -- ... )
     PrintDataStack();
@@ -67,9 +69,12 @@ static void CommFetch(void) {
 }
 
 static void InstExecute(uint32_t xt) {
-    if (q->reloaded[CORE] == 0) {
-        printf("'reload'ing host --> target\n");
-        Reload();
+    if (!(xt & INST_TAG)) { // instructions do not need reload
+        if (q->reloaded[CORE] == 0) {
+            printf("reloading host --> target ");
+            ShowLine();
+            Reload();
+        }
     }
     SendInit();
     SendChar(BCIFN_EXECUTE);
@@ -90,8 +95,6 @@ static void Prim_Exec(void) {
 
 //------------------------------------------------------------------------------
 // Compiler
-//    uint8_t nvm[CPUCORES][NVMSIZE];    // local NVM image
-//    VMcell_t code[CPUCORES][CODESIZE]; // VM_INSTBITS UOP_SLOTS
 
 int slot = UOP_SLOTS;
 uint32_t instruction;
@@ -269,9 +272,6 @@ ex: instruction |= VM_UOPS | VM_RET;
     slot = 0;
     NewInst();
 }
-
-
-#define IS_UOP (0x80000000 | (1 << (VM_INSTBITS - 1)))
 
 static void Macro_Fn(void (*func)(uint32_t)) {
     uint32_t macro = my();
@@ -464,7 +464,7 @@ void AddForthKeywords(struct QuitStruct *state) {
     AddKeyword("here",     "~core/HERE -- a",               tpFetch,    noCompile);
     AddKeyword("tp",       "-forth.htm#tp -- a",            tpFetch,    noCompile);
     AddKeyword("tp!",      "-forth.htm#tpstore a --",       tpStore,    noCompile);
-    AddKeyword(",\"",      "-forth.htm#comstr x --",        CommaStr,   CompStr);
+    AddKeyword(",\"",      "-forth.htm#comstr string\" -- a", CommaStr, CompStr);
     AddKeyword(",",        "~core/Comma x --",              Comma,      noCompile);
     AddKeyword("[",        "~core/Bracket --",              toImmediate,toImmediate);
     AddKeyword("]",        "~right-bracket --",             toCompile,  toCompile);
@@ -493,6 +493,7 @@ void AddForthKeywords(struct QuitStruct *state) {
     AddUop("cy!",    "-forth.htm#cystore carry --",         IS_UOP + VMO_CYSTORE);
     AddUop("cy",     "-forth.htm#cy -- carry",              IS_UOP + VMO_CY);
     AddUop("0",      "-forth.htm#zero -- 0",                IS_UOP + VMO_ZERO);
+    AddUop("0<",     "~core/Zeroless n -- flag",            IS_UOP + VMO_ZEROLESS);
     AddUop("u!",     "-forth.htm#ustore --",                IS_UOP + VMO_USTORE);
     AddUop("u",      "-forth.htm#u -- u",                   IS_UOP + VMO_U);
     AddUop("+",      "~core/Plus n1 n2 -- n3",              IS_UOP + VMO_PLUS);
@@ -511,14 +512,13 @@ void AddForthKeywords(struct QuitStruct *state) {
     AddUop("!a+",    "-forth.htm#storeaplus x --",          IS_UOP + VMO_STOREAPLUS);
     AddUop("!b",     "-forth.htm#storeb x --",              IS_UOP + VMO_STOREB);
     AddUop("!b+",    "-forth.htm#storebplus x --",          IS_UOP + VMO_STOREBPLUS);
-    AddOp("throw",   "-forth.htm#throw x --",               0x80000000 + VMI_THROW);
-    AddOp("y!",      "-forth.htm#ystore x --",              0x80000000 + VMI_YSTORE);
-    AddOp("x!",      "-forth.htm#xstore x --",              0x80000000 + VMI_XSTORE);
-    AddAPIcall("emit",     "~core/EMIT c --",               VM_SIGN + VMI_APIDROP + 5);
+    AddOp("err!",    "-forth.htm#throw x --",               INST_TAG + VMI_THROW);
+    AddOp("y!",      "-forth.htm#ystore x --",              INST_TAG + VMI_YSTORE);
+    AddOp("x!",      "-forth.htm#xstore x --",              INST_TAG + VMI_XSTORE);
+    AddAPIcall("semit",    "-forth.htm#semit c --",         VM_SIGN + VMI_APIDROP + 5);
     AddAPIcall("um*",      "~core/UMTimes u1 u2 -- d1",     VM_SIGN + VMI_API     + 6);
-    AddAPIcall("m*",       "~core/MTimes n1 n2 -- d1",      VM_SIGN + VMI_API     + 7);
-    AddAPIcall("um/mod",   " ud u -- q r",                  VM_SIGN + VMI_APIDROP + 8);
-    AddAPIcall("mu/mod",   " ud u -- q r",                  VM_SIGN + VMI_API     + 8);
+    AddAPIcall("um/mod",   "~core/UMDivMOD ud u -- q r",    VM_SIGN + VMI_APIDROP + 7);
+    AddAPIcall("mu/mod",   "-forth.htm#mumod ud u -- dq r", VM_SIGN + VMI_API     + 7);
 
     // compile-only control words, can't be postponed
     AddKeyword("begin",    "~core/BEGIN C: -- dest",        noExecute, doBegin);

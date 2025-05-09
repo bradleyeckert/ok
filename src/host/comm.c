@@ -301,6 +301,7 @@ static void BCIreceive(const uint8_t *src, int length) {
                             if (length != 15) goto error;
                             x = BCIparam(&src, &length, 4);
                             BASE = x & 0xFF;
+                            if (BASE < 2) BASE = 2;
                             STATE = x >> 8;
                             x = BCIparam(&src, &length, 4);
                             q->cycles = ((uint64_t)BCIparam(&src, &length, 4) << 32) | x;

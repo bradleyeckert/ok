@@ -5,7 +5,7 @@
 #include "bci.h"
 #include "bciHW.h"
 
-#define TRACE 1
+#define TRACE 0
 
 /*
 BCIhandler takes input from a buffer and outputs to encrypted UART using these primitives:
@@ -38,7 +38,7 @@ typedef VMcell_t (*APIfn) (vm_ctx *ctx);
 
 const APIfn APIfns[] = {
     NVMbeginRead, NVMbeginWrite, NVMread, NVMwrite, NVMendRW,
-    API_Emit, API_umstar, API_mstar, API_mudivmod
+    API_Emit, API_umstar, API_mudivmod
 };
 
 void BCIinitial(vm_ctx *ctx) {
@@ -198,6 +198,7 @@ int BCIstepVM(vm_ctx *ctx, VMinst_t inst){
                     if (ctx->r == 0) {popReturn(ctx); break;}
                     else {i = 15; continue;}
                 case VMO_U:          ctx->t = 0;                        break;
+                case VMO_ZEROLESS:   ctx->t = (ctx->t & VM_SIGN) ? VM_MASK : 0; break;
                 // memory operations
                 case VMO_ASTORE:     ctx->a = t;                        break;
                 case VMO_A:          ctx->t = ctx->a;                   break;
@@ -345,7 +346,7 @@ Since the VM has a context structure, these are late-bound in the context to all
 */
 
 void BCIhandler(vm_ctx *ctx, const uint8_t *src, uint16_t length) {
-    ctx->InitFn(ctx->id);
+    ctx->InitFn(ctx->id);               // empty the response buffer
     cmd = src;  len = length;
     uint32_t ds[16];
     memset(ds, 0, 16 * sizeof(uint32_t));
