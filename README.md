@@ -36,7 +36,7 @@ The rationale behind using submodules for these is that they can start as forks.
 
 ## code size
 
-`test.f` demonstrates numeric conversion in 117 instructions.
+`test.f` demonstrates numeric output in 117 instructions.
 
 Some examples, `ok` vs `SwiftForth`.
 
