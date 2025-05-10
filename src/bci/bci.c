@@ -81,14 +81,9 @@ static void WriteCell(vm_ctx *ctx, uint32_t addr, uint32_t x) {
         ctx->DataMem[addr] = x;         // Data
         return;
     }
-    if (addr < TEXTORIGIN) {
+    if (addr < (TEXTORIGIN + TEXTSIZE)) {
         ctx->ior = BCI_IOR_INVALID_ADDRESS;
-        return;
-    }
-    addr -= TEXTORIGIN;
-    if (addr < TEXTSIZE) {
-        ctx->TextMem[addr] = x;         // Text
-        return;
+        return;                         // no write access to text
     }
     BCIVMioWrite(ctx, addr, x);         // Peripherals
 }
@@ -128,12 +123,14 @@ static const uint8_t stackeffects[32] = {
 // Single-step the VM and set ctx->status to 1 if the PC goes out of bounds.
 // inst = instruction. If 0, fetch inst from code memory.
 // ctx->ior should be 0 upon entering the function.
+// Returns 1 if running and ready for BCI execution
 
 #define IMASK2 ((1 << (VM_INSTBITS - 2)) - 1)
 #define APIfs (sizeof(APIfn)/sizeof(APIfns[0]))
-static void ops0001(vm_ctx *ctx, int inst);
+static int ops0001(vm_ctx *ctx, int inst);
 
 int BCIstepVM(vm_ctx *ctx, VMinst_t inst){
+    int r = 0;
     uint32_t pc = ctx->pc;
     if (inst == 0) {
         inst = ctx->CodeMem[pc++];
@@ -234,7 +231,7 @@ store:                               WriteCell(ctx, ctx->a, t);
             int flag;
             switch (opcode) {
                 case 0: _lex = (ctx->lex << (VM_INSTBITS - 7)) | imm;   break;
-                case 1: ops0001(ctx, imm);                              break;
+                case 1: r = ops0001(ctx, imm);                          break;
                 case 2: ctx->a = ctx->x + imm;                          break;
                 case 3: ctx->a = ctx->y + imm;                          break;
                 case 4: flag = (ctx->t == 0);  dropData(ctx);
@@ -266,22 +263,25 @@ store:                               WriteCell(ctx, ctx->a, t);
         ctx->cycles += (UOP_SLOTS + 1);
     }
     ctx->pc = pc;
-    return ctx->ior;
+    return r;
 }
 
-static void ops0001(vm_ctx *ctx, int inst) { // alternate instructions 0110001...
+static int ops0001(vm_ctx *ctx, int inst) { // alternate instructions 0110001...
+    int r = 0;
     int imm = inst & 0x7F;
     if (inst & VMI_ZOODUP) dupData(ctx);
     switch(imm) {
-        case 0: ctx->x = ctx->t;    break;
-        case 1: ctx->y = ctx->t;    break;
-        case 2: ctx->sp = ctx->t;   break;
-        case 3: ctx->rp = ctx->t;   break;
+        case 0: ctx->x = ctx->t;    break;  // x!
+        case 1: ctx->y = ctx->t;    break;  // y!
+        case 2: ctx->sp = ctx->t;   break;  // sp!
+        case 3: ctx->rp = ctx->t;   break;  // rp!
         case 4: ctx->t = (ctx->sp - 1) & (DATA_STACKSIZE - 1); break;
-        case 5: ctx->t = ctx->rp;   break;
-        case 6: ctx->ior = ctx->t;  break;
+        case 5: ctx->t = ctx->rp;   break;  // rp@
+        case 6: r = 1;              break;  // bcisync
+        case 7: ctx->ior = ctx->t;  break;  // err!
     }
     if (inst & VMI_ZOODROP) dropData(ctx);
+    return r;
 }
 
 // Stream interface between BCI and VM
@@ -327,21 +327,20 @@ static void waitUntilVMready(vm_ctx *ctx){
 }
 
 static int16_t simulate(vm_ctx *ctx, uint32_t xt){
-    int ior = 0;
     if (xt & 0x80000000) {
-        ior = BCIstepVM(ctx, xt);       // single instruction
+        BCIstepVM(ctx, xt);             // single instruction
     } else {
-        PRINTF("\nCalling %d ", xt);
+        PRINTF("\nCalling %d, ", xt);
         int rdepth = ctx->rp;
         xt += VMI_CALL;
-        ior = BCIstepVM(ctx, xt);       // trigger call to xt
+        BCIstepVM(ctx, xt);             // trigger call to xt
         while (rdepth != ctx->rp) {
             BCIstepVM(ctx, 0);          // execute instructions
             if (ctx->ior) break;        // break on error
         }
-        PRINTF("\nDone simulating");
+        PRINTF("Done simulating");
     }
-    return ior;
+    return ctx->ior;
 }
 
 /*
@@ -432,10 +431,15 @@ write:  addr = get32();
         PRINTF("\nErasing sector %d of Flash ", x);
         FlashErase(x);
         break;
-    case BCIFN_SHUTDOWN:
+    case BCIFN_STROBE:
         x = get32();
-        PRINTF("\nVM shutdown triggered with pin=%d ", x);
-        if (x == 123456789) ctx->status = BCI_STATUS_SHUTDOWN;
+        PRINTF("\nVM strobe=%d ", x);
+        switch (x) {
+            case VM_SHUTDOWN_PIN: ctx->status = BCI_STATUS_SHUTDOWN;  break;
+            case VM_SLEEP_PIN:    ctx->status = BCI_STATUS_STOPPED;   break;
+            case VM_RESET_PIN:    BCIinitial(ctx);                    break;
+            default: break;
+        }
         break;
     default:
         ctx->ior = BCI_BAD_COMMAND;

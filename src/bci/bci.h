@@ -26,7 +26,9 @@
 #define VM_STACK_UNDERFLOW        -4
 #define BCI_IOR_INVALID_ADDRESS   -9
 #define BCI_BAD_COMMAND          -84
-
+#define VM_SHUTDOWN_PIN        10000
+#define VM_RESET_PIN           10011
+#define VM_SLEEP_PIN           10022
 #define BCI_BEGIN                252    /* beginning-of-message */
 
 #if ((DATA_STACKSIZE-1) & DATA_STACKSIZE)
@@ -116,7 +118,7 @@
 #define VMI_ZOODROP             (1 << (VM_INSTBITS - 9))
 #define VMI_ZOO                 (VMI_PFX + (1 << (VM_INSTBITS - 7)))
 
-#define ZOO_NAMES  "x!", "y!", "sp!", "rp!", "sp@", "rp@", "err!"
+#define ZOO_NAMES  "x!", "y!", "sp!", "rp!", "sp@", "rp@", "bcisync", "err!"
 
 #define VMI_XSTORE              (VMI_ZOO + 0 + VMI_ZOODROP)
 #define VMI_YSTORE              (VMI_ZOO + 1 + VMI_ZOODROP)
@@ -124,7 +126,8 @@
 #define VMI_RPSTORE             (VMI_ZOO + 3 + VMI_ZOODROP)
 #define VMI_SPFETCH             (VMI_ZOO + 4 + VMI_ZOODUP)
 #define VMI_RPFETCH             (VMI_ZOO + 5 + VMI_ZOODUP)
-#define VMI_THROW               (VMI_ZOO + 6 + VMI_ZOODROP)
+#define VMI_BCISYNC             (VMI_ZOO + 6)
+#define VMI_THROW               (VMI_ZOO + 7 + VMI_ZOODROP)
 
 #define IMM_NAMES \
     "pfx", "zoo", "ax", "ay", "if", "bran", "-if", "next", \
@@ -148,11 +151,10 @@
 #define BCIFN_WRCODE        5
 #define BCIFN_WRTEXT        6
 #define BCIFN_SECTOR_ERASE  7
-#define BCIFN_SHUTDOWN      8
+#define BCIFN_STROBE        8
 #define BCIFN_READREG      11
 #define BCIFN_WRITEREG     12
 
-//#define BCI_EMPTY_STACK   0xAAAAAAAA
 #define BCI_STATUS_RUNNING         0
 #define BCI_STATUS_STOPPED         1
 #define BCI_STATUS_SHUTDOWN        2

@@ -248,6 +248,36 @@ static int UsesRetStack(uint32_t inst) {
     return 0;
 }
 
+static void Later(void) {
+    Definition();  HEADER[HP].w2 = MAGIC_LATER;
+    CompInst(VMI_JUMP);
+    EndDefinition();
+}
+
+static void MuchLater(void) {
+    Definition();  HEADER[HP].w2 = MAGIC_LATER;
+    CompInst(VMI_PFX);
+    CompInst(VMI_JUMP);
+    EndDefinition();
+}
+
+static void Resolves(void) {                     // ( xt <name> -- )
+    Tick();
+    int orig = DataPop();
+    uint32_t addr = DataPop();
+    if (HEADER[ME].w2 != MAGIC_LATER) ERROR = BAD_IS;
+    int first = q->code[CORE][orig];
+    if (first == VMI_PFX) {
+        q->code[CORE][orig++] = VMI_PFX | ((addr >> VM_IMMBITS) & VM_IMMS_MASK);
+        addr &= VM_IMM_MASK;
+    }
+    q->code[CORE][orig] = VMI_JUMP | addr;
+    if (addr & ~VM_IMM_MASK) {
+        ERROR = BAD_IS;
+        printf("'later' must be the far type. Use 'muchlater' instead.\n");
+    }
+}
+
 /*
 several ways to exit:
 if notail = 0, convert call to jump
@@ -513,6 +543,8 @@ void AddForthKeywords(struct QuitStruct *state) {
     AddUop("!a+",    "-forth.htm#storeaplus x --",          IS_UOP + VMO_STOREAPLUS);
     AddUop("!b",     "-forth.htm#storeb x --",              IS_UOP + VMO_STOREB);
     AddUop("!b+",    "-forth.htm#storebplus x --",          IS_UOP + VMO_STOREBPLUS);
+
+    AddOp("bcisync", "-forth.htm#bcisync --",               INST_TAG + VMI_BCISYNC);
     AddOp("err!",    "-forth.htm#throw x --",               INST_TAG + VMI_THROW);
     AddOp("y!",      "-forth.htm#ystore x --",              INST_TAG + VMI_YSTORE);
     AddOp("x!",      "-forth.htm#xstore x --",              INST_TAG + VMI_XSTORE);
@@ -526,19 +558,22 @@ void AddForthKeywords(struct QuitStruct *state) {
     AddAPIcall("mu/mod",   "-forth.htm#mumod ud u -- dq r", INST_TAG + VMI_API     + 7);
 
     // compile-only control words, can't be postponed
-    AddKeyword("begin",    "~core/BEGIN C: -- dest",        noExecute, doBegin);
-    AddKeyword("again",    "~core/AGAIN C: dest --",        noExecute, doAgain);
-    AddKeyword("until",    "~core/UNTIL C: dest -- | f --", noExecute, doUntil);
+    AddKeyword("later",    "-forth.htm#later <name> --",    Later,        noCompile);
+    AddKeyword("muchlater","-forth.htm#muchlater <name> --",MuchLater,    noCompile);
+    AddKeyword("resolves", "-forth.htm#resolves xt <name> --", Resolves,  noCompile);
+    AddKeyword("begin",    "~core/BEGIN C: -- dest",        noExecute,    doBegin);
+    AddKeyword("again",    "~core/AGAIN C: dest --",        noExecute,    doAgain);
+    AddKeyword("until",    "~core/UNTIL C: dest -- | f --", noExecute,    doUntil);
     AddKeyword("-until",   "-forth.htm#muntil C: dest -- | n -- n", noExecute, doMuntil);
-    AddKeyword("if",       "~core/IF C: -- orig | f --",    noExecute, doIf);
+    AddKeyword("if",       "~core/IF C: -- orig | f --",    noExecute,    doIf);
     AddKeyword("-if",      "-forth.htm#mif C: -- orig | f -- f",  noExecute, doMif);
-    AddKeyword("else",     "~core/ELSE C: orig1 -- orig2",  noExecute, doElse);
-    AddKeyword("then",     "~core/THEN C: orig",            noExecute, doThen);
+    AddKeyword("else",     "~core/ELSE C: orig1 -- orig2",  noExecute,    doElse);
+    AddKeyword("then",     "~core/THEN C: orig",            noExecute,    doThen);
     AddKeyword("while",    "~core/WHILE C: dest -- orig dest | f -- f", noExecute, doWhile);
     AddKeyword("-while",   "-forth.htm#mwhile C: dest -- orig dest | f -- f", noExecute, doMwhile);
-    AddKeyword("repeat",   "~core/REPEAT C: orig dest --",  noExecute, doRepeat);
-    AddKeyword("for",      "-forth.htm#for C: -- dest | n --",          noExecute, doFor);
-    AddKeyword("next",     "-forth.htm#next C: dest --",    noExecute, doNext);
+    AddKeyword("repeat",   "~core/REPEAT C: orig dest --",  noExecute,    doRepeat);
+    AddKeyword("for",      "-forth.htm#for C: -- dest | n --",  noExecute, doFor);
+    AddKeyword("next",     "-forth.htm#next C: dest --",    noExecute,    doNext);
     AddMacro("@",     "~core/Fetch a -- x",               (VMO_ASTORE << 5)  | VMO_FETCHA);
     AddMacro("!",     "~core/Store x a --",               (VMO_ASTORE << 5)  | VMO_STOREA);
     AddMacro("-1",    "-forth.htm#minusone -- -1",        (VMO_ZERO << 5)    | VMO_INV);

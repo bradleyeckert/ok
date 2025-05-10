@@ -179,12 +179,24 @@ void BCIwait(void) {
     }
 }
 
-static void VMshutdown(void) {
+static void VMstrobe(int pin) {
     SendInit();
-    SendChar(BCIFN_SHUTDOWN);
-    SendCell(123456789);
+    SendChar(BCIFN_STROBE);
+    SendCell(pin);
     SendFinal();
     BCIwait();
+}
+
+static void VMreset(void) {
+    VMstrobe(VM_RESET_PIN);
+}
+
+static void VMshutdown(void) {
+    VMstrobe(VM_SHUTDOWN_PIN);
+}
+
+static void VMsleep(void) {
+    VMstrobe(VM_SLEEP_PIN);
 }
 
 void BCIsendToHost(const uint8_t *src, int length) {
@@ -226,6 +238,7 @@ void Reload(void) {
         printf("\nTarget port accepts only %d bytes, %d bytes needed ", avail, flashNeeds);
         return;
     }
+    VMsleep();                          // pause the VM while programming
     SendInit();
     SendChar(BCIFN_CRC);                // get the remote CRCs
     SendFinal();
@@ -250,6 +263,7 @@ void Reload(void) {
         ProgramFlash(addr, blocks, BCIFN_WRTEXT);
     }
     q->reloaded[CORE] = 1;
+    VMreset();                          // reset the target because code changed
 }
 
 static void GetBoiler(void) {
@@ -420,6 +434,7 @@ void AddCommKeywords(struct QuitStruct *state) {
     q->baudrate = DEFAULT_BAUDRATE;
     q->port =     DEFAULT_HOSTPORT;
     AddKeyword("shutdown",  "-comm.htm#shutdn --",      VMshutdown,   noCompile);
+    AddKeyword("reset",     "-comm.htm#reset --",       VMreset,      noCompile);
     AddKeyword("com-list",  "-comm.htm#list --",        ComList,      noCompile);
     AddKeyword("com-open",  "-comm.htm#open --",        ComOpen,      noCompile);
     AddKeyword("com-close", "-comm.htm#close --",       ComClose,     noCompile);

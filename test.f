@@ -20,10 +20,12 @@ t{ 100 a! 1000 !a -> }t
 t{ 100 a! @a -> 1000 }t
 t{ 0 a! @a -> 10 }t
 
-1 cp!
 only forth definitions
 
 \ Forth definitions
+
+\ 1 cp! \ leave in stopped mode
+later coldboot
 
 \ Text output needs some indirection
 
@@ -111,7 +113,19 @@ tp equ table  100 , 1000 , 10000 ,
 ," こんにちは世界" : hi  literal @+ type ;
 : yo        ," ok!" @+ type ;
 
-\ 8 verbose!
+variable counter
+
+: mystuff   1 counter +! ;
+
+\ @ is a "a! @a" macro, so within the loop 'a' must be protected as follows:
+
+:noname     begin 
+                a mystuff a!
+                bcisync
+            again 
+; resolves coldboot
+
+
 reload \ synchronize code and text images to target
 \ executing words without reload will crash
 
