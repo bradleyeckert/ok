@@ -10,7 +10,7 @@
 #include "../bci/bciHW.h"
 #include "../RS-232/rs232.h"
 #include "../mole/src/mole.h"
-#include "../mole/src/testkeys.h"
+#include "../mole/src/moleconfig.h"
 
 static struct QuitStruct *q;
 
