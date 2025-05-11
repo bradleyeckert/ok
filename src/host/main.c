@@ -63,10 +63,20 @@ void* SimulateCPU(void* threadid) {
     ctx->id = id;
     printID(id);
     g_begun++;
+    uint64_t t0 = GetMicroseconds() + 1000000;
+    uint64_t c0 = ctx->cycles;
     while  (ctx->status != BCI_STATUS_SHUTDOWN) {
         if (ctx->status == BCI_STATUS_RUNNING) {
             // int ior =
             BCIstepVM(ctx, 0);
+            uint64_t t = GetMicroseconds();
+            if (t > t0) {
+                t0 += 1000000;
+                uint64_t c1 = ctx->cycles;
+                float mips = (c1 - c0) / 1e6;
+                printf ("\n%f mips", mips);
+                c0 = c1;
+            }
         }
         YieldThread();
     }

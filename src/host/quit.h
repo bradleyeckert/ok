@@ -7,7 +7,7 @@
 
 #include "../bci/bci.h"
 
-#define CPUCORES         2
+#define CPUCORES         1
 #define PAD_SIZE       128      /* cells of pad to place at the top od data space */
 #define HANG_LIMIT_MS 3000      /* milliseconds to wait for a response */
 
