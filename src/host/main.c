@@ -30,24 +30,37 @@ static void printID(int id) {}
 
 static uint8_t  responseBuf[CPUCORES][MaxBCIresponseSize];
 static uint16_t responseLen[CPUCORES];
+
 // These functions are used by the BCI to return a response
-static void mySendChar(int id, uint8_t c) {
+
+void BCIsendChar(int id, uint8_t c) {
     responseBuf[id][responseLen[id]++] = c;
 }
-static void mySendInit(int id) {
+
+void BCIsendInit(int id) {
     responseLen[id] = 0;
-    mySendChar(id, id & 0xFF);
-    mySendChar(id, id >> 8);
+    BCIsendChar(id, id & 0xFF);
+    BCIsendChar(id, id >> 8);
 }
-static void mySendFinal(int id) {
+
+void BCIsendFinal(int id) {
     BCIsendToHost((const uint8_t*)&responseBuf[id], responseLen[id]);
 }
 
+
 // allocate "flash memory" for the VM(s)
+
 VMcell_t TextMem[CPUCORES][TEXTSIZE];
 VMinst_t CodeMem[CPUCORES][CODESIZE];
 
 static int g_begun;
+
+void StopVMthread(vm_ctx *ctx) {
+    ctx->status = BCI_STATUS_STOPPED;
+    while (ctx->statusNew != BCI_STATUS_STOPPED) {
+        YieldThread();
+    }
+}
 
 void* SimulateCPU(void* threadid) {
     int id = (size_t) threadid & 0xFFFF;
@@ -56,9 +69,6 @@ void* SimulateCPU(void* threadid) {
     ctx->CodeMem = &CodeMem[id][0];     // flash sector for code
     memset(TextMem, BLANK_FLASH_BYTE, sizeof(TextMem));
     memset(CodeMem, BLANK_FLASH_BYTE, sizeof(CodeMem));
-    ctx->InitFn = mySendInit;           // output initialization function
-    ctx->putcFn = mySendChar;           // output putc function
-    ctx->FinalFn = mySendFinal;         // output finalization function
     BCIinitial(ctx);
     ctx->id = id;
     printID(id);
@@ -79,6 +89,7 @@ void* SimulateCPU(void* threadid) {
             }
         }
         YieldThread();
+        ctx->statusNew = ctx->status;
     }
 #ifdef _MSC_VER
     return 0;

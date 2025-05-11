@@ -10,21 +10,21 @@
 VMcell_t API_Emit (vm_ctx *ctx){
     uint32_t codepoint = ctx->t;
     if (codepoint < 0x80) {
-        ctx->putcFn(ctx->id, codepoint);
+        BCIsendChar(ctx->id, codepoint);
         return 0;
     }
     if (codepoint < 0x800) {
-        ctx->putcFn(ctx->id, (char)(0xC0 | (codepoint >> 6)));
+        BCIsendChar(ctx->id, (char)(0xC0 | (codepoint >> 6)));
         goto last;
     }
     if (codepoint < 0x10000) {
-        ctx->putcFn(ctx->id, (char)(0xE0 | (codepoint >> 12)));
+        BCIsendChar(ctx->id, (char)(0xE0 | (codepoint >> 12)));
         goto thrd;
     }
-      ctx->putcFn(ctx->id, (char)(0xF0 | (codepoint >> 18)));
-      ctx->putcFn(ctx->id, (char)(0x80 | ((codepoint >> 12) & 0x3F)));
-thrd: ctx->putcFn(ctx->id, (char)(0x80 | ((codepoint >> 6) & 0x3F)));
-last: ctx->putcFn(ctx->id, (char)(0x80 | (codepoint & 0x3F)));
+      BCIsendChar(ctx->id, (char)(0xF0 | (codepoint >> 18)));
+      BCIsendChar(ctx->id, (char)(0x80 | ((codepoint >> 12) & 0x3F)));
+thrd: BCIsendChar(ctx->id, (char)(0x80 | ((codepoint >> 6) & 0x3F)));
+last: BCIsendChar(ctx->id, (char)(0x80 | (codepoint & 0x3F)));
     return 0;
 }
 

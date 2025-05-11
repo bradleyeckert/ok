@@ -6,6 +6,7 @@
 #include "bciHW.h"
 
 #define TRACE 0
+#include <stdio.h>
 
 /*
 BCIhandler takes input from a buffer and outputs to encrypted UART using these primitives:
@@ -47,6 +48,7 @@ void BCIinitial(vm_ctx *ctx) {
     ctx->boilerplate = boilerplate;
     ctx->DataMem[0] = 10;
     ctx->status = BCI_STATUS_STOPPED;
+    ctx->statusNew = BCI_STATUS_STOPPED;
     VMinst_t blank = (VMinst_t)((BLANK_FLASH_BYTE << 24) | (BLANK_FLASH_BYTE << 16)
                               | (BLANK_FLASH_BYTE << 8) | BLANK_FLASH_BYTE);
     if (ctx->CodeMem[0] != blank) // got code?
@@ -301,12 +303,12 @@ static uint32_t get32(void) {           // 32-bit stream data is little-endian
 }
 
 static void put8(vm_ctx *ctx, uint8_t c) {
-    ctx->putcFn(ctx->id, c);
+    BCIsendChar(ctx->id, c);
 }
 
 static void putN(vm_ctx *ctx, uint32_t x, int n) {
     while (n--) {
-        ctx->putcFn(ctx->id, x & 0xFF);
+        BCIsendChar(ctx->id, x & 0xFF);
         x >>= 8;
     }
 }
@@ -320,6 +322,7 @@ static void put32(vm_ctx *ctx, uint32_t x) {
 static void waitUntilVMready(vm_ctx *ctx){
     if (ctx->status == BCI_STATUS_STOPPED) return;
     uint32_t limit = BCI_CYCLE_LIMIT;
+    StopVMthread(ctx);
     while (limit--) {
         if (BCIstepVM(ctx, 0)) return;
     }
@@ -348,7 +351,7 @@ Since the VM has a context structure, these are late-bound in the context to all
 */
 
 void BCIhandler(vm_ctx *ctx, const uint8_t *src, uint16_t length) {
-    ctx->InitFn(ctx->id);               // empty the response buffer
+    BCIsendInit(ctx->id);               // empty the response buffer
     cmd = src;  len = length;
     uint32_t ds[16];
     memset(ds, 0, 16 * sizeof(uint32_t));
@@ -360,6 +363,7 @@ void BCIhandler(vm_ctx *ctx, const uint8_t *src, uint16_t length) {
     put8(ctx, BCI_BEGIN);               // indicate a BCI response message
     put8(ctx, n);                       // indicate what kind of response it is
     ctx->ior = 0;
+    uint8_t status0 = ctx->status;
     switch (n) {
     case BCIFN_READ:
         n = get8();
@@ -401,6 +405,7 @@ void BCIhandler(vm_ctx *ctx, const uint8_t *src, uint16_t length) {
         put32(ctx, ReadCell(ctx, 0));   // return packed status
         put32(ctx, (uint32_t)ctx->cycles);
         put32(ctx, (uint32_t)(ctx->cycles >> 32));  // return cycle count
+        ctx->status = status0;
         break;
     case BCIFN_CRC:
         put8(ctx, 4);
@@ -445,5 +450,5 @@ write:  addr = get32();
         ctx->ior = BCI_BAD_COMMAND;
     }
     putN(ctx, ctx->ior, 2);
-    ctx->FinalFn(ctx->id);
+    BCIsendFinal(ctx->id);
 }

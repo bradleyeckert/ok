@@ -171,16 +171,13 @@ typedef struct
     VMcell_t r, n, t, a, b, x, y;
     uint16_t lex;
     int16_t  ior;
-    uint8_t  sp, rp, status, cy;
+    uint8_t  sp, rp, cy, status, statusNew;
     uint64_t cycles;
     VMcell_t DataStack[DATA_STACKSIZE];
     VMcell_t ReturnStack[RETURN_STACKSIZE];
     VMcell_t DataMem[DATASIZE]; // RAM can be anywhere
     VMcell_t *TextMem;          // Flash must have a specific address
     VMinst_t *CodeMem;
-    BCITXinitFn InitFn;         // output initialization function
-    BCITXputcFn putcFn;         // output putc function
-    BCITXfinalFn FinalFn;       // output finalization function
     int16_t id;                 // node id
     const uint8_t *boilerplate; // boilerplate info
 } vm_ctx;
@@ -205,5 +202,12 @@ void BCIhandler(vm_ctx *ctx, const uint8_t *src, uint16_t length);
  * @param id VM identifier, used when ctx=NULL
  */
 void BCIinitial(vm_ctx *ctx);
+
+// Needs these externals
+
+void StopVMthread(vm_ctx *ctx);
+void BCIsendInit(int id);
+void BCIsendChar(int id, uint8_t c);
+void BCIsendFinal(int id);
 
 #endif /* __BCI_H__ */
