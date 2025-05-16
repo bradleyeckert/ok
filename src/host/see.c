@@ -115,7 +115,9 @@ static char * DisassembleInsn(uint32_t inst) {
             uint8_t slot;
             if (i < 0) slot = inst & LAST_SLOT_MASK;
             else slot = (inst >> i) & 0x1F;
-            appendDA(uopName[slot]);
+            if (inst & ((1 << (i + 5)) - 1)) {
+                appendDA(uopName[slot]);
+            }
         }
     } else {
         int opcode =   (inst >> (VM_INSTBITS - 3)) & 3;
@@ -146,12 +148,15 @@ static char * DisassembleInsn(uint32_t inst) {
                     appendDA("zoo? ");
                 }
             } else {
+                if (opcode == VMO_LEX) _lex = imm;
                 HexToDA(immex);
                 appendDA(immName[opcode]);
             }
         }
     }
-    lex = _lex;
+    if (_lex)
+    lex = (lex << (VM_INSTBITS - 7)) | _lex;
+    else lex = 0;
     return DAbuf;
 }
 
