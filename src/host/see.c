@@ -109,7 +109,7 @@ static char * DisassembleInsn(uint32_t inst) {
     appendDA(itos(inst, 16, (VM_INSTBITS + 3) / 4, 0, VM_INSTBITS));
     appendDA("");
     if (inst & VM_UOPS) {
-        if (inst & VM_RET) appendDA(";");
+        int returning = inst & VM_RET;
         inst &= (VM_RET - 1);
         for (int i = SLOT0_POSITION; i > -5; i -= 5) {
             uint8_t slot;
@@ -119,6 +119,7 @@ static char * DisassembleInsn(uint32_t inst) {
                 appendDA(uopName[slot]);
             }
         }
+        if (returning) appendDA(";");
     } else {
         int opcode =   (inst >> (VM_INSTBITS - 3)) & 3;
         int32_t immex = (lex << (VM_INSTBITS - 3))
