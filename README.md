@@ -1,24 +1,14 @@
 # ok
-Another C-based Forth
+This Forth is designed for embedded systems development using a host PC, serial port connection, and a target system based on an MCU or FPGA. To address modern cybersecurity requirements, the serial connection is encrypted.
 
 Status: Proof of concept works: Compiles and executes Forth. Execution is on a VM either within `ok` or on a remote [target](./target/PC) connected by serial ports.
-
-This Forth is designed for embedded systems development using a host PC, serial port connection, and a target system based on an MCU or FPGA. To address modern cybersecurity requirements, the serial connection is encrypted.
 
 `ok` contains a copy of the target VM(s) and a simulated serial port. The serial connection may be redirected to real target hardware.
 
 Multiple VMs are supported via pthreads, so `ok` can simulate an array of Forth cores (one core per thread).
 Some work would be required to simulate message passing between cores.
-
-
 ## compiling
-
-`make all` under Linux
-
-Code::Blocks works under Windows after manually adding files. Add files recursively, then remove all files with a `main` function, except main.c.
-
-I could not make Visual Studio 2022 work with either pthreads or the Windows \<thread\> library. The magical project settings to avoid a cascade of errors in the library files could not be found. It possibly expects C++, not C.
-
+`make all` under Linux. For Windows, see [windows/README](./windows/README.md).
 ## submodules
 Note: Contains [submodules](https://www.geeksforgeeks.org/how-to-clone-git-repositories-including-submodules/). Use `git clone --recurse <url>` to clone.
 

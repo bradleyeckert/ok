@@ -74,20 +74,14 @@ static uint32_t ReadCell(vm_ctx *ctx, uint32_t addr) {
     if (addr < TEXTSIZE) {
         return ctx->TextMem[addr];      // Text
     }
-    return BCIVMioRead(ctx, addr);      // Peripherals
+    ctx->ior = BCI_IOR_INVALID_ADDRESS;
+    return 0;
 }
 
 static void WriteCell(vm_ctx *ctx, uint32_t addr, uint32_t x) {
     PRINTF("\nStore [0x%x] = %d", addr, x);
-    if (addr < DATASIZE) {
-        ctx->DataMem[addr] = x;         // Data
-        return;
-    }
-    if (addr < (TEXTORIGIN + TEXTSIZE)) {
-        ctx->ior = BCI_IOR_INVALID_ADDRESS;
-        return;                         // no write access to text
-    }
-    BCIVMioWrite(ctx, addr, x);         // Peripherals
+    if (addr < DATASIZE) ctx->DataMem[addr] = x;
+    else ctx->ior = BCI_IOR_INVALID_ADDRESS;
 }
 
 static void dupData(vm_ctx *ctx) {
@@ -115,12 +109,7 @@ static uint32_t popReturn(vm_ctx *ctx) {
     return r;
 }
 
-static const uint8_t stackeffects[32] = {
-    0x00, 0x00, 0x01, 0x02, 0x02, 0x02, 0x02, 0x02,
-    0x00, 0x00, 0x01, 0x02, 0x01, 0x01, 0x01, 0x01,
-    0x00, 0x00, 0x01, 0x02, 0x02, 0x02, 0x02, 0x02,
-    0x00, 0x00, 0x01, 0x02, 0x01, 0x01, 0x01, 0x01
-};
+static const uint8_t stackeffects[32] = VM_STACKEFFECTS;
 
 // Single-step the VM and set ctx->status to 1 if the PC goes out of bounds.
 // inst = instruction. If 0, fetch inst from code memory.
@@ -143,75 +132,70 @@ int BCIstepVM(vm_ctx *ctx, VMinst_t inst){
     if (inst & (1 << (VM_INSTBITS - 1))) { // MSB
         if (inst & (1 << (VM_INSTBITS - 2))) pc = popReturn(ctx);
         inst &= IMASK2;
-        for (int i = UOP_SLOTS * 5; i >= 0; i -= 5) {
+        for (int i = SLOT0_POSITION; i > -5; i -= 5) {
+            uint8_t uop;
+            if (i < 0) uop = inst & LAST_SLOT_MASK;
+            else uop = (inst >> i) & 0x1F;
             uint32_t t = ctx->t;
             uint32_t n = ctx->n;
-            uint32_t _a = ctx->a;
-            uint32_t _b = ctx->b;
-            uint8_t slot = (inst >> i) & 0x1F;
-            uint8_t se = stackeffects[slot];
+            uint8_t se = stackeffects[uop];
             if (se & 1) {
                 dupData(ctx);
             } else if (se & 2) {
                 dropData(ctx);
             }
-            switch(slot) {
+            switch (uop) {
                 // basic stack operations
 #if (VM_CELLBITS == 32)
                 uint64_t ud;
 #endif
-                case VMO_CYSTORE:    ctx->cy = t & 1;
                 case VMO_NOP:
                 case VMO_DUP:
-                case VMO_DROP:                                          break;
-                case VMO_INV:        ctx->t = ~t & VM_MASK;             break;
+                case VMO_DROP:                                            break;
+                case VMO_INV:        ctx->t = ~t & VM_MASK;               break;
                 case VMO_TWOSTAR:    ctx->t = (t << 1) & VM_MASK;
-                                     ctx->cy = (t >> (VM_CELLBITS - 1)) & 1;  break;
+                                     ctx->cy = (t >> (VM_CELLBITS - 1)) & 1; break;
                 case VMO_TWODIV:     ctx->t = (t & VM_SIGN) | (t >> 1);
-                                     ctx->cy = t & 1;                   break;
+                                     ctx->cy = t & 1;                     break;
                 case VMO_TWODIVC:    ctx->t = (ctx->cy << (VM_CELLBITS - 1)) | (t >> 1);
-                                     ctx->cy = t & 1;                   break;
+                                     ctx->cy = t & 1;                     break;
                 case VMO_PLUS:
 #if (VM_CELLBITS == 32)
                                      ud = (uint64_t)t + (uint64_t)ctx->t;
                                      ctx->t = ud & VM_MASK;
-                                     ctx->cy = (uint8_t)(ud >> 32);     break;
+                                     ctx->cy = (uint8_t)(ud >> 32);       break;
 #else
                                      t += ctx->t;  ctx->t = t & VM_MASK;
-                                     ctx->cy = (t >> VM_CELLBITS) & 1;  break;
+                                     ctx->cy = (t >> VM_CELLBITS) & 1;    break;
 #endif
-                case VMO_XOR:        ctx->t = t ^ n;                    break;
-                case VMO_AND:        ctx->t = t & n;                    break;
-                case VMO_SWAP:       ctx->t = n;  ctx->n = t;           break;
-                case VMO_CY:         ctx->t = ctx->cy;                  break;
-                case VMO_ZERO:       ctx->t = 0;                        break;
-                case VMO_OVER:       ctx->t = n;                        break;
-                case VMO_PUSH:       pushReturn(ctx, t);                break;
-                case VMO_R:          ctx->t = ctx->r;                   break;
-                case VMO_POP:        ctx->t = popReturn(ctx);           break;
+                case VMO_XOR:        ctx->t = t ^ n;                      break;
+                case VMO_AND:        ctx->t = t & n;                      break;
+                case VMO_SWAP:       ctx->t = n;  ctx->n = t;             break;
+                case VMO_CY:         ctx->t = ctx->cy;                    break;
+                case VMO_ZERO:       ctx->t = 0;                          break;
+                case VMO_OVER:       ctx->t = n;                          break;
+                case VMO_PUSH:       pushReturn(ctx, t);                  break;
+                case VMO_R:          ctx->t = ctx->r;                     break;
+                case VMO_POP:        ctx->t = popReturn(ctx);             break;
                 case VMO_UNEXT: ctx->r--;
                     if (ctx->r == 0) {popReturn(ctx); break;}
                     else {i = 15; continue;}
-                case VMO_U:          ctx->t = 0;                        break;
-                case VMO_ZEROLESS:   ctx->t = (ctx->t & VM_SIGN) ? VM_MASK : 0; break;
+                case VMO_U:          ctx->t = 0;                          break;
                 // memory operations
-                case VMO_ASTORE:     ctx->a = t;                        break;
-                case VMO_A:          ctx->t = ctx->a;                   break;
-                case VMO_FETCHB:     _b = ctx->a;  _a = ctx->b;
-                case VMO_FETCHA:
-fetch:                               ctx->t = ReadCell(ctx, ctx->a);
-                                     ctx->a = _a;  ctx->b = _b;         break;
-                case VMO_FETCHAPLUS: _a = ctx->a + 1;                goto fetch;
-                case VMO_FETCHBPLUS: _b = ctx->a + 1;  _a = ctx->b;  goto fetch;
-                case VMO_STOREB:     _b = ctx->a;  _a = ctx->b;
-                case VMO_STOREA:
-store:                               WriteCell(ctx, ctx->a, t);
-                                     ctx->a = _a;  ctx->b = _b;         break;
-                case VMO_STOREAPLUS: _a = ctx->a + 1;                goto store;
-                case VMO_STOREBPLUS: _b = ctx->a + 1;  _a = ctx->b;  goto store;
+                case VMO_BSTORE:     ctx->b = t;                          break;
+                case VMO_A:          ctx->t = ctx->a;                     break;
+                case VMO_ASTORE:     ctx->a = t;                          break;
+                case VMO_FETCHA:     ctx->t = ReadCell(ctx, ctx->a);      break;
+                case VMO_FETCHAPLUS: ctx->t = ReadCell(ctx, ctx->a++);    break;
+                case VMO_FETCHB:     ctx->t = BCIVMioRead(ctx, ctx->b);   break;
+                case VMO_FETCHBPLUS: ctx->t = BCIVMioRead(ctx, ctx->b++); break;
+                case VMO_STOREA:     WriteCell(ctx, ctx->a, t);           break;
+                case VMO_STOREAPLUS: WriteCell(ctx, ctx->a++, t);         break;
+                case VMO_STOREB:     BCIVMioWrite(ctx, ctx->b, t);        break;
+                case VMO_STOREBPLUS: BCIVMioWrite(ctx, ctx->b++, t);      break;
                 default: break;
             }
-            PRINTF(" uop:%02xh (%x %x)", slot, ctx->n, ctx->t);
+            PRINTF(" uop:%02xh (%x %x)", uop, ctx->n, ctx->t);
             ctx->cycles++;
         }
     } else {
@@ -220,9 +204,9 @@ store:                               WriteCell(ctx, ctx->a, t);
         int32_t immex = (ctx->lex << (VM_INSTBITS - 3))
                     | (inst & ((1 << (VM_INSTBITS - 3)) - 1));
         switch ((inst >> (VM_INSTBITS - 3)) & 3) { // upper bits 000, 001, 010, 011
-            case 0: pushReturn(ctx, pc);
-            case 1: pc = immex;                                         break;
-            case 2: dupData(ctx);  ctx->t = immex;                      break;
+            case VMO_CALL: pushReturn(ctx, pc);
+            case VMO_JUMP: pc = immex;                                  break;
+            case VMO_LIT: dupData(ctx);  ctx->t = immex;                break;
             default: // inst = 011 oooo imm...
             imm = inst & ((1 << (VM_INSTBITS - 7)) - 1);
             immex = imm;
@@ -232,37 +216,38 @@ store:                               WriteCell(ctx, ctx->a, t);
             int opcode = (inst >> (VM_INSTBITS - 7)) & 0x0F;
             int flag;
             switch (opcode) {
-                case 0: _lex = (ctx->lex << (VM_INSTBITS - 7)) | imm;   break;
-                case 1: r = ops0001(ctx, imm);                          break;
-                case 2: ctx->a = ctx->x + imm;                          break;
-                case 3: ctx->a = ctx->y + imm;                          break;
-                case 4: flag = (ctx->t == 0);  dropData(ctx);
+                case VMO_LEX: _lex = (ctx->lex << (VM_INSTBITS - 7)) | imm;
+                    break;
+                case VMO_ZOO: r = ops0001(ctx, imm);                    break;
+                case VMO_AX: ctx->a = ctx->x + imm;                     break;
+                case VMO_BY: ctx->b = ctx->y + imm;                     break;
+                case VMO_ZBRAN: flag = (ctx->t == 0);  dropData(ctx);
                     if (flag) { pc = ctx->pc + immex; }                 break;
-                case 5: pc = ctx->pc + immex;                           break;
-                case 6: if ((ctx->t & VM_SIGN) == 0) {
+                case VMO_BRAN: pc = ctx->pc + immex;                    break;
+                case VMO_PBRAN: if ((ctx->t & VM_SIGN) == 0) {
                     pc = ctx->pc + immex;
                     } break;
-                case 7:
+                case VMO_NEXT:
                     ctx->r--;
                     if (ctx->r == 0) popReturn(ctx);
                     else pc = ctx->pc + immex;
                     break;
-                case 13: dupData(ctx);
-                case 12:
-                case 14:
-                case 15:
+                case VMO_DUPAPI: dupData(ctx);
+                case VMO_API:
+                case VMO_APIDROP:
+                case VMO_API2DROP:
                     if (imm < APIfs) ctx->t = -1;
                     else {ctx->t = APIfns[imm](ctx);}                   break;
                 default: break;
             }
             switch (opcode) {
-                case 15: dropData(ctx);
-                case 14: dropData(ctx);
+                case VMO_API2DROP: dropData(ctx);
+                case VMO_APIDROP: dropData(ctx);
                 default: break;
             }
         }
         ctx->lex = _lex;
-        ctx->cycles += (UOP_SLOTS + 1);
+//        ctx->cycles += 3; // whole instructions take longer
     }
     ctx->pc = pc;
     return r;
@@ -273,14 +258,15 @@ static int ops0001(vm_ctx *ctx, int inst) { // alternate instructions 0110001...
     int imm = inst & 0x7F;
     if (inst & VMI_ZOODUP) dupData(ctx);
     switch(imm) {
-        case 0: ctx->x = ctx->t;    break;  // x!
-        case 1: ctx->y = ctx->t;    break;  // y!
-        case 2: ctx->sp = ctx->t;   break;  // sp!
-        case 3: ctx->rp = ctx->t;   break;  // rp!
-        case 4: ctx->t = (ctx->sp - 1) & (DATA_STACKSIZE - 1); break;
-        case 5: ctx->t = ctx->rp;   break;  // rp@
-        case 6: r = 1;              break;  // bcisync
-        case 7: ctx->ior = ctx->t;  break;  // err!
+        case VMO_XSTORE: ctx->x = ctx->t;                               break;
+        case VMO_YSTORE: ctx->y = ctx->t;                               break;
+        case VMO_SPSTORE: ctx->sp = ctx->t;                             break;
+        case VMO_RPSTORE: ctx->rp = ctx->t;                             break;
+        case VMO_SPFETCH: ctx->t = (ctx->sp - 1) & (DATA_STACKSIZE-1);  break;
+        case VMO_RPFETCH: ctx->t = ctx->rp;                             break;
+        case VMO_BCISYNC: r = 1;                                        break;
+        case VMO_THROW: ctx->ior = ctx->t;                              break;
+        default: break;
     }
     if (inst & VMI_ZOODROP) dropData(ctx);
     return r;
@@ -384,6 +370,7 @@ void BCIhandler(vm_ctx *ctx, const uint8_t *src, uint16_t length) {
         ctx->cycles = 0;
         WriteCell(ctx, 0, get32());     // packed status at data[0]
         n = get8();
+        // VM_EMPTY_STACK
         uint16_t sp0 = ctx->sp;
         while (n--) {
             dupData(ctx);

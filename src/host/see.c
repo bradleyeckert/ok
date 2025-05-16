@@ -97,10 +97,10 @@ static void HexToDA(uint32_t x) {                    // append hex number to DA 
     appendDA(itos(x, 16, 1, 1, 32));
 }
 
-static const char *uopName[] = {UOP_NAMES};
-static const char *opName[] =  {OP_NAMES};
-static const char *immName[] = {IMM_NAMES};
-static const char *zooName[] = {ZOO_NAMES};
+static const char *uopName[] = UOP_NAMES;
+static const char *opName[] =  OP_NAMES;
+static const char *immName[] = IMM_NAMES;
+static const char *zooName[] = ZOO_NAMES;
 
 static char * DisassembleInsn(uint32_t inst) {
     static uint32_t lex;
@@ -111,8 +111,11 @@ static char * DisassembleInsn(uint32_t inst) {
     if (inst & VM_UOPS) {
         if (inst & VM_RET) appendDA(";");
         inst &= (VM_RET - 1);
-        for (int i = UOP_SLOTS * 5; i >= 0; i -= 5) {
-            appendDA(uopName[(inst >> i) & 0x1F]);
+        for (int i = SLOT0_POSITION; i > -5; i -= 5) {
+            uint8_t slot;
+            if (i < 0) slot = inst & LAST_SLOT_MASK;
+            else slot = (inst >> i) & 0x1F;
+            appendDA(uopName[slot]);
         }
     } else {
         int opcode =   (inst >> (VM_INSTBITS - 3)) & 3;

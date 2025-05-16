@@ -301,7 +301,7 @@ char * GetToken (void) {
     return TOKEN;
 }
 
-void Tick (void) {               // get the w field of the word
+void Tick (void) {                      // get the w field of the word
     DataPush(Ctick(GetToken()));
 }
 
@@ -309,12 +309,12 @@ static void BracketTick (void) {
     ForthLiteral(Ctick(GetToken()));
 }
 
-// [IF ] [ELSE] [THEN]
+// [IF ] [ELSE] [THEN] (note: must be followed by newline if at end of file)
 
 static void BrackElse(void) {
     int level = 1;
-    char *s = GetToken();
     while (level) {
+        char *s = GetToken();
         int length = (int)strlen(s);
         if (length) {
             if (!strcmp(s, "[if]")) {
@@ -326,8 +326,7 @@ static void BrackElse(void) {
             if (!strcmp(s, "[else]") && (level == 1)) {
                 level--;
             }
-        }
-        else {                          // EOL
+        } else {                        // EOL
             if (!refill()) {
                 ERROR = BAD_EOF;
                 return;
@@ -335,13 +334,8 @@ static void BrackElse(void) {
         }
     }
 }
-static void BrackIf(void) {
-    if (0 == DataPop()) {
-        BrackElse();
-    }
-}
-
-static void BrackDefined(void) { DataPush(FindWord(GetToken())); }
+static void BrackIf(void)        { if (!DataPop())  BrackElse(); }
+static void BrackDefined(void)   { DataPush(FindWord(GetToken())); }
 static void BrackUndefined(void) { BrackDefined();  DataPush(~DataPop()); }
 
 // T{ 0 0 AND -> 0 }T

@@ -23,8 +23,9 @@ static struct QuitStruct *q;
 #define ME        q->me
 #define VERBOSE   q->verbose
 #define TOKEN     q->token
-#define INST_TAG  0x80000000
-#define IS_UOP (INST_TAG | (1 << (VM_INSTBITS - 1)))
+#define INST_TAG  0x80000000            // executes as individual instruction
+#define IS_UOP(x) (INST_TAG | VM_UOPS \
+                  | (x << ((VM_INSTBITS - 2) % 5)))
 
 static void dotESS (void) {                      // ( ... -- ... )
     PrintDataStack();
@@ -96,9 +97,8 @@ static void Prim_Exec(void) {
 //------------------------------------------------------------------------------
 // Compiler
 
-int slot = UOP_SLOTS;
+int slot = SLOT0_POSITION;
 uint32_t instruction;
-
 
 static void CodeComma(uint32_t inst) {
     q->code[CORE][CP++] = inst;
@@ -109,11 +109,11 @@ static void CodeComma(uint32_t inst) {
         return;
     }
     instruction = 0;
-    slot = UOP_SLOTS;
+    slot = SLOT0_POSITION;
 }
 
 static void NewInst(void) {
-    if (slot != UOP_SLOTS) CodeComma(instruction);
+    if (slot != SLOT0_POSITION) CodeComma(VM_UOPS | instruction);
     instruction = 0;
 }
 
@@ -129,19 +129,19 @@ static void CompCall(uint32_t addr) {
 }
 
 static void CompUop  (uint32_t uop) {
-    uop &= 0x1F;
-    if (slot < 0) {                     // no slots left
-        CodeComma(instruction);
+    uop &= 0x1F; // slots = 9, 4, -1
+    if (slot < -4) CodeComma(VM_UOPS | instruction);
+    if (slot < 0) { // last slot
+        slot = 0;
+        if (uop >= (1 << LAST_SLOT_WIDTH)) {
+            CodeComma(VM_UOPS | instruction);
+        }
     }
-    if (slot == UOP_SLOTS) {
-        if (uop >= MAX_LEFT_UOP) slot--;// does not fit in first slot, insert nop
-        instruction = VM_UOPS;          // initial inst is "uop" group
-    }
-    instruction |= uop << (slot * 5);
-    slot--;
+    instruction |= uop << slot;
+    slot -= 5;
 }
 
-static void uOp_Comp (void) { CompUop(my()); }
+static void uOp_Comp (void) { CompUop(my() >> LAST_SLOT_WIDTH); }
 static void Op_Comp  (void) { CompInst(my()); }
 
 static void CompLit(uint32_t x) {                // unsigned cellbits-1 bits
@@ -239,8 +239,10 @@ static void EndDefinition(void) {                   // resolve length of definit
 const static uint8_t returnOps[] = {VMO_PUSH, VMO_R, VMO_POP};
 
 static int UsesRetStack(uint32_t inst) {
-    for (int i = 0; i <= UOP_SLOTS; i++) {
-        int uop = (instruction >> (5 * i)) & 0x1F;
+    for (int i = SLOT0_POSITION; i >= -5; i -= 5) {
+        uint8_t uop;
+        if (i < 0) uop = inst & LAST_SLOT_MASK;
+        else uop = (inst >> i) & 0x1F;
         for (int j = 0; j < sizeof(returnOps); j++) {
             if (returnOps[j] == uop) return 1;
         }
@@ -286,7 +288,7 @@ otherwise, start a new instruction with just the ; bit set.
 */
 
 static void CompExit(void) {
-    if (slot != UOP_SLOTS) {
+    if (slot != SLOT0_POSITION) {
         if (UsesRetStack(instruction)) NewInst();
         goto ex;
     }
@@ -310,13 +312,14 @@ static void Macro_Fn(void (*func)(uint32_t)) {
         int uop = (macro >> i) & 0x1F;
         if ((!active) && (uop)) active = 1;
         if (active) {
-            func(uop + IS_UOP);
+            func(uop);
         }
     }
 }
 
+static void ExecUop(uint32_t uop) { InstExecute(IS_UOP(uop)); }
 static void Macro_Comp(void) { Macro_Fn(CompUop); }
-static void Macro_Exec(void) { Macro_Fn(InstExecute); }
+static void Macro_Exec(void) { Macro_Fn(ExecUop); }
 
 void AddMacro(char* name, char* help, uint32_t value) {
     if (AddHead(name, help)) {
@@ -510,39 +513,38 @@ void AddForthKeywords(struct QuitStruct *state) {
     AddKeyword("decimal",  "~core/DECIMAL --",              Decimal,    noCompile);
     AddKeyword("hex",      "~core/HEX --",                  Hex,        noCompile);
     AddKeyword("literal",  "~core/LITERAL x --",            noExecute,  Literal);
-    AddUop("over",   "~core/OVER x1 x2 -- x1 x2 x1",        IS_UOP + VMO_OVER);
-    AddUop("xor",    "~core/XOR x1 x2 -- x3",               IS_UOP + VMO_XOR);
-    AddUop("and",    "~core/AND x1 x2 -- x3",               IS_UOP + VMO_AND);
-    AddUop("dup",    "~core/DUP x -- x x",                  IS_UOP + VMO_DUP);
-    AddUop("drop",   "~core/DROP x x -- x",                 IS_UOP + VMO_DROP);
-    AddUop("swap",   "~core/SWAP x1 x2 -- x2 x1",           IS_UOP + VMO_SWAP);
-    AddUop("invert", "~core/INVERT x -- ~x",                IS_UOP + VMO_INV);
-    AddUop("inv",    "-forth.htm#inv x -- ~x",              IS_UOP + VMO_INV);
-    AddUop("nop",    "-forth.htm#nop --",                   IS_UOP + VMO_NOP);
-    AddUop("a!",     "-forth.htm#astore a --",              IS_UOP + VMO_ASTORE);
-    AddUop("a",      "-forth.htm#a -- a",                   IS_UOP + VMO_A);
-    AddUop("cy!",    "-forth.htm#cystore carry --",         IS_UOP + VMO_CYSTORE);
-    AddUop("cy",     "-forth.htm#cy -- carry",              IS_UOP + VMO_CY);
-    AddUop("0",      "-forth.htm#zero -- 0",                IS_UOP + VMO_ZERO);
-    AddUop("0<",     "~core/Zeroless n -- flag",            IS_UOP + VMO_ZEROLESS);
-    AddUop("u!",     "-forth.htm#ustore --",                IS_UOP + VMO_USTORE);
-    AddUop("u",      "-forth.htm#u -- u",                   IS_UOP + VMO_U);
-    AddUop("+",      "~core/Plus n1 n2 -- n3",              IS_UOP + VMO_PLUS);
-    AddUop("2*",     "~core/TwoTimes x1 -- x2",             IS_UOP + VMO_TWOSTAR);
-    AddUop("2/",     "~core/TwoDiv x1 -- x2",               IS_UOP + VMO_TWODIV);
-    AddUop("2/c",    "-forth.htm#twodivc x1 -- x2",         IS_UOP + VMO_TWODIVC);
-    AddUop("unext",  "-forth.htm#unext --",                 IS_UOP + VMO_UNEXT);
-    AddUop(">r",     "~core/toR x --",                      IS_UOP + VMO_PUSH);
-    AddUop("r@",     "~core/RFetch -- x",                   IS_UOP + VMO_R);
-    AddUop("r>",     "~core/Rfrom -- x",                    IS_UOP + VMO_POP);
-    AddUop("@a",     "-forth.htm#fetcha -- x",              IS_UOP + VMO_FETCHA);
-    AddUop("@a+",    "-forth.htm#fetchaplus -- x",          IS_UOP + VMO_FETCHAPLUS);
-    AddUop("@b",     "-forth.htm#fetchb -- x",              IS_UOP + VMO_FETCHB);
-    AddUop("@b+",    "-forth.htm#fetchbplus -- x",          IS_UOP + VMO_FETCHBPLUS);
-    AddUop("!a",     "-forth.htm#storea x --",              IS_UOP + VMO_STOREA);
-    AddUop("!a+",    "-forth.htm#storeaplus x --",          IS_UOP + VMO_STOREAPLUS);
-    AddUop("!b",     "-forth.htm#storeb x --",              IS_UOP + VMO_STOREB);
-    AddUop("!b+",    "-forth.htm#storebplus x --",          IS_UOP + VMO_STOREBPLUS);
+    AddUop("over",   "~core/OVER x1 x2 -- x1 x2 x1",        IS_UOP(VMO_OVER));
+    AddUop("xor",    "~core/XOR x1 x2 -- x3",               IS_UOP(VMO_XOR));
+    AddUop("and",    "~core/AND x1 x2 -- x3",               IS_UOP(VMO_AND));
+    AddUop("dup",    "~core/DUP x -- x x",                  IS_UOP(VMO_DUP));
+    AddUop("drop",   "~core/DROP x x -- x",                 IS_UOP(VMO_DROP));
+    AddUop("swap",   "~core/SWAP x1 x2 -- x2 x1",           IS_UOP(VMO_SWAP));
+    AddUop("invert", "~core/INVERT x -- ~x",                IS_UOP(VMO_INV));
+    AddUop("inv",    "-forth.htm#inv x -- ~x",              IS_UOP(VMO_INV));
+    AddUop("nop",    "-forth.htm#nop --",                   IS_UOP(VMO_NOP));
+    AddUop("a",      "-forth.htm#a -- a",                   IS_UOP(VMO_A));
+    AddUop("a!",     "-forth.htm#astore a --",              IS_UOP(VMO_ASTORE));
+    AddUop("b!",     "-forth.htm#bstore a --",              IS_UOP(VMO_BSTORE));
+    AddUop("cy",     "-forth.htm#cy -- carry",              IS_UOP(VMO_CY));
+    AddUop("0",      "-forth.htm#zero -- 0",                IS_UOP(VMO_ZERO));
+    AddUop("u!",     "-forth.htm#ustore --",                IS_UOP(VMO_USTORE));
+    AddUop("u",      "-forth.htm#u -- u",                   IS_UOP(VMO_U));
+    AddUop("+",      "~core/Plus n1 n2 -- n3",              IS_UOP(VMO_PLUS));
+    AddUop("2*",     "~core/TwoTimes x1 -- x2",             IS_UOP(VMO_TWOSTAR));
+    AddUop("2/",     "~core/TwoDiv x1 -- x2",               IS_UOP(VMO_TWODIV));
+    AddUop("2/c",    "-forth.htm#twodivc x1 -- x2",         IS_UOP(VMO_TWODIVC));
+    AddUop("unext",  "-forth.htm#unext --",                 IS_UOP(VMO_UNEXT));
+    AddUop(">r",     "~core/toR x --",                      IS_UOP(VMO_PUSH));
+    AddUop("r@",     "~core/RFetch -- x",                   IS_UOP(VMO_R));
+    AddUop("r>",     "~core/Rfrom -- x",                    IS_UOP(VMO_POP));
+    AddUop("@a",     "-forth.htm#fetcha -- x",              IS_UOP(VMO_FETCHA));
+    AddUop("@a+",    "-forth.htm#fetchaplus -- x",          IS_UOP(VMO_FETCHAPLUS));
+    AddUop("@b",     "-forth.htm#fetchb -- x",              IS_UOP(VMO_FETCHB));
+    AddUop("@b+",    "-forth.htm#fetchbplus -- x",          IS_UOP(VMO_FETCHBPLUS));
+    AddUop("!a",     "-forth.htm#storea x --",              IS_UOP(VMO_STOREA));
+    AddUop("!a+",    "-forth.htm#storeaplus x --",          IS_UOP(VMO_STOREAPLUS));
+    AddUop("!b",     "-forth.htm#storeb x --",              IS_UOP(VMO_STOREB));
+    AddUop("!b+",    "-forth.htm#storebplus x --",          IS_UOP(VMO_STOREBPLUS));
 
     AddOp("bcisync", "-forth.htm#bcisync --",               INST_TAG + VMI_BCISYNC);
     AddOp("err!",    "-forth.htm#throw x --",               INST_TAG + VMI_THROW);

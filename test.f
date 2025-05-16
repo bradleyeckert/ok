@@ -13,8 +13,8 @@ t{ 3 5 drop -> 3 }t
 t{ 3 5 swap -> 5 3 }t
 t{ 3 2* -> 6 }t
 t{ 3 dup -> 3 3 }t
-t{ 100 2/ -> 50 }t
-t{ 1 cy!  100 2/c 2*  cy -> 100 1 }t
+t{ 100 2/ cy -> 50 0 }t
+t{ -1  2/ cy -> -1 1 }t
 t{ 0 -> 0 }t
 t{ 100 a! 1000 !a -> }t
 t{ 100 a! @a -> 1000 }t
@@ -47,8 +47,9 @@ variable outputs
 : rot       >r swap r> swap ;                   \h ~core/ROT x1 x2 x3 -- x2 x3 x1
 : dnegate   inv swap inv 1 + swap cy + ;        \h ~double/DNEGATE d -- -d
 : dabs      -if dnegate then ;                  \h ~double/DABS d -- ud
-: s>d       dup 0< ;                            \h ~core/StoD n -- d
 : 0=        if 0 exit then -1 ;                 \h ~core/ZeroEqual x -- flag
+: s>d       dup [ ;                             \h ~core/StoD n -- d
+: 0<        -if drop -1 exit then drop 0 ;      \h ~core/ZeroLess x -- flag
 : @+        a! @a+ a swap ;                     \h  a -- a+1 n
 : 1+        1 + ;                               \h ~core/OnePlus n1 -- n2
 : 1-        -1 + ;                              \h ~core/OneMinus n1 -- n2
@@ -72,7 +73,7 @@ pad |pad| + equ numbuf
 : #>        2drop hld @ numbuf  over - ;        \h ~core/num-end ud -- c-addr u
 : s.r       over - spaces type ;                \h  a u width --
 : d.r       >r dup >r dabs                      \h ~double/DDotR d width --
-            <# #s r> sign #> r> s.r  ;      
+            <# #s r> sign #> r> s.r  ;
 : u.r       0 swap d.r ;                        \h ~core/UDotR u width --
 : .r        >r s>d r> d.r ;                     \h ~core/DotR n width --
 : d.        0 d.r space ;                       \h ~double/Dd d --
@@ -84,9 +85,9 @@ pad |pad| + equ numbuf
 : abs       -if negate then ;                   \h ~core/ABS n -- u
 : m*        2dup xor >r abs swap abs um*        \h ~core/MTimes n1 n2 -- d
             r> 0< if dnegate then ;
-            
+
 : m/mod
-    dup 0< dup >r  
+    dup 0< dup >r
     if negate  >r
        dnegate r>
     then >r dup 0<
@@ -98,7 +99,7 @@ pad |pad| + equ numbuf
 ;
 
 : */        >r m* r> m/mod swap drop ;
-            
+
 : d2/       2/ swap 2/c swap ;                  \h ~double/DTwoDiv d1 -- d2
 : +!        a! @a + !a ;                        \h ~core/PlusStore n a --
 : noop      ;                                   \ --
@@ -119,12 +120,11 @@ variable counter
 
 \ @ is a "a! @a" macro, so within the loop 'a' must be protected as follows:
 
-:noname     begin 
+:noname     begin
                 a mystuff a!
                 bcisync
-            again 
+            again
 ; resolves coldboot
-
 
 reload \ synchronize code and text images to target
 \ executing words without reload will crash
@@ -143,3 +143,4 @@ t{ table 1 + @ -> 1000 }t
 t{ table 2 + @ -> 10000 }t
 
 \ verbose_bci verbose!
+

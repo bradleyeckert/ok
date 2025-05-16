@@ -142,6 +142,10 @@ Example usage is:
 <p>The A register.
 </p>
 
+<h2 id="bstore">b! ( x -- )</h2>
+<p>Store to the B register, which addresses peripheral space.
+</p>
+
 <h2 id="fetcha">@a ( -- x )</h2>
 <p>Fetch from data or text space depending on address A.
 </p>
@@ -151,11 +155,11 @@ Example usage is:
 </p>
 
 <h2 id="fetchb">@b ( -- x )</h2>
-<p>Fetch from data or text space depending on address A. Swap the A and B registers.
+<p>Fetch from peripheral space address B.
 </p>
 
 <h2 id="fetchbplus">@b+ ( -- x )</h2>
-<p>Fetch from data or text space depending on address A. Load A with B+1 and load B with A.
+<p>Fetch from peripheral space address B. Increment B by 1.
 </p>
 
 <h2 id="storea">!a ( x -- )</h2>
@@ -167,11 +171,11 @@ Example usage is:
 </p>
 
 <h2 id="storeb">!b ( x -- )</h2>
-<p>Store to data or text space depending on address A. Swap the A and B registers.
+<p>Store to peripheral space address B.
 </p>
 
 <h2 id="storebplus">!b+ ( x -- )</h2>
-<p>Store to data or text space depending on address A. Load A with B+1 and load B with A.
+<p>Store to peripheral space address B. Increment B by 1.
 </p>
 
 <h2 id="zero">0 ( -- 0 )</h2>
