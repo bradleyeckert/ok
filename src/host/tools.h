@@ -4,6 +4,11 @@
 
 #ifndef __TOOLS_H__
 #define __TOOLS_H__
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 #include <stdio.h>
 
@@ -17,6 +22,10 @@ void cdump(const uint8_t *src, uint16_t len);
 
 #ifdef _MSC_VER
 #define MORESAFE // Linux does not like, Visual Studio does. Code::Blocks does not care.
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif // __TOOLS_H__

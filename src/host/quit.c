@@ -3,15 +3,14 @@
 #include <stdint.h>
 #include <string.h>
 #include <inttypes.h>
+#include "quit.h"
 
 #ifdef _MSC_VER
-#include <winbase.h>
-#define chdir SetCurrentDirectory
+#include <windows.h> // not winbase.h
 #else
 #include <unistd.h>
 #endif
 
-#include "quit.h"
 #include "forth.h"
 #include "see.h"
 #include "tools.h"
@@ -23,7 +22,7 @@ static struct QuitStruct *q;
 #define TIB       q->tib                // location of text input buffer
 #define MAXTIB    q->maxtib             // buffer size available for tib's zstring
 #define VERBOSE   q->verbose
-#define ERROR     q->error              // detected error
+#define ERR       q->error              // did I err?
 #define TOIN      q->toin               // offset into tib
 #define HP        q->hp
 #define SP        q->sp                 // data stack pointer
@@ -80,7 +79,7 @@ char * Const(char *name) {              // convert ephemeral string to constant
         textsp++;
         if (c == 0) return r;
     }
-oops: ERROR = BAD_TEXTSTAK;
+oops: ERR = BAD_TEXTSTAK;
     return "bad";
 }
 
@@ -146,7 +145,7 @@ static int FindWord(char* key) {                // find in context, xt is ME
 
 static int Ctick(char* name) {
     if (FindWord(name) == 0) {
-        ERROR = UNRECOGNIZED;
+        ERR = UNRECOGNIZED;
         return 0;
     }
     return HEADER[ME].target;           // W field of found word
@@ -161,17 +160,17 @@ wordlists but "wordlists--;" can be used by C to delete the last wordlist.
 static int AddWordlist(char *name) {
     q->wordlist[++WRDLISTS] = 0;       // start with empty wordlist
     WLNAME[WRDLISTS] = name;
-    if (WRDLISTS == (MaxWordlists - 1)) ERROR = BAD_WID_OVER;
+    if (WRDLISTS == (MaxWordlists - 1)) ERR = BAD_WID_OVER;
     return WRDLISTS;
 }
 
 static void OrderPush(uint8_t wid) {
     if ((wid < 1) || (wid > WRDLISTS)) {
-        ERROR = BAD_WID;
+        ERR = BAD_WID;
         return;
     }
     if (ORDERS >= MaxOrder) {
-        ERROR = BAD_ORDER_OVER;
+        ERR = BAD_ORDER_OVER;
         return;
     }
     int n = ORDERS;
@@ -186,7 +185,7 @@ static int OrderPop(void) {
     uint8_t r = 1;
     int n = ORDERS - 1;
     if (n < 0) {
-        ERROR = BAD_ORDER_UNDER;
+        ERR = BAD_ORDER_UNDER;
     } else {
         r = CONTEXT[0];
         memcpy(&CONTEXT[0], &CONTEXT[1], n * sizeof(int));
@@ -266,7 +265,7 @@ static void ParseFilename(void) {
 
 static void Include(void) {             // Nest into a source file
     ParseFilename();
-    ERROR = OpenNewFile(TOKEN);
+    ERR = OpenNewFile(TOKEN);
 }
 
 static void trimCR(char* s) {           // clean up the buffer returned by fgets
@@ -335,7 +334,7 @@ static void BrackElse(void) {
             }
         } else {                        // EOL
             if (!refill()) {
-                ERROR = BAD_EOF;
+                ERR = BAD_EOF;
                 return;
             }
         }
@@ -363,11 +362,11 @@ static void DoTest(void) { // ->
 
 static void EndTest(void) { // }t
     if (actual_sp != SP) {
-        ERROR = WRONG_NUM_OF_RESULTS;
+        ERR = WRONG_NUM_OF_RESULTS;
         return;
     }
     if (memcmp(actual_results, &q->ds[1], SP*sizeof(uint32_t))) {
-        ERROR = WRONG_TEST_RESULTS;
+        ERR = WRONG_TEST_RESULTS;
         cdump((const uint8_t*)actual_results, SP*sizeof(uint32_t));
         printf("actual");
         cdump((const uint8_t*)&q->ds[1], SP*sizeof(uint32_t));
@@ -383,12 +382,17 @@ static void EndTest(void) { // }t
 
 static void SkipToPar (void) { parseword(')'); }
 static void EchoToPar (void) { SkipToPar();  printf("%s", TOKEN); }
-static void SkipToEOL (void) { TOIN = (int)strlen(TIB); }
+static void SkipToEOL (void) { TOIN = (uint16_t)strlen(TIB); }
 static void BaseStore (void) { int n = DataPop(); if (n > 1) BASE = n; }
 static char* Source   (void) { char *src = &TIB[TOIN]; SkipToEOL(); return src; }
 static void EchoToEOL (void) { printf("%s\n", Source()); }
-static void Chdir     (void) { ERROR = chdir(Source()) ? INVALID_DIRECTORY : 0; }
 char * TIBtoEnd       (void) { return Const(Source()); }
+
+#ifdef _MSC_VER
+static void Chdir(void) { ERR = SetCurrentDirectoryA(Source()) ? INVALID_DIRECTORY : 0; }
+#else
+static void Chdir(void) { ERR = chdir(Source()) ? INVALID_DIRECTORY : 0; }
+#endif
 
 void ShowLine(void) {
     if (File.fp != stdin) {
@@ -405,7 +409,7 @@ static uint32_t CellBitMask(void) {
 
 static void Number(char* s) {
     if (BASE == 0) {
-        ERROR = DIV_BY_ZERO;
+        ERR = DIV_BY_ZERO;
         return;
     }
     int i = 0;
@@ -435,13 +439,13 @@ static void Number(char* s) {
             }
             if (c > 41) c -= 32;        // lower to upper
             if (c >= BASE)
-bogus:          ERROR = UNRECOGNIZED;
+bogus:          ERR = UNRECOGNIZED;
             x = x * BASE + c;
         }
     }
     BASE = base;                        // restore original base
     if (neg) x = -x;                    // sign number
-    if (ERROR == 0) {
+    if (ERR == 0) {
         if (DPL < 0) {                  // single-length number
             x &= CellBitMask();
             if (STATE) {
@@ -481,7 +485,7 @@ int AddHead (char* name, char* help) { // add a header to the list
         WORDLIST[CURRENT] = HP;
     } else {
         printf("Please increase MaxKeywords and rebuild.\n");
-        r = 0;  ERROR = BYE;
+        r = 0;  ERR = BYE;
     }
     return r;
 }
@@ -498,10 +502,10 @@ void AddKeyword (char* name, char* help, void (*xte)(), void (*xtc)()) {
     }
 }
 
-void noCompile(void) { ERROR = BAD_NOCOMPILE; }
-void noExecute(void) { ERROR = BAD_NOEXECUTE; }
+void noCompile(void) { ERR = BAD_NOCOMPILE; }
+void noExecute(void) { ERR = BAD_NOEXECUTE; }
 static void Nothing(void) { }
-static void Bye(void) {ERROR = BYE;}
+static void Bye(void) {ERR = BYE;}
 
 static void AddRootKeywords(void) {
     HP = 0; // start empty
@@ -562,13 +566,13 @@ int quitloop(char * line, int maxlength, struct QuitStruct *state) {
     while (1) {
         FILEDEPTH = 0;
         File.fp = stdin;                // keyboard input
-        ERROR = 0;                      // interpreter state
+        ERR = 0;                      // interpreter state
         STATE = 0;
         q->startup_us = GetMicroseconds();
-        while (ERROR == 0) {
+        while (ERR == 0) {
             TOIN = 0;
             int TIBlen = (int)strlen(TIB);
-            if (TIBlen > MAXTIB) ERROR = BAD_INPUT_LINE;
+            if (TIBlen > MAXTIB) ERR = BAD_INPUT_LINE;
             uint64_t time0 = GetMicroseconds();
             if (VERBOSE & VERBOSE_SRC) {
                 printf("TIB={%s}\n", TIB);
@@ -591,11 +595,11 @@ int quitloop(char * line, int maxlength, struct QuitStruct *state) {
                 if (VERBOSE & VERBOSE_SRC) {
                     printf(") (\"%s\"", &TIB[TOIN]);
                 }
-                if (SP < 0) ERROR = BAD_STACKUNDER;
-                if (ERROR) {
-                    switch (ERROR) {
+                if (SP < 0) ERR = BAD_STACKUNDER;
+                if (ERR) {
+                    switch (ERR) {
                     case BYE: return 0;
-                    default: ErrorMessage (ERROR, TOKEN);
+                    default: ErrorMessage (ERR, TOKEN);
                     }
                     while (FILEDEPTH) {
                         ShowLine();

@@ -4,6 +4,9 @@
 
 #ifndef __QUIT_H__
 #define __QUIT_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "../bci/bci.h"
 
@@ -197,5 +200,9 @@ char * GetToken(void);
 #define VERBOSE_SRC     4   // display the remaining source in the TIB
 #define VERBOSE_BCI     8   // trace BCI input and output
 #define VERBOSE_CYCLES 16   // display cycle count of last executed word
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // __QUIT_H__

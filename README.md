@@ -14,7 +14,7 @@ Note: Contains [submodules](https://www.geeksforgeeks.org/how-to-clone-git-repos
 
 I've found that this updates submodules:
 
-1. `git submodule update --init --recursive` re-clones the files
+1. `git submodule update --force --recursive` re-clones the files
 2. `git submodule update --remote --recursive` points to the latest heads
 3. `git status` shows if `--remote` made changes. If so,
 4. `git add <filespec>` stages the change (use `git add --all` if living dangerously)

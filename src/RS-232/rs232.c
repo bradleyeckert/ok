@@ -28,6 +28,10 @@
 /* Last revision: January 14, 2023 */
 /* For more info and how to use this library, visit: https://www.teuniz.net/RS-232/ */
 
+#ifdef _MSC_VER // for Visual Studio
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 
 #include "rs232.h"
 

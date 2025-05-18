@@ -18,7 +18,6 @@ void YieldThread(void) {
     sched_yield();
 }
 
-
 static struct QuitStruct quit_internal_state;
 
 #ifdef STANDALONE
@@ -55,29 +54,20 @@ void BCIsendFinal(int id) {
 
 // allocate "flash memory" for the VM(s)
 
-VMcell_t TextMem[CPUCORES][TEXTSIZE];
-VMinst_t CodeMem[CPUCORES][CODESIZE];
+static VMcell_t TextMem[CPUCORES][TEXTSIZE];
+static VMinst_t CodeMem[CPUCORES][CODESIZE];
 
 static int g_begun;
 
 void StopVMthread(vm_ctx *ctx) {
     ctx->status = BCI_STATUS_STOPPED;
     while (ctx->statusNew != BCI_STATUS_STOPPED) {
-#ifdef _MSC_VER
-        SwitchToThread();
-#else
-        sched_yield();
-#endif
+        YieldThread();
     }
 }
 
 void* SimulateCPU(void* threadid) {
-#ifdef _MSC_VER
-    int* int_ptr = (int*)threadid;
-    int id = *int_ptr;
-#else
-    int id = (size_t)threadid & 0xFFFF;
-#endif
+    int id = (int)(size_t)threadid;
     printf("starting thread %d\n", id);
     vm_ctx *ctx = &quit_internal_state.VMlist[id].ctx;
     ctx->TextMem = &TextMem[id][0];     // flash sector for read-only data
@@ -93,19 +83,11 @@ void* SimulateCPU(void* threadid) {
             // int ior =
             BCIstepVM(ctx, 0);
         }
-#ifdef _MSC_VER
-        SwitchToThread();
-#else
-        sched_yield();
-#endif
+        YieldThread();
         ctx->statusNew = ctx->status;
     }
-#ifdef _MSC_VER
-    return 0;
-#else
     pthread_exit(NULL);
     return (void*)0;
-#endif
 }
 
 static int CommDone = 0;
@@ -121,45 +103,23 @@ void* PollCommRX(void* threadid) {
                 TargetCharOutput(buffer[0]);
             }
         }
-#ifdef _MSC_VER
-        SwitchToThread();
-#else
-        sched_yield();
-#endif
+        YieldThread();
     }
-#ifdef _MSC_VER
-    return 0;
-#else
     pthread_exit(NULL);
     return (void*)0;
-#endif
 }
 
 static char linebuf[LineBufferSize];
 
 int main(int argc, char* argv[]) {
     g_begun = 0;
-#ifdef _MSC_VER
-    HANDLE tid[CPUCORES];
-    HANDLE commtask;
-    for (int i = 0; i < CPUCORES; i++) {
-        void* index = i;
-        tid[i] = CreateThread(NULL, 0, SimulateCPU, NULL, 0, index);
-    }
-    commtask = CreateThread(NULL, 0, PollCommRX, NULL, 0, NULL);
-#else
     pthread_t tid[CPUCORES];
     pthread_t commtask;
     for (int i = 0; i < CPUCORES; i++) {
         if (pthread_create(&tid[i], NULL, SimulateCPU, (void *)(size_t)i)) return 1;
     }
     if (pthread_create(&commtask, NULL, PollCommRX, (void *)(size_t)0)) return 1;
-#endif
-#ifdef _MSC_VER
-        SwitchToThread();
-#else
-        sched_yield();
-#endif
+    YieldThread();
     linebuf[0] = 0;
     // concatenate all arguments to the line buffer
     for (int i = 1; i < argc; i++) {
@@ -167,11 +127,7 @@ int main(int argc, char* argv[]) {
         if (i != (argc - 1))  StrCat(linebuf, " ", sizeof(linebuf));
     }
     while (g_begun != (CPUCORES + 1)) {  // wait for all tasks to start
-#ifdef _MSC_VER
-        SwitchToThread();
-#else
-        sched_yield();
-#endif
+        YieldThread();
     }
     int ior = quitloop(linebuf, sizeof(linebuf), &quit_internal_state);
     for (int i = 0; i < CPUCORES; i++) { // tell VM threads to quit

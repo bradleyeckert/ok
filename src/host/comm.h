@@ -4,6 +4,10 @@
 
 #ifndef __COMM_H__
 #define __COMM_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 
 void SendInit(void);        // Begin building a message to send to the BCI
@@ -18,4 +22,7 @@ void BCIsendToHost(const uint8_t *src, int length);
 void TargetCharOutput(uint8_t c); // target --> host chars (see main.c)
 void Reload(void);          // load host images onto target
 
+#ifdef __cplusplus
+}
+#endif
 #endif // __COMM_H__

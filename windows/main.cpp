@@ -1,7 +1,7 @@
 #include <iostream>
-#include <process.h> // Required for _beginthread
-#include <thread> // For std::this_thread::sleep_for
-#include <chrono> // For std::chrono::seconds
+#include <process.h> 
+#include <thread>
+#include <windows.h>
 
 using namespace std;
 
@@ -66,7 +66,7 @@ void StopVMthread(vm_ctx* ctx) {
 
 #ifdef _MSC_VER
 DWORD WINAPI SimulateCPU(LPVOID threadid) {
-    int id = (int)threadid;
+    int id =  (int)(uintptr_t)threadid;
 #else
 void* SimulateCPU(void* threadid) {
     int id = (size_t)threadid & 0xFFFF;
@@ -132,7 +132,7 @@ int main(int argc, char* argv[]) {
     HANDLE tid[CPUCORES];
     HANDLE commtask;
     for (int i = 0; i < CPUCORES; i++) {
-        LPDWORD index = (LPDWORD)i;
+        LPDWORD index = (LPDWORD)(size_t)i;
         tid[i] = CreateThread(NULL, 0, SimulateCPU, NULL, 0, index);
         if (tid[i] == NULL) return 1;
     }

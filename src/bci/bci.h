@@ -1,6 +1,10 @@
 #ifndef __BCI_H__
 #define __BCI_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 
 #define MaxBCIresponseSize      1030
@@ -243,5 +247,9 @@ void StopVMthread(vm_ctx *ctx);
 void BCIsendInit(int id);
 void BCIsendChar(int id, uint8_t c);
 void BCIsendFinal(int id);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __BCI_H__ */
