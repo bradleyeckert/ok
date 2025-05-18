@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include "threds.h"
 #include "quit.h"
 #include "tools.h"
 #include "comm.h"
@@ -58,7 +57,7 @@ Return NULL if key cannot be updated
 */
 
 static uint8_t * UpdateKeySet(uint8_t* keyset) {
-    memcpy(my_keys, keyset, MOLE_KEYSET_LENGTH);
+    memcpy(my_keys, keyset, MOLE_PASSCODE_LENGTH);
 	return my_keys;
 }
 
@@ -209,11 +208,11 @@ static void ProgramFlash(uint8_t *addr, int blocks, int command) {
     if (VERBOSE & VERBOSE_BCI) {
         printf("\nProgramming Flash[%p], %d blocks, command %d ", addr, blocks, command);
     }
-    size_t addr0 = (size_t)addr;
+    uint32_t addr0 = (uint32_t)(size_t)addr;
     while (blocks--) {
         SendInit();
         SendChar(command);
-        SendCell((size_t)addr - addr0);
+        SendCell((uint32_t)(size_t)addr - addr0);
         for (int i = 0; i < FLASH_BLOCK_SIZE; i++) {
             SendChar(*addr++);
         }

@@ -2,8 +2,15 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <unistd.h>
 #include <inttypes.h>
+
+#ifdef _MSC_VER
+#include <winbase.h>
+#define chdir SetCurrentDirectory
+#else
+#include <unistd.h>
+#endif
+
 #include "quit.h"
 #include "forth.h"
 #include "see.h"
@@ -509,7 +516,7 @@ static void AddRootKeywords(void) {
     Definitions();
 //                            v--- ~ = https://forth-standard.org/standard/
     AddKeyword("bye",        "~tools/BYE --",                       Bye,         noCompile);
-    AddKeyword("cd",         "-quit.htm#chdir ccc<EOL> --",         Chdir,       noCompile);
+    AddKeyword("cd",         "-quit.htm#cdir ccc<EOL> --",          Chdir,       noCompile);
     AddKeyword("base!",      "-quit.htm#basestore n --",            BaseStore,   noCompile);
     AddKeyword("only",       "~search/ONLY --",                     Only,        noCompile);
     AddKeyword("order",      "~search/ORDER --",                    Order,       noCompile);

@@ -128,6 +128,7 @@ struct QuitStruct {                     // The app has one of these...
 
 // export to main.c
 int quitloop(char *line, int maxlength, struct QuitStruct *state);
+void YieldThread(void);
 
 // export to forth.c, etc.
 void DataPush(uint32_t x);

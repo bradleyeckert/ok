@@ -85,8 +85,8 @@ static char* TargetName (uint32_t addr) {
 static char DAbuf[256];                 // disassembling to a buffer
 
 static void appendDA(const char* s) {            // append string to DA buffer
-    int i = strlen(DAbuf);
-    int len = strlen(s);
+    int i = (int)strlen(DAbuf);
+    int len = (int)strlen(s);
     strmove(&DAbuf[i], (char*)s, len + 1);
     i += len;
     DAbuf[i++] = ' ';                   // trailing space

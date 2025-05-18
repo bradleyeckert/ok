@@ -191,7 +191,7 @@ static void toCompile  (void) { STATE = 1; }
 static void tpFetch    (void) { DataPush(TP + TextMemOrigin()); }
 
 static void tpStore    (void) {
-    int p = DataPop();
+    uint32_t p = DataPop();
     if (p < TextMemOrigin()) {
         printf("Text address is too small, minimum is 0x%X\n", TextMemOrigin());
         ERROR = BCI_IOR_INVALID_ADDRESS;

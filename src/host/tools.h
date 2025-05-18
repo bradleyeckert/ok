@@ -10,12 +10,14 @@
 uint64_t GetMicroseconds(void);
 void strmove(char* dest, char* src, unsigned int maxlen);
 char* itos(uint64_t x, uint8_t radix, int8_t digits, uint8_t unsign, uint8_t cellbits);
-void StrCat(char* dest, char* src, int limit);
+void StrCat(char* dest, const char* src, int limit);
 FILE* fopenx(char* filename, char* fmt);
 void ErrorMessage(int error, char* s);
 void cdump(const uint8_t *src, uint16_t len);
 
-//#define MORESAFE // Linux does not like, but Visual Studio does. Code::Blocks does not care.
+#ifdef _MSC_VER
+#define MORESAFE // Linux does not like, Visual Studio does. Code::Blocks does not care.
+#endif
 
 #endif // __TOOLS_H__
 

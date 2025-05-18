@@ -7,12 +7,17 @@ Start each simulated CPU core in its own thread
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "threds.h"
+#include <pthread.h>
 #include "quit.h"
 #include "tools.h"
 #include "../bci/bci.h"
 #include "comm.h"
 #include "../RS-232/rs232.h"
+
+void YieldThread(void) {
+    sched_yield();
+}
+
 
 static struct QuitStruct quit_internal_state;
 
@@ -58,12 +63,22 @@ static int g_begun;
 void StopVMthread(vm_ctx *ctx) {
     ctx->status = BCI_STATUS_STOPPED;
     while (ctx->statusNew != BCI_STATUS_STOPPED) {
-        YieldThread();
+#ifdef _MSC_VER
+        SwitchToThread();
+#else
+        sched_yield();
+#endif
     }
 }
 
 void* SimulateCPU(void* threadid) {
-    int id = (size_t) threadid & 0xFFFF;
+#ifdef _MSC_VER
+    int* int_ptr = (int*)threadid;
+    int id = *int_ptr;
+#else
+    int id = (size_t)threadid & 0xFFFF;
+#endif
+    printf("starting thread %d\n", id);
     vm_ctx *ctx = &quit_internal_state.VMlist[id].ctx;
     ctx->TextMem = &TextMem[id][0];     // flash sector for read-only data
     ctx->CodeMem = &CodeMem[id][0];     // flash sector for code
@@ -78,7 +93,11 @@ void* SimulateCPU(void* threadid) {
             // int ior =
             BCIstepVM(ctx, 0);
         }
-        YieldThread();
+#ifdef _MSC_VER
+        SwitchToThread();
+#else
+        sched_yield();
+#endif
         ctx->statusNew = ctx->status;
     }
 #ifdef _MSC_VER
@@ -102,7 +121,11 @@ void* PollCommRX(void* threadid) {
                 TargetCharOutput(buffer[0]);
             }
         }
-        YieldThread();
+#ifdef _MSC_VER
+        SwitchToThread();
+#else
+        sched_yield();
+#endif
     }
 #ifdef _MSC_VER
     return 0;
@@ -117,12 +140,13 @@ static char linebuf[LineBufferSize];
 int main(int argc, char* argv[]) {
     g_begun = 0;
 #ifdef _MSC_VER
-    thrd_t tid[CPUCORES];
-    thrd_t commtask;
+    HANDLE tid[CPUCORES];
+    HANDLE commtask;
     for (int i = 0; i < CPUCORES; i++) {
-        if (thrd_create(&tid[i], SimulateCPU, (void *)(size_t)i) return 1;
+        void* index = i;
+        tid[i] = CreateThread(NULL, 0, SimulateCPU, NULL, 0, index);
     }
-    if (thrd_create(&commtask, PollCommRX, NULL)) return 1;
+    commtask = CreateThread(NULL, 0, PollCommRX, NULL, 0, NULL);
 #else
     pthread_t tid[CPUCORES];
     pthread_t commtask;
@@ -131,7 +155,11 @@ int main(int argc, char* argv[]) {
     }
     if (pthread_create(&commtask, NULL, PollCommRX, (void *)(size_t)0)) return 1;
 #endif
-    YieldThread();
+#ifdef _MSC_VER
+        SwitchToThread();
+#else
+        sched_yield();
+#endif
     linebuf[0] = 0;
     // concatenate all arguments to the line buffer
     for (int i = 1; i < argc; i++) {
@@ -139,7 +167,11 @@ int main(int argc, char* argv[]) {
         if (i != (argc - 1))  StrCat(linebuf, " ", sizeof(linebuf));
     }
     while (g_begun != (CPUCORES + 1)) {  // wait for all tasks to start
-        YieldThread();
+#ifdef _MSC_VER
+        SwitchToThread();
+#else
+        sched_yield();
+#endif
     }
     int ior = quitloop(linebuf, sizeof(linebuf), &quit_internal_state);
     for (int i = 0; i < CPUCORES; i++) { // tell VM threads to quit
@@ -147,7 +179,7 @@ int main(int argc, char* argv[]) {
     }
     CommDone = 1;                         // tell RS232 thread to quit
     for (int i = 0; i < CPUCORES; i++) { // wait for the threads to quit
-        JoinThread(tid[i], NULL);
+        pthread_join(tid[i], NULL);
     }
     return ior;
 }

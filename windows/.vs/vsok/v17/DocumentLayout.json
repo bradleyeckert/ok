@@ -1,0 +1,181 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\Brad\\Documents\\GitHub\\ok\\windows\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{46660DC9-AAED-4891-8996-D18434C97796}|vsok.vcxproj|C:\\Users\\Brad\\Documents\\GitHub\\ok\\src\\host\\quit.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{46660DC9-AAED-4891-8996-D18434C97796}|vsok.vcxproj|C:\\Users\\Brad\\Documents\\GitHub\\ok\\src\\host\\tools.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{46660DC9-AAED-4891-8996-D18434C97796}|vsok.vcxproj|C:\\Users\\Brad\\Documents\\GitHub\\ok\\src\\host\\tools.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{46660DC9-AAED-4891-8996-D18434C97796}|vsok.vcxproj|C:\\PROGRAM FILES (X86)\\WINDOWS KITS\\10\\INCLUDE\\10.0.22621.0\\UM\\ERRHANDLINGAPI.H||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{46660DC9-AAED-4891-8996-D18434C97796}|vsok.vcxproj|C:\\Users\\Brad\\Documents\\GitHub\\ok\\src\\host\\see.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{46660DC9-AAED-4891-8996-D18434C97796}|vsok.vcxproj|C:\\Users\\Brad\\Documents\\GitHub\\ok\\src\\host\\comm.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{46660DC9-AAED-4891-8996-D18434C97796}|vsok.vcxproj|C:\\Users\\Brad\\Documents\\GitHub\\ok\\windows\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{46660DC9-AAED-4891-8996-D18434C97796}|vsok.vcxproj|solutionrelative:main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{46660DC9-AAED-4891-8996-D18434C97796}|vsok.vcxproj|C:\\Users\\Brad\\Documents\\GitHub\\ok\\src\\host\\forth.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{46660DC9-AAED-4891-8996-D18434C97796}|vsok.vcxproj|C:\\Users\\Brad\\Documents\\GitHub\\ok\\src\\mole\\src\\mole.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{46660DC9-AAED-4891-8996-D18434C97796}|vsok.vcxproj|C:\\PROGRAM FILES\\MICROSOFT VISUAL STUDIO\\2022\\COMMUNITY\\VC\\TOOLS\\MSVC\\14.42.34433\\INCLUDE\\YVALS_CORE.H||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 2,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "errhandlingapi.h",
+              "DocumentMoniker": "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22621.0\\um\\errhandlingapi.h",
+              "RelativeDocumentMoniker": "..\\..\\..\\..\\..\\..\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22621.0\\um\\errhandlingapi.h",
+              "ToolTip": "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22621.0\\um\\errhandlingapi.h",
+              "RelativeToolTip": "..\\..\\..\\..\\..\\..\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22621.0\\um\\errhandlingapi.h",
+              "ViewState": "AgIAAKcAAAAAAAAAAAAAwMIAAAANAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2025-05-18T18:33:09.118Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "see.c",
+              "DocumentMoniker": "C:\\Users\\Brad\\Documents\\GitHub\\ok\\src\\host\\see.c",
+              "RelativeDocumentMoniker": "..\\src\\host\\see.c",
+              "ToolTip": "C:\\Users\\Brad\\Documents\\GitHub\\ok\\src\\host\\see.c",
+              "RelativeToolTip": "..\\src\\host\\see.c",
+              "ViewState": "AgIAADwAAAAAAAAAAAAAwGgAAAAuAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
+              "WhenOpened": "2025-05-18T18:31:24.333Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "quit.c",
+              "DocumentMoniker": "C:\\Users\\Brad\\Documents\\GitHub\\ok\\src\\host\\quit.c",
+              "RelativeDocumentMoniker": "..\\src\\host\\quit.c",
+              "ToolTip": "C:\\Users\\Brad\\Documents\\GitHub\\ok\\src\\host\\quit.c",
+              "RelativeToolTip": "..\\src\\host\\quit.c",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAhAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
+              "WhenOpened": "2025-05-18T18:17:59.941Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "comm.c",
+              "DocumentMoniker": "C:\\Users\\Brad\\Documents\\GitHub\\ok\\src\\host\\comm.c",
+              "RelativeDocumentMoniker": "..\\src\\host\\comm.c",
+              "ToolTip": "C:\\Users\\Brad\\Documents\\GitHub\\ok\\src\\host\\comm.c",
+              "RelativeToolTip": "..\\src\\host\\comm.c",
+              "ViewState": "AgIAALsAAAAAAAAAAAAAwNYAAAAwAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
+              "WhenOpened": "2025-05-18T18:17:37.38Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "forth.c",
+              "DocumentMoniker": "C:\\Users\\Brad\\Documents\\GitHub\\ok\\src\\host\\forth.c",
+              "RelativeDocumentMoniker": "..\\src\\host\\forth.c",
+              "ToolTip": "C:\\Users\\Brad\\Documents\\GitHub\\ok\\src\\host\\forth.c",
+              "RelativeToolTip": "..\\src\\host\\forth.c",
+              "ViewState": "AgIAAKcAAAAAAAAAAAAAwM0AAAALAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
+              "WhenOpened": "2025-05-18T18:15:22.564Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "mole.h",
+              "DocumentMoniker": "C:\\Users\\Brad\\Documents\\GitHub\\ok\\src\\mole\\src\\mole.h",
+              "RelativeDocumentMoniker": "..\\src\\mole\\src\\mole.h",
+              "ToolTip": "C:\\Users\\Brad\\Documents\\GitHub\\ok\\src\\mole\\src\\mole.h",
+              "RelativeToolTip": "..\\src\\mole\\src\\mole.h",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAABTAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2025-05-18T18:13:59.792Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "tools.h",
+              "DocumentMoniker": "C:\\Users\\Brad\\Documents\\GitHub\\ok\\src\\host\\tools.h",
+              "RelativeDocumentMoniker": "..\\src\\host\\tools.h",
+              "ToolTip": "C:\\Users\\Brad\\Documents\\GitHub\\ok\\src\\host\\tools.h",
+              "RelativeToolTip": "..\\src\\host\\tools.h",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAATAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2025-05-18T17:39:01.372Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "tools.c",
+              "DocumentMoniker": "C:\\Users\\Brad\\Documents\\GitHub\\ok\\src\\host\\tools.c",
+              "RelativeDocumentMoniker": "..\\src\\host\\tools.c",
+              "ToolTip": "C:\\Users\\Brad\\Documents\\GitHub\\ok\\src\\host\\tools.c",
+              "RelativeToolTip": "..\\src\\host\\tools.c",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAALAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
+              "WhenOpened": "2025-05-18T17:38:39.2Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "yvals_core.h",
+              "DocumentMoniker": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.42.34433\\include\\yvals_core.h",
+              "RelativeDocumentMoniker": "..\\..\\..\\..\\..\\..\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.42.34433\\include\\yvals_core.h",
+              "ToolTip": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.42.34433\\include\\yvals_core.h",
+              "RelativeToolTip": "..\\..\\..\\..\\..\\..\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.42.34433\\include\\yvals_core.h",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABYAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2025-05-18T17:58:42.318Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "main.cpp",
+              "DocumentMoniker": "C:\\Users\\Brad\\Documents\\GitHub\\ok\\windows\\main.cpp",
+              "RelativeDocumentMoniker": "main.cpp",
+              "ToolTip": "C:\\Users\\Brad\\Documents\\GitHub\\ok\\windows\\main.cpp",
+              "RelativeToolTip": "main.cpp",
+              "ViewState": "AgIAAI0AAAAAAAAAAAAAAKQAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-05-18T17:22:49.642Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

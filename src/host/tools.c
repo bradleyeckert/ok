@@ -63,7 +63,7 @@ char* itos(uint64_t x, uint8_t radix, int8_t digits, uint8_t issign, uint8_t cel
 
 // concatenate string (dest, src, maxdest)
 
-void StrCat(char* dest, char* src, int limit) {    // safe strcat
+void StrCat(char* dest, const char* src, int limit) {    // safe strcat
     int i = (int)strlen(dest);
     while (i < limit) {
         char c = *src++;
