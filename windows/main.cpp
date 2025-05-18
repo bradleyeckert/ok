@@ -71,7 +71,6 @@ DWORD WINAPI SimulateCPU(LPVOID threadid) {
 void* SimulateCPU(void* threadid) {
     int id = (size_t)threadid & 0xFFFF;
 #endif
-    printf("starting thread %d\n", id);
     vm_ctx* ctx = &quit_internal_state.VMlist[id].ctx;
     ctx->TextMem = &TextMem[id][0];     // flash sector for read-only data
     ctx->CodeMem = &CodeMem[id][0];     // flash sector for code

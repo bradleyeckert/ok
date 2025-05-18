@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.12.35707.178 d17.12
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "vsok", "vsok.vcxproj", "{46660DC9-AAED-4891-8996-D18434C97796}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ok", "ok.vcxproj", "{46660DC9-AAED-4891-8996-D18434C97796}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
