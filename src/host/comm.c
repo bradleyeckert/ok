@@ -49,7 +49,7 @@ Cheat sheet for the sequence of functions hit by the BCI data flow:
 
 // 32-byte BCI encryption key, 32-byte BCI MAC key, 16-byte admin password,
 // 32-byte file encryption key, 32-byte file MAC key, 16-byte hash
-static const uint8_t default_keys[] = TESTKEY_1;
+static const uint8_t default_keys[] = TESTPASS_1;
 uint8_t my_keys[sizeof(default_keys)];
 
 /*
