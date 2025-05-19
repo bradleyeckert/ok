@@ -16,7 +16,7 @@ struct QuitStruct *q;
 #define CP        q->cp[CORE]           // code space pointer
 #define NP        q->np                 // NVM space pointer
 #define SP        q->sp                 // data stack pointer
-#define ERROR     q->error              // detected error
+#define ERR       q->error              // detected error
 #define HEADER    q->Header
 #define ME        q->me
 #define VERBOSE   q->verbose
@@ -191,7 +191,7 @@ static void See (void) { // ( <name> -- )
 
 static void Locate(void) {
     Tick();
-    if (ERROR) return;
+    if (ERR) return;
     DataPop();
     int length = 10;
     if (SP == 1) length = DataPop();
@@ -254,8 +254,25 @@ static void DotBoiler(void) {
     }
 }
 
+#ifdef _WIN32
+#include <windows.h>
+#define SLEEPms Sleep
+#else
+#include <unistd.h>
+#define SLEEPms(t) usleep(t*1000);
+#endif
+
+static void ShowMIPS(void) {
+    uint64_t c0 = q->VMlist[CORE].ctx.cycles;
+    SLEEPms(200);
+    uint64_t c1 = q->VMlist[CORE].ctx.cycles;
+    float mips = (float)(c1 - c0) / 2e5;
+    printf("%f MIPS ", mips);
+}
+
 void AddSeeKeywords(struct QuitStruct *state) {
     q = state;
+    AddKeyword("mips",   "-see.htm#mips --",                    ShowMIPS,   noCompile);
     AddKeyword(".ir",    "-see.htm#dotir inst --",              Onesee,     noCompile);
     AddKeyword("dasm",   "-see.htm#dasm [ a u ] --",            Dasm,       noCompile);
     AddKeyword("see",    "~tools/SEE <name> --",                See,        noCompile);

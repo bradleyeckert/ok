@@ -14,24 +14,7 @@ Start each simulated CPU core in its own thread
 #include "comm.h"
 #include "../RS-232/rs232.h"
 
-void YieldThread(void) {
-    sched_yield();
-}
-
 static struct QuitStruct quit_internal_state;
-
-#ifdef STANDALONE
-int quitloop(char *line, int maxlength, struct QuitStruct *state) {
-    printf("\n'quitloop' function not found in project\n*state=%p", state);
-    printf("\n%d VMs use %d kB of RAM", CPUCORES, (unsigned)(sizeof(quit_internal_state)/1024));
-    printf("\ntext = [%s] of %d", line, maxlength);
-    return 2;
-}
-static void printID(int id) {printf("\nStarting VM %d", id);}
-#else
-static void printID(int id) {}
-#endif
-
 static uint8_t  responseBuf[CPUCORES][MaxBCIresponseSize];
 static uint16_t responseLen[CPUCORES];
 
@@ -51,6 +34,13 @@ void BCIsendFinal(int id) {
     BCIsendToHost((const uint8_t*)&responseBuf[id], responseLen[id]);
 }
 
+void YieldThread(void) {
+    sched_yield();
+}
+
+/*
+VM state accessed in main: CodeMem, TextMem, id, status, statusNew
+*/
 
 // allocate "flash memory" for the VM(s)
 
@@ -66,22 +56,22 @@ void StopVMthread(vm_ctx *ctx) {
     }
 }
 
+#define CYCLES 1000
+
 void* SimulateCPU(void* threadid) {
     int id = (int)(size_t)threadid;
-    printf("starting thread %d\n", id);
     vm_ctx *ctx = &quit_internal_state.VMlist[id].ctx;
     ctx->TextMem = &TextMem[id][0];     // flash sector for read-only data
     ctx->CodeMem = &CodeMem[id][0];     // flash sector for code
     memset(TextMem, BLANK_FLASH_BYTE, sizeof(TextMem));
     memset(CodeMem, BLANK_FLASH_BYTE, sizeof(CodeMem));
-    BCIinitial(ctx);
+    VMreset(ctx);
     ctx->id = id;
-    printID(id);
     g_begun++;
     while  (ctx->status != BCI_STATUS_SHUTDOWN) {
         if (ctx->status == BCI_STATUS_RUNNING) {
-            // int ior =
-            BCIstepVM(ctx, 0);
+            int ior = VMsteps(ctx, CYCLES);
+            if (ior) quit_internal_state.error = ior;
         }
         YieldThread();
         ctx->statusNew = ctx->status;

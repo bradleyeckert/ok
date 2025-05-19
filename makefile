@@ -4,7 +4,8 @@ CC = gcc
 # Define compiler flags (e.g., -Wall for all warnings)
 CFLAGS = -Wall -g
 
-SRCS1 = src/bci/bci.c \
+SRCS1 = src/bci/vm.c \
+src/bci/bci.c \
 src/bci/bciHW.c \
 src/RS-232/rs232.c \
 src/mole/src/mole.c \

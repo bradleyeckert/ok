@@ -2,34 +2,17 @@
 #include <process.h> 
 #include <thread>
 #include <windows.h>
+#include <string.h>
 
 using namespace std;
 
-#include <string.h>
 #include "../src/host/quit.h"
 #include "../src/host/tools.h"
 #include "../src/bci/bci.h"
 #include "../src/host/comm.h"
 #include "../src/RS-232/rs232.h"
 
-void YieldThread(void) {
-    SwitchToThread(); // sched_yield
-}
-    
 static struct QuitStruct quit_internal_state;
-
-#ifdef STANDALONE
-int quitloop(char* line, int maxlength, struct QuitStruct* state) {
-    printf("\n'quitloop' function not found in project\n*state=%p", state);
-    printf("\n%d VMs use %d kB of RAM", CPUCORES, (unsigned)(sizeof(quit_internal_state) / 1024));
-    printf("\ntext = [%s] of %d", line, maxlength);
-    return 2;
-}
-static void printID(int id) { printf("\nStarting VM %d", id); }
-#else
-static void printID(int id) {}
-#endif
-
 static uint8_t  responseBuf[CPUCORES][MaxBCIresponseSize];
 static uint16_t responseLen[CPUCORES];
 
@@ -49,7 +32,10 @@ void BCIsendFinal(int id) {
     BCIsendToHost((const uint8_t*)&responseBuf[id], responseLen[id]);
 }
 
-
+void YieldThread(void) {
+    SwitchToThread();
+}
+    
 // allocate "flash memory" for the VM(s)
 
 VMcell_t TextMem[CPUCORES][TEXTSIZE];
@@ -64,6 +50,11 @@ void StopVMthread(vm_ctx* ctx) {
     }
 }
 
+/*
+VM state accessed in main: CodeMem, TextMem, id, status, statusNew
+*/
+#define CYCLES 1000
+
 #ifdef _MSC_VER
 DWORD WINAPI SimulateCPU(LPVOID threadid) {
     int id =  (int)(uintptr_t)threadid;
@@ -76,14 +67,13 @@ void* SimulateCPU(void* threadid) {
     ctx->CodeMem = &CodeMem[id][0];     // flash sector for code
     memset(TextMem, BLANK_FLASH_BYTE, sizeof(TextMem));
     memset(CodeMem, BLANK_FLASH_BYTE, sizeof(CodeMem));
-    BCIinitial(ctx);
+    VMreset(ctx);
     ctx->id = id;
-    printID(id);
     g_begun++;
     while (ctx->status != BCI_STATUS_SHUTDOWN) {
         if (ctx->status == BCI_STATUS_RUNNING) {
-            // int ior =
-            BCIstepVM(ctx, 0);
+            int ior = VMsteps(ctx, CYCLES);
+            if (ior) quit_internal_state.error = ior;
         }
         YieldThread();
         ctx->statusNew = ctx->status;

@@ -66,7 +66,7 @@ struct HeaderStruct {                   // Each dictionary has many of these...
 /*
 Note: ListStruct.ctx should almost never be used because the VM should be
 accessed through the BCI rather than directly. Do a "search all files" to see
-where it used. There are a few places other than bci.c and bciHW.c:
+where it used. There are a few places other than vm.c, bci.c and bciHW.c:
 
 In quit.c, the BCIhandler function needs a vm_ctx.
 In main.c, SimulateCPU uses vm_ctx to initialize the VMs.
@@ -75,7 +75,7 @@ Access to the const boilerplate is allowed - it never changes.
 
 struct ListStruct {                     // Each VM has one of these...
     vm_ctx   ctx;                       // simulator + BCI instance
-    uint32_t forth;
+    uint32_t forth;                     // not sure if this is used, see quit.c
     uint32_t asmb;
 };
 

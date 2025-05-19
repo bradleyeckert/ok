@@ -18,7 +18,7 @@ static struct QuitStruct *q;
 #define HP        q->hp
 #define BASE      q->base
 #define STATE     q->state
-#define ERROR     q->error              // detected error
+#define ERR       q->error              // detected error
 #define HEADER    q->Header
 #define ME        q->me
 #define VERBOSE   q->verbose
@@ -105,7 +105,7 @@ static void CodeComma(uint32_t inst) {
     q->reloaded[CORE] = 0;
     if (CP >= CodeMemSize()) {
         printf("Out of code memory, increase CODESIZE.\n");
-        ERROR = BCI_IOR_INVALID_ADDRESS;
+        ERR = BCI_IOR_INVALID_ADDRESS;
         return;
     }
     instruction = 0;
@@ -194,13 +194,13 @@ static void tpStore    (void) {
     uint32_t p = DataPop();
     if (p < TextMemOrigin()) {
         printf("Text address is too small, minimum is 0x%X\n", TextMemOrigin());
-        ERROR = BCI_IOR_INVALID_ADDRESS;
+        ERR = BCI_IOR_INVALID_ADDRESS;
         return;
     }
     uint32_t max = TextMemOrigin() + TextMemSize() - 1;
     if (p > max) {
         printf("Text address is too large, maximum is 0x%X\n", max);
-        ERROR = BCI_IOR_INVALID_ADDRESS;
+        ERR = BCI_IOR_INVALID_ADDRESS;
         return;
     }
     TP = p;
@@ -267,7 +267,7 @@ static void Resolves(void) {                     // ( xt <name> -- )
     Tick();
     int orig = DataPop();
     uint32_t addr = DataPop();
-    if (HEADER[ME].w2 != MAGIC_LATER) ERROR = BAD_IS;
+    if (HEADER[ME].w2 != MAGIC_LATER) ERR = BAD_IS;
     int first = q->code[CORE][orig];
     if (first == VMI_PFX) {
         q->code[CORE][orig++] = VMI_PFX | ((addr >> VM_IMMBITS) & VM_IMMS_MASK);
@@ -275,7 +275,7 @@ static void Resolves(void) {                     // ( xt <name> -- )
     }
     q->code[CORE][orig] = VMI_JUMP | addr;
     if (addr & ~VM_IMM_MASK) {
-        ERROR = BAD_IS;
+        ERR = BAD_IS;
         printf("'later' must be the far type. Use 'muchlater' instead.\n");
     }
 }
@@ -336,7 +336,7 @@ static void ControlSwap(void) {
 }
 
 static void sane(void) {
-    if (ConSP)  ERROR = BAD_CONTROL;
+    if (ConSP)  ERR = BAD_CONTROL;
     ConSP = 0;
 }
 
@@ -408,7 +408,7 @@ static void allot     (int n) {
     DP = n + DP;
     if (DP >= DataMemSize()) {
         printf("Out of data memory, increase DATASIZE.\n");
-        ERROR = BCI_IOR_INVALID_ADDRESS;
+        ERR = BCI_IOR_INVALID_ADDRESS;
         return;
     }
 }
@@ -418,7 +418,7 @@ static void Comma(void) {
     q->reloaded[CORE] = 0;
     if (TP >= TextMemSize()) {
         printf("Out of text memory, increase TEXTSIZE.\n");
-        ERROR = BCI_IOR_INVALID_ADDRESS;
+        ERR = BCI_IOR_INVALID_ADDRESS;
         return;
     }
 }
@@ -435,7 +435,7 @@ static void CommaStr(void) { /* ( string" -- a ) */
         Comma();
         length++;
         p += UFT8length;
-        if (ERROR) return;
+        if (ERR) return;
     }
     q->text[CORE][first] = length;
 }

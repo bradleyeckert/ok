@@ -51,6 +51,9 @@
     <ClCompile Include="..\src\mole\src\xchacha\src\xchacha.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\bci\vm.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\bci\bci.h">

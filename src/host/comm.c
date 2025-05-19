@@ -176,16 +176,16 @@ static void VMstrobe(int pin) {
     BCIwait();
 }
 
-static void VMreset(void) {
-    VMstrobe(VM_RESET_PIN);
+static void VMresetcmd(void) {
+    VMstrobe(BCI_RESET_PIN);
 }
 
 static void VMshutdown(void) {
-    VMstrobe(VM_SHUTDOWN_PIN);
+    VMstrobe(BCI_SHUTDOWN_PIN);
 }
 
 static void VMsleep(void) {
-    VMstrobe(VM_SLEEP_PIN);
+    VMstrobe(BCI_SLEEP_PIN);
 }
 
 void BCIsendToHost(const uint8_t *src, int length) {
@@ -252,7 +252,7 @@ void Reload(void) {
         ProgramFlash(addr, blocks, BCIFN_WRTEXT);
     }
     q->reloaded[CORE] = 1;
-    VMreset();                          // reset the target because code changed
+    VMresetcmd();                       // reset the target because code changed
 }
 
 static void GetBoiler(void) {
@@ -423,7 +423,7 @@ void AddCommKeywords(struct QuitStruct *state) {
     q->baudrate = DEFAULT_BAUDRATE;
     q->port =     DEFAULT_HOSTPORT;
     AddKeyword("shutdown",  "-comm.htm#shutdn --",      VMshutdown,   noCompile);
-    AddKeyword("reset",     "-comm.htm#reset --",       VMreset,      noCompile);
+    AddKeyword("reset",     "-comm.htm#reset --",       VMresetcmd,   noCompile);
     AddKeyword("com-list",  "-comm.htm#list --",        ComList,      noCompile);
     AddKeyword("com-open",  "-comm.htm#open --",        ComOpen,      noCompile);
     AddKeyword("com-close", "-comm.htm#close --",       ComClose,     noCompile);
