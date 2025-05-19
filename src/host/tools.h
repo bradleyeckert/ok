@@ -17,7 +17,7 @@ void strmove(char* dest, char* src, unsigned int maxlen);
 char* itos(uint64_t x, uint8_t radix, int8_t digits, uint8_t unsign, uint8_t cellbits);
 void StrCat(char* dest, const char* src, int limit);
 FILE* fopenx(char* filename, char* fmt);
-void ErrorMessage(int error, char* s);
+char * ErrorMessage(int error, char* s);
 void cdump(const uint8_t *src, uint16_t len);
 
 #ifdef _MSC_VER

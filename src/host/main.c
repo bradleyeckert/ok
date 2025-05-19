@@ -119,7 +119,7 @@ int main(int argc, char* argv[]) {
     while (g_begun != (CPUCORES + 1)) {  // wait for all tasks to start
         YieldThread();
     }
-    int ior = quitloop(linebuf, sizeof(linebuf), &quit_internal_state);
+    int ior = QuitLoop(linebuf, sizeof(linebuf), &quit_internal_state);
     for (int i = 0; i < CPUCORES; i++) { // tell VM threads to quit
         quit_internal_state.VMlist[i].ctx.status = BCI_STATUS_SHUTDOWN;
     }

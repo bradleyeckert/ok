@@ -85,7 +85,7 @@ typedef void (*BCIinit)(vm_ctx *ctx);
 struct QuitStruct {                     // The app has one of these...
     VMinst_t code[CPUCORES][CODESIZE];  // host-side images for compiling
     VMcell_t text[CPUCORES][TEXTSIZE];
-    uint8_t  boilerplate[CPUCORES][16];
+    uint8_t  boilerplate[CPUCORES][BOILERPLATE_SIZE];
     char     token[LineBufferSize];     // blank delimited token zstring
     char     *tib;                      // location of text input buffer
     uint16_t maxtib;                    // buffer size available for tib's zstring
@@ -96,14 +96,16 @@ struct QuitStruct {                     // The app has one of these...
     uint16_t dp[CPUCORES];              // data space pointer
     uint16_t cp[CPUCORES];              // code space pointer
     uint16_t tp[CPUCORES];              // text space pointer
+    uint32_t hp;                        // header pointer
+    uint8_t  reloaded[CPUCORES];        // 0 when target is out of sync
+    uint8_t  fileID;                    // file history stack
+    uint8_t  wordlists;                 // wordlists stack
     uint8_t  base;                      // numeric conversion radix
     uint8_t  state;                     // 0 = interpret, 1 = compile
     int8_t   dpl;                       // decimal place, -1 if not a double number
     int8_t   sp;                        // data stack pointer
-    uint8_t  fileID;
-    uint8_t  filedepth;
     int8_t   orders;                    // length of search order
-    uint8_t  wordlists;
+    uint8_t  filedepth;
     uint32_t  wordlist[MaxWordlists];   // wordlist indices into header array
     char *wordlistname[MaxWordlists];
     uint32_t ds[256];                   // data stack
@@ -112,7 +114,6 @@ struct QuitStruct {                     // The app has one of these...
     uint64_t startup_us;                // startup time
     uint64_t globalSize;                // global capacity in bytes
     uint32_t *global;                   // global non-volatile data
-    uint32_t hp;                        // header pointer
     uint32_t me;                        // found header
     char*  WidName;                     // found WID name
     struct HeaderStruct Header[MaxKeywords];
@@ -121,16 +122,15 @@ struct QuitStruct {                     // The app has one of these...
     struct ListStruct   VMlist[CPUCORES];
     int    context[MaxOrder];           // first is CONTEXT, rest is search order
     uint32_t current;
-    uint32_t root;                      // common to all VMs
+    uint32_t host;                      // common to all VMs
     uint32_t baudrate;
     uint8_t port;
     uint8_t portisopen;
     uint8_t connected;
-    uint8_t reloaded[CPUCORES];
 };
 
 // export to main.c
-int quitloop(char *line, int maxlength, struct QuitStruct *state);
+int QuitLoop(char *line, int maxlength, struct QuitStruct *state);
 void YieldThread(void);
 
 // export to forth.c, etc.
@@ -148,6 +148,8 @@ void noExecute(void);
 char * Const(char *name);
 char * TIBtoEnd(void);
 char * GetToken(void);
+void Color(const char *color);
+void message(const char* color, const char *s);
 
 #define NOTANEQU -3412
 #define MAGIC_LATER 1000
@@ -195,11 +197,18 @@ char * GetToken(void);
 #define BYE            -299
 
 // verbose flags
-#define VERBOSE_SOURCE  1   // show the source file line
-#define VERBOSE_TOKEN   2   // show the source token (blank-delimited string)
-#define VERBOSE_SRC     4   // display the remaining source in the TIB
-#define VERBOSE_BCI     8   // trace BCI input and output
-#define VERBOSE_CYCLES 16   // display cycle count of last executed word
+#define VERBOSE_COLOR    1  // show the source file line
+#define VERBOSE_SOURCE   2  // show the source file line
+#define VERBOSE_TOKEN    4  // show the source token (blank-delimited string)
+#define VERBOSE_SRC      8  // display the remaining source in the TIB
+#define VERBOSE_BCI     16  // trace BCI input and output
+#define VERBOSE_CYCLES  32  // display cycle count of last executed word
+
+#define COLOR_NONE      "\033[0m"
+#define COLOR_PATH      "\033[96m"
+#define COLOR_GREEN     "\033[92m"
+#define COLOR_IMMED     "\033[93m"    // yellow
+#define COLOR_RED       "\033[91m"    // red
 
 #ifdef __cplusplus
 }

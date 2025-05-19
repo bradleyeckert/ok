@@ -50,6 +50,7 @@ static void Prefixes(void) {
 static void help(void) {
     Tick();
     DataPop();
+    if (ERR) return;
     char *str = HEADER[ME].help;
     char *pic = strchr(str, ' ');
     char *term;
@@ -71,6 +72,8 @@ cat:        term = &command[strlen(command) + (pic - str)];
 //------------------------------------------------------------------------------
 // see
 
+#define LABEL_COLUMN 18
+
 static char* TargetName (uint32_t addr) {
     if (!addr) return NULL;
     int i = q->hp + 1;
@@ -84,7 +87,7 @@ static char* TargetName (uint32_t addr) {
 
 static char DAbuf[256];                 // disassembling to a buffer
 
-static void appendDA(const char* s) {            // append string to DA buffer
+static void appendDA(const char* s) {   // append string to DA buffer
     int i = (int)strlen(DAbuf);
     int len = (int)strlen(s);
     strmove(&DAbuf[i], (char*)s, len + 1);
@@ -93,7 +96,19 @@ static void appendDA(const char* s) {            // append string to DA buffer
     DAbuf[i++] = '\0';
 }
 
-static void HexToDA(uint32_t x) {                    // append hex number to DA buffer
+static void DAtabTo(int column) {
+    int i = (int)strlen(DAbuf);
+    while (i < column) DAbuf[i++] = ' ';
+    DAbuf[i++] = '\0';
+}
+
+static void ToLabel(void) {
+    DAtabTo(LABEL_COLUMN);
+    if (VERBOSE & VERBOSE_COLOR) appendDA(COLOR_NONE);
+    else appendDA("\\");
+}
+
+static void HexToDA(uint32_t x) {       // append hex number to DA buffer
     appendDA(itos(x, 16, 1, 1, 32));
 }
 
@@ -101,6 +116,7 @@ static const char *uopName[] = UOP_NAMES;
 static const char *opName[] =  OP_NAMES;
 static const char *immName[] = IMM_NAMES;
 static const char *zooName[] = ZOO_NAMES;
+static const char *apiName[] = API_NAMES;
 
 static char * DisassembleInsn(uint32_t inst) {
     static uint32_t lex;
@@ -124,15 +140,22 @@ static char * DisassembleInsn(uint32_t inst) {
         int opcode =   (inst >> (VM_INSTBITS - 3)) & 3;
         int32_t immex = (lex << (VM_INSTBITS - 3))
                | (inst & ((1 << (VM_INSTBITS - 3)) - 1));
-        if (opcode < 3) {
+        if (opcode < 3) { // call, jump, imm
             HexToDA(immex);
             appendDA(opName[opcode]);
-            if (opcode < 2) {
-                char* name = TargetName(immex);
-                if (name) {
-                    appendDA("\\");
-                    appendDA(name);
-                }
+            char* name;
+            switch (opcode) {
+                case VMO_CALL:
+                case VMO_JUMP:
+                    name = TargetName(immex);
+                    if (name) {
+                        ToLabel();
+                        appendDA(name);
+                    } break;
+                case VMO_LIT:
+                    ToLabel();
+                    appendDA(itos(immex, 10, 1, 1, 32));
+                default: break;
             }
         } else {
             uint32_t imm = inst & ((1 << (VM_INSTBITS - 7)) - 1);
@@ -152,6 +175,14 @@ static char * DisassembleInsn(uint32_t inst) {
                 if (opcode == VMO_LEX) _lex = imm;
                 HexToDA(immex);
                 appendDA(immName[opcode]);
+                switch (opcode) {
+                    case VMO_API:
+                    case VMO_DUPAPI:
+                    case VMO_APIDROP:
+                    case VMO_API2DROP: ToLabel();
+                        appendDA(apiName[imm]);
+                    default: break;
+                }
             }
         }
     }
@@ -175,8 +206,13 @@ static void Dasm (void) { // ( addr len -- ) or ( -- )
         int a = addr++ & (CODESIZE-1);
         int x = q->code[CORE][a];
         name = TargetName(a);
-        if (name != NULL) printf(": %s\n", name);
-        printf("%04X %s\n", a, DisassembleInsn(x));
+        if (name != NULL) {
+            Color(COLOR_RED);  printf("     %s\n", name);
+            Color(COLOR_NONE);
+        }
+        printf("%04X ", a);
+        message(COLOR_GREEN, DisassembleInsn(x));
+        printf("\n");
     }
 }
 
@@ -215,9 +251,9 @@ static void Locate(void) {
     }
 }
 
-static void Words(void) {
+static void words(int wid) {
     parseword(' ');                     // tok is the search key (none=ALL)
-    uint16_t i = q->wordlist[q->context[0]];
+    uint16_t i = q->wordlist[wid];
     while (i) {
         size_t len = strlen(TOKEN);     // filter by substring
         char* s = strstr(HEADER[i].name, TOKEN);
@@ -227,6 +263,9 @@ static void Words(void) {
     }
     printf("\n");
 }
+
+static void Words(void) { words(q->context[0]); }
+static void Wrds(void)  { int x = DataPop(); if (x < q->wordlists) words(x); }
 
 static void DotBoiler(void) {
     const uint8_t *p = q->VMlist[CORE].ctx.boilerplate;
@@ -285,6 +324,7 @@ void AddSeeKeywords(struct QuitStruct *state) {
     AddKeyword("see",    "~tools/SEE <name> --",                See,        noCompile);
     AddKeyword("locate", "-see.htm#locate [lines] <name> --",   Locate,     noCompile);
     AddKeyword("words",  "~tools/WORDS [substr] --",            Words,      noCompile);
+    AddKeyword("wrds",   "-see.htm#wrds [substr] wid --",       Wrds,       noCompile);
     AddKeyword("help",   "-see.htm#help <name> --",             help,       noCompile);
     AddKeyword("help_prefix", "-see.htm#helpprefix --",         Prefixes,   noCompile);
     AddKeyword("help_forth:", "-see.htm#helpforth \"ccc<eol>\" --", PrefixSetForth, noCompile);

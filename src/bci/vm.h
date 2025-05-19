@@ -5,11 +5,12 @@
 
 #define VM_CELLBITS               32    /* simulator bits per cell: 16 to 32 */
 #define VM_INSTBITS               16    /* bits per instruction: 16, 17, 20, 21, 22, 25, 26, or 27 bits */
-#define VM_STACKSIZE            16    /* depth of stacks */
+#define VM_STACKSIZE              16    /* depth of stacks */
 #define CODESIZE              0x2000    /* cells in code space: 16KB */
 #define DATASIZE              0x0800    /* cells in data space: 8KB */
 #define TEXTORIGIN            0x1000    /* base address of internal Flash data in cells */
 #define TEXTSIZE              0x4000    /* size of internal Flash data in cells */
+#define BOILERPLATE_SIZE          16
 
 #if (VM_CELLBITS > 16)
 #define VMcell_t            uint32_t
@@ -87,9 +88,6 @@ void VMwriteCell(vm_ctx *ctx, VMcell_t addr, VMcell_t x);
 void VMpushData(vm_ctx *ctx, VMcell_t x);
 VMcell_t VMpopData(vm_ctx *ctx);
 
-#define BOILERPLATE_SIZE          16
-
-
 #define VM_UOPS       (1 << (VM_INSTBITS - 1)) // uops bit location
 #define VM_RET        (1 << (VM_INSTBITS - 2)) // return bit location
 #define SLOT0_POSITION   (VM_INSTBITS - 7)
@@ -107,6 +105,9 @@ VMcell_t VMpopData(vm_ctx *ctx);
     0x00,    0x00,    0x01,    0x02,    0x01,    0x01,    0x01,    0x01, \
     0x00,    0x00,    0x01,    0x02,    0x02,    0x02,    0x02,    0x02, \
     0x00,    0x00,    0x01,    0x02,    0x01,    0x01,    0x01,    0x01}
+
+#define API_NAMES { \
+    "NVM@[", "NMV![", "NVM@", "NVM!", "]NVM", "semit", "um*", "mu/mod"}
 
 #define VMO_NOP                 0x00
 #define VMO_INV                 0x01
@@ -162,19 +163,11 @@ VMcell_t VMpopData(vm_ctx *ctx);
 #define VMO_YSTORE              1
 #define VMO_BCISYNC             2
 #define VMO_THROW               3
-#define VMO_SPSTORE             4
-#define VMO_RPSTORE             5
-#define VMO_SPFETCH             6
-#define VMO_RPFETCH             7
 
 #define VMI_XSTORE              (VMI_ZOO + VMO_XSTORE  + VMI_ZOODROP)
 #define VMI_YSTORE              (VMI_ZOO + VMO_YSTORE  + VMI_ZOODROP)
 #define VMI_BCISYNC             (VMI_ZOO + VMO_BCISYNC)
 #define VMI_THROW               (VMI_ZOO + VMO_THROW   + VMI_ZOODROP)
-#define VMI_SPSTORE             (VMI_ZOO + VMO_SPSTORE)
-#define VMI_RPSTORE             (VMI_ZOO + VMO_RPSTORE + VMI_ZOODROP)
-#define VMI_SPFETCH             (VMI_ZOO + VMO_SPFETCH + VMI_ZOODUP)
-#define VMI_RPFETCH             (VMI_ZOO + VMO_RPFETCH + VMI_ZOODUP)
 
 #define IMM_NAMES { \
     "pfx", "zoo", "ax", "by", "if", "bran", "-if", "next", \

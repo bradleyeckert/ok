@@ -485,7 +485,7 @@ void AddForthKeywords(struct QuitStruct *state) {
     AddEquate("verbose_src",    "-forth.htm#vsrc -- mask",      VERBOSE_SRC);
     AddEquate("verbose_source", "-forth.htm#vsource -- mask",   VERBOSE_SOURCE);
     AddEquate("verbose_cycles", "-forth.htm#vcycles -- mask",   VERBOSE_CYCLES);
-    AddEquate("root",           "-forth.htm#root -- wid",       q->root);
+    AddEquate("host",           "-forth.htm#host -- wid",       q->host);
     AddKeyword("equ",      "-forth.htm#equ x <name> --",    Constant,   noCompile);
     AddKeyword(".s",       "~tools/DotS wid --",            dotESS,     noCompile);
     AddKeyword(".",        "~core/d n --",                  dot,        noCompile);

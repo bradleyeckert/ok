@@ -83,6 +83,15 @@ oops: ERR = BAD_TEXTSTAK;
     return "bad";
 }
 
+void Color(const char * color) {
+    if (VERBOSE & VERBOSE_COLOR) printf("%s", color);
+}
+
+void message(const char *color, const char *s) {
+    Color(color);  printf("%s", s);
+    Color(COLOR_NONE);
+}
+
 //##############################################################################
 //##  Dictionary
 //##  The dictionary uses a static array of data structures loaded at startup.
@@ -98,7 +107,7 @@ oops: ERR = BAD_TEXTSTAK;
 
 static void printWID(int wid) {
     if ((wid < 1) || (wid > WRDLISTS)) {
-        printf("? ");
+        message(COLOR_RED, "? ");
     } else {
         char* s = WLNAME[wid];
         if (*s) printf("%s ", s);
@@ -194,8 +203,9 @@ static int OrderPop(void) {
     return r;
 }
 
-static void Only       (void) { ORDERS = 0; OrderPush(q->root); OrderPush(q->root); }
+static void Only       (void) { ORDERS = 0; OrderPush(q->host); OrderPush(q->host); }
 static void ForthLex   (void) { CONTEXT[0] = CORE.forth; }
+static void ForthWID   (void) { DataPush(CORE.forth); }
 static void Definitions(void) { CURRENT = CONTEXT[0]; }
 static void PlusOrder  (void) { OrderPush(DataPop()); }
 static void MinusOrder (void) { DataPush(OrderPop()); }
@@ -283,7 +293,7 @@ static int refill(void) {
 ask: TOIN = 0;
     int lineno = File.LineNumber++;
     if (File.fp == stdin) {
-        printf("ok>");
+        message(COLOR_GREEN, "ok>");
         lineno = 0;
     }
     if (fgets(TIB, MAXTIB, File.fp) == NULL) {
@@ -396,7 +406,9 @@ static void Chdir(void) { ERR = chdir(Source()) ? INVALID_DIRECTORY : 0; }
 
 void ShowLine(void) {
     if (File.fp != stdin) {
+        Color(COLOR_PATH);
         printf("%s, Line %d: ", q->FilePaths[File.FID].filepath, File.LineNumber);
+        Color(COLOR_NONE);
         printf("%s\n", File.Line);
     }
 }
@@ -484,7 +496,7 @@ int AddHead (char* name, char* help) { // add a header to the list
         HEADER[HP].w2 = 0;
         WORDLIST[CURRENT] = HP;
     } else {
-        printf("Please increase MaxKeywords and rebuild.\n");
+        message(COLOR_RED, "Please increase MaxKeywords and rebuild.\n");
         r = 0;  ERR = BYE;
     }
     return r;
@@ -507,19 +519,36 @@ void noExecute(void) { ERR = BAD_NOEXECUTE; }
 static void Nothing(void) { }
 static void Bye(void) {ERR = BYE;}
 
+static int hp0, wordlist0;
+static void Empty(void) {
+    memset(q->text, BLANK_FLASH_BYTE, sizeof(q->text));
+    memset(q->code, BLANK_FLASH_BYTE, sizeof(q->code));
+    for (int i = 0; i < CPUCORES; i++) {
+        q->reloaded[i] = 0;
+        q->dp[i] = 1;
+        q->cp[i] = 0;
+        q->tp[i] = 0;
+    }
+    HP = hp0;
+    WRDLISTS = wordlist0;
+    FILEID = 0;
+    textsp = 0;
+    Only(); ForthLex(); Definitions();
+}
+
 static void AddRootKeywords(void) {
     HP = 0; // start empty
     WRDLISTS = 0;
     // Forth definitions
-    q->root = AddWordlist("host");
+    q->host = AddWordlist("host");
     for (int i = 0; i < CPUCORES; i++) {
-        CORE.forth = AddWordlist("forth");
+        CORE.forth = AddWordlist("frth");
         q->dp[i] = 1;                   // data[0] reserved for BCI
     }
-    Only();
-    Definitions();
+    Only(); Definitions();
 //                            v--- ~ = https://forth-standard.org/standard/
     AddKeyword("bye",        "~tools/BYE --",                       Bye,         noCompile);
+    AddKeyword("empty",      "-quit.htm#empty --",                  Empty,       noCompile);
     AddKeyword("cd",         "-quit.htm#cdir ccc<EOL> --",          Chdir,       noCompile);
     AddKeyword("base!",      "-quit.htm#basestore n --",            BaseStore,   noCompile);
     AddKeyword("only",       "~search/ONLY --",                     Only,        noCompile);
@@ -533,6 +562,7 @@ static void AddRootKeywords(void) {
     AddKeyword("'",          "~core/Tick <spaces>\"name\" -- xt",   Tick,        noCompile);
     AddKeyword("[']",        "~core/BracketTick <spaces>\"name\" -- xt", noExecute, BracketTick);
     AddKeyword("forth",      "~search/FORTH --",                    ForthLex,    noCompile);
+    AddKeyword("frth",       "~-quit.htm#frth -- wid",              ForthWID,    noCompile);
     AddKeyword("verbose!",   "-quit.htm#verbsto mask --",           Verbosity,   noCompile);
     AddKeyword("(",          "~core/p ccc<paren> --",               SkipToPar,   SkipToPar);
     AddKeyword("\\",         "~core/bs ccc<EOL> --",                SkipToEOL,   SkipToEOL);
@@ -548,9 +578,9 @@ static void AddRootKeywords(void) {
     AddKeyword("t{",         "-quit.htm#tbegin ... --",             BeginTest,   noCompile);
 }
 
-const uint8_t BaseChar[] = {"??%.....&.#.....$"};
+static const uint8_t BaseChar[] = {"??%.....&.#.....$"};
 
-int quitloop(char * line, int maxlength, struct QuitStruct *state) {
+int QuitLoop(char * line, int maxlength, struct QuitStruct *state) {
     q = state;
     TIB = line;
     MAXTIB = maxlength;                 // assign a working buffer
@@ -558,16 +588,15 @@ int quitloop(char * line, int maxlength, struct QuitStruct *state) {
     AddForthKeywords(q);
     AddSeeKeywords(q);
     AddCommKeywords(q);
-    FILEID = 0;
+    hp0 = HP; wordlist0 = WRDLISTS;     // for Empty
     BASE = 10;
-    VERBOSE = 0;
-    memset(q->text, BLANK_FLASH_BYTE, sizeof(q->text));
-    memset(q->code, BLANK_FLASH_BYTE, sizeof(q->code));
+//    VERBOSE = VERBOSE_COLOR;
+    Empty();
     while (1) {
         FILEDEPTH = 0;
         File.fp = stdin;                // keyboard input
-        ERR = 0;                      // interpreter state
-        STATE = 0;
+        ERR = 0;
+        STATE = 0;                      // interpreter state
         q->startup_us = GetMicroseconds();
         while (ERR == 0) {
             TOIN = 0;
@@ -599,7 +628,9 @@ int quitloop(char * line, int maxlength, struct QuitStruct *state) {
                 if (ERR) {
                     switch (ERR) {
                     case BYE: return 0;
-                    default: ErrorMessage (ERR, TOKEN);
+                    default: Color(COLOR_RED);
+                        printf("%s ", ErrorMessage (ERR, TOKEN));
+                        Color(COLOR_NONE);
                     }
                     while (FILEDEPTH) {
                         ShowLine();
