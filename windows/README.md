@@ -26,4 +26,4 @@ Add files recursively, then remove all files with a `main` function, except main
 
 `libwinpthread-1.dll` may be needed by the `ok.exe` compiled by Code::Blocks, regardless of instructions to compile static libraries.
 I found several DLLs on my computer named libwinpthread-1.dll. I tried one from 2021, it did not work. The one from 2016 worked.
-To prevent such headaches, the working DLL is included in the repo in case Windows complains.
+The working DLL is included in the repo in case Windows complains.

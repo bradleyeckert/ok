@@ -18,8 +18,8 @@ extern "C" {
 #define FLASH_BLOCK_SIZE         256    /* bytes in a flash programming block */
 #define BCI_DEBUG_ACCESS           3    /* debug access, should be 0 for production */
 #define BCI_CYCLE_LIMIT     10000000    /* number of cycles to wait before resetting the VM */
-#define BOILERPLATE_SIZE          16
 
+#define BCI_STACK_OVERFLOW        -3
 #define BCI_STACK_UNDERFLOW       -4
 #define BCI_IOR_INVALID_ADDRESS   -9
 #define BCI_BAD_COMMAND          -84
@@ -31,11 +31,12 @@ extern "C" {
 #define BCIFN_READ                 1
 #define BCIFN_WRITE                2
 #define BCIFN_EXECUTE              3
-#define BCIFN_CRC                  4
-#define BCIFN_WRCODE               5
-#define BCIFN_WRTEXT               6
-#define BCIFN_SECTOR_ERASE         7
-#define BCIFN_STROBE               8
+#define BCIFN_GET_CYCLES           4
+#define BCIFN_CRC                  5
+#define BCIFN_WRCODE               6
+#define BCIFN_WRTEXT               7
+#define BCIFN_SECTOR_ERASE         8
+#define BCIFN_STROBE               9
 #define BCIFN_READREG             11
 #define BCIFN_WRITEREG            12
 

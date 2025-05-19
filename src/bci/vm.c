@@ -19,8 +19,8 @@ static const uint8_t boilerplate[BOILERPLATE_SIZE] = {
     1,                          // format 1
     VM_CELLBITS,                // bits per data cell
     VM_INSTBITS,                // bits per instruction icell
-    DATA_STACKSIZE - 1,         // max stack depths
-    RETURN_STACKSIZE - 1,
+    VM_STACKSIZE - 1,         // max stack depths
+    VM_STACKSIZE - 1,
     (DATASIZE >> 8) - 1,        // 256-cell pages of data memory less 1
     (CODESIZE >> 8) - 1,        // 256-icell pages of code memory less 1
     (TEXTSIZE >> 10) - 1,       // 1K-cell pages of text memory less 1
@@ -37,6 +37,13 @@ static const APIfn APIfns[] = {
 void VMreset(vm_ctx *ctx) {
     memset(ctx, 0, sizeof(ctx->DataMem)); // data space initializes to 0
     memset(ctx, 0, 64);         // wipe the first 16 longs
+    for (int i = 0; i < VM_STACKSIZE; i++) {
+        ctx->DataStack[i] = VM_EMPTY_STACK;
+        ctx->ReturnStack[i] = VM_EMPTY_STACK;
+    }
+    ctx->t = VM_EMPTY_STACK;
+    ctx->n = VM_EMPTY_STACK;
+    ctx->r = VM_EMPTY_STACK;
     ctx->boilerplate = boilerplate;
     ctx->DataMem[0] = 10;
     ctx->status = BCI_STATUS_STOPPED;
@@ -69,16 +76,21 @@ void VMwriteCell(vm_ctx *ctx, VMcell_t addr, VMcell_t x) {
     else ctx->ior = BCI_IOR_INVALID_ADDRESS;
 }
 
-void VMdupData(vm_ctx *ctx) {
+static void VMdupData(vm_ctx *ctx) {
     ctx->DataStack[ctx->sp] = ctx->n;
-    ctx->sp = (ctx->sp + 1) & (DATA_STACKSIZE - 1);
+    ctx->sp = (ctx->sp + 1) & (VM_STACKSIZE - 1);
     ctx->n = ctx->t;
 }
 
-VMcell_t VMdropData(vm_ctx *ctx) {
+void VMpushData(vm_ctx *ctx, VMcell_t x) {
+    VMdupData(ctx);
+    ctx->t = x;
+}
+
+VMcell_t VMpopData(vm_ctx *ctx) {
     VMcell_t r = ctx->t;
     ctx->t = ctx->n;
-    ctx->sp = (ctx->sp - 1) & (DATA_STACKSIZE - 1);
+    ctx->sp = (ctx->sp - 1) & (VM_STACKSIZE - 1);
     ctx->n = ctx->DataStack[ctx->sp];
     ctx->DataStack[ctx->sp] = VM_EMPTY_STACK;
     return r;
@@ -86,13 +98,13 @@ VMcell_t VMdropData(vm_ctx *ctx) {
 
 static void pushReturn(vm_ctx *ctx, VMcell_t x) {
     ctx->ReturnStack[ctx->rp] = ctx->r;
-    ctx->rp = (ctx->rp + 1) & (RETURN_STACKSIZE - 1);
+    ctx->rp = (ctx->rp + 1) & (VM_STACKSIZE - 1);
     ctx->r = x;
 }
 
 static VMcell_t popReturn(vm_ctx *ctx) {
     VMcell_t r = ctx->r;
-    ctx->rp = (ctx->rp - 1) & (RETURN_STACKSIZE - 1);
+    ctx->rp = (ctx->rp - 1) & (VM_STACKSIZE - 1);
     ctx->r = ctx->ReturnStack[ctx->rp];
     ctx->ReturnStack[ctx->rp] = VM_EMPTY_STACK;
     return r;
@@ -140,7 +152,7 @@ int VMstep(vm_ctx *ctx, VMinst_t inst){
             if (se & 1) {
                 VMdupData(ctx);
             } else if (se & 2) {
-                VMdropData(ctx);
+                VMpopData(ctx);
             }
             switch (uop) {
                 // basic stack operations
@@ -219,7 +231,7 @@ int VMstep(vm_ctx *ctx, VMinst_t inst){
                 case VMO_ZOO: r = ops0001(ctx, imm);                    break;
                 case VMO_AX: ctx->a = ctx->x + imm;                     break;
                 case VMO_BY: ctx->b = ctx->y + imm;                     break;
-                case VMO_ZBRAN: flag = (ctx->t == 0);  VMdropData(ctx);
+                case VMO_ZBRAN: flag = (ctx->t == 0);  VMpopData(ctx);
                     if (flag) { pc = ctx->pc + immex; }                 break;
                 case VMO_BRAN: pc = ctx->pc + immex;                    break;
                 case VMO_PBRAN: if ((ctx->t & VM_SIGN) == 0) {
@@ -239,8 +251,8 @@ int VMstep(vm_ctx *ctx, VMinst_t inst){
                 default: break;
             }
             switch (opcode) {
-                case VMO_API2DROP: VMdropData(ctx);
-                case VMO_APIDROP: VMdropData(ctx);
+                case VMO_API2DROP: VMpopData(ctx);
+                case VMO_APIDROP: VMpopData(ctx);
                 default: break;
             }
         }
@@ -258,14 +270,10 @@ static int ops0001(vm_ctx *ctx, int inst) { // alternate instructions 0110001...
     switch(imm) {
         case VMO_XSTORE: ctx->x = ctx->t;                               break;
         case VMO_YSTORE: ctx->y = ctx->t;                               break;
-        case VMO_SPSTORE: ctx->sp = ctx->t;                             break;
-        case VMO_RPSTORE: ctx->rp = ctx->t;                             break;
-        case VMO_SPFETCH: ctx->t = (ctx->sp - 1) & (DATA_STACKSIZE-1);  break;
-        case VMO_RPFETCH: ctx->t = ctx->rp;                             break;
         case VMO_BCISYNC: r = 1;                                        break;
         case VMO_THROW: ctx->ior = ctx->t;                              break;
         default: break;
     }
-    if (inst & VMI_ZOODROP) VMdropData(ctx);
+    if (inst & VMI_ZOODROP) VMpopData(ctx);
     return r;
 }

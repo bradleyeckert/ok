@@ -550,10 +550,6 @@ void AddForthKeywords(struct QuitStruct *state) {
     AddOp("err!",    "-forth.htm#throw x --",               INST_TAG + VMI_THROW);
     AddOp("y!",      "-forth.htm#ystore x --",              INST_TAG + VMI_YSTORE);
     AddOp("x!",      "-forth.htm#xstore x --",              INST_TAG + VMI_XSTORE);
-    AddOp("sp!",     "-forth.htm#spstore x -- x",           INST_TAG + VMI_SPSTORE);
-    AddOp("rp!",     "-forth.htm#rpstore -- x",             INST_TAG + VMI_RPSTORE);
-    AddOp("sp@",     "-forth.htm#spfetch -- x",             INST_TAG + VMI_SPFETCH);
-    AddOp("rp@",     "-forth.htm#rpfetch x --",             INST_TAG + VMI_RPFETCH);
     AddAPIcall("semit",    "-forth.htm#semit c --",         INST_TAG + VMI_APIDROP + 5);
     AddAPIcall("um*",      "~core/UMTimes u1 u2 -- d1",     INST_TAG + VMI_API     + 6);
     AddAPIcall("um/mod",   "~core/UMDivMOD ud u -- q r",    INST_TAG + VMI_APIDROP + 7);

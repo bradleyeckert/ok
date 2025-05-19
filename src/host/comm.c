@@ -306,6 +306,7 @@ static void BCIreceive(const uint8_t *src, int length) {
                             BASE = x & 0xFF;
                             if (BASE < 2) BASE = 2;
                             STATE = x >> 8;
+                case BCIFN_GET_CYCLES:
                             x = BCIparam(&src, &length, 4);
                             q->cycles = ((uint64_t)BCIparam(&src, &length, 4) << 32) | x;
                             goto getior;

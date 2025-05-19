@@ -5,8 +5,7 @@
 
 #define VM_CELLBITS               32    /* simulator bits per cell: 16 to 32 */
 #define VM_INSTBITS               16    /* bits per instruction: 16, 17, 20, 21, 22, 25, 26, or 27 bits */
-#define DATA_STACKSIZE            16    /* depth of stacks */
-#define RETURN_STACKSIZE          16
+#define VM_STACKSIZE            16    /* depth of stacks */
 #define CODESIZE              0x2000    /* cells in code space: 16KB */
 #define DATASIZE              0x0800    /* cells in data space: 8KB */
 #define TEXTORIGIN            0x1000    /* base address of internal Flash data in cells */
@@ -22,11 +21,8 @@
 #define C_CELLBITS          16
 #endif
 
-#if ((DATA_STACKSIZE-1) & DATA_STACKSIZE)
-#error DATA_STACKSIZE must be an exact power of 2
-#endif
-#if ((RETURN_STACKSIZE-1) & DATA_STACKSIZE)
-#error RETURN_STACKSIZE must be an exact power of 2
+#if ((VM_STACKSIZE-1) & VM_STACKSIZE)
+#error VM_STACKSIZE must be an exact power of 2
 #endif
 
 #define VM_SIGN     (1 << (VM_CELLBITS - 1)) // MSB
@@ -54,8 +50,8 @@ typedef struct
     uint16_t lex;
     int16_t  ior;
     uint64_t cycles;
-    VMcell_t DataStack[DATA_STACKSIZE];
-    VMcell_t ReturnStack[RETURN_STACKSIZE];
+    VMcell_t DataStack[VM_STACKSIZE];
+    VMcell_t ReturnStack[VM_STACKSIZE];
     VMcell_t DataMem[DATASIZE]; // RAM can be anywhere
     VMcell_t *TextMem;          // Flash must have a specific address
     VMinst_t *CodeMem;
@@ -88,8 +84,8 @@ void VMreset(vm_ctx *ctx);
 
 VMcell_t VMreadCell(vm_ctx *ctx, VMcell_t addr);
 void VMwriteCell(vm_ctx *ctx, VMcell_t addr, VMcell_t x);
-void VMdupData(vm_ctx *ctx);
-VMcell_t VMdropData(vm_ctx *ctx);
+void VMpushData(vm_ctx *ctx, VMcell_t x);
+VMcell_t VMpopData(vm_ctx *ctx);
 
 #define BOILERPLATE_SIZE          16
 
@@ -164,21 +160,21 @@ VMcell_t VMdropData(vm_ctx *ctx);
 
 #define VMO_XSTORE              0
 #define VMO_YSTORE              1
-#define VMO_SPSTORE             2
-#define VMO_RPSTORE             3
-#define VMO_SPFETCH             4
-#define VMO_RPFETCH             5
-#define VMO_BCISYNC             6
-#define VMO_THROW               7
+#define VMO_BCISYNC             2
+#define VMO_THROW               3
+#define VMO_SPSTORE             4
+#define VMO_RPSTORE             5
+#define VMO_SPFETCH             6
+#define VMO_RPFETCH             7
 
 #define VMI_XSTORE              (VMI_ZOO + VMO_XSTORE  + VMI_ZOODROP)
 #define VMI_YSTORE              (VMI_ZOO + VMO_YSTORE  + VMI_ZOODROP)
+#define VMI_BCISYNC             (VMI_ZOO + VMO_BCISYNC)
+#define VMI_THROW               (VMI_ZOO + VMO_THROW   + VMI_ZOODROP)
 #define VMI_SPSTORE             (VMI_ZOO + VMO_SPSTORE)
 #define VMI_RPSTORE             (VMI_ZOO + VMO_RPSTORE + VMI_ZOODROP)
 #define VMI_SPFETCH             (VMI_ZOO + VMO_SPFETCH + VMI_ZOODUP)
 #define VMI_RPFETCH             (VMI_ZOO + VMO_RPFETCH + VMI_ZOODUP)
-#define VMI_BCISYNC             (VMI_ZOO + VMO_BCISYNC)
-#define VMI_THROW               (VMI_ZOO + VMO_THROW   + VMI_ZOODROP)
 
 #define IMM_NAMES { \
     "pfx", "zoo", "ax", "by", "if", "bran", "-if", "next", \

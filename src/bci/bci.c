@@ -88,14 +88,17 @@ static int16_t simulate(vm_ctx *ctx, uint32_t xt){
 Since the VM has a context structure, these are late-bound in the context to allow stand-alone testing.
 */
 
+#define EXEC_STACK_SIZE 16
+
 void BCIhandler(vm_ctx *ctx, const uint8_t *src, uint16_t length) {
     BCIsendInit(ctx->id);               // empty the response buffer
     cmd = src;  len = length;
-    uint32_t ds[16];
-    memset(ds, 0, 16 * sizeof(uint32_t));
+    uint32_t ds[EXEC_STACK_SIZE];
+    memset(ds, 0, EXEC_STACK_SIZE * sizeof(uint32_t));
     uint32_t addr;
     uint32_t x;
     int32_t temp;
+    uint64_t ud;
     uint8_t *taddr;
     uint8_t n = get8();
     put8(ctx, BCI_BEGIN);               // indicate a BCI response message
@@ -118,32 +121,36 @@ void BCIhandler(vm_ctx *ctx, const uint8_t *src, uint16_t length) {
         }
         break;
     case BCIFN_EXECUTE:
-        waitUntilVMready(ctx);
+        waitUntilVMready(ctx);          // stop the VM if it is running
         ctx->cycles = 0;
-        VMwriteCell(ctx, 0, get32());     // packed status at data[0]
+        VMwriteCell(ctx, 0, get32());   // packed status at data[0]
         n = get8();
-        // VM_EMPTY_STACK
-        uint16_t sp0 = ctx->sp;
-        while (n--) {
-            VMdupData(ctx);
-            ctx->t = get32();
+        VMpushData(ctx, VM_EMPTY_STACK);// use special "empty stack" symbol
+        while (n--) {                   // to mark the stack, SP might not exist
+            VMpushData(ctx, get32());
         }
         ctx->ior = simulate(ctx, get32()); // xt
         put8(ctx, BCI_BEGIN);           // indicate end of random chars, if any
-        temp = ctx->sp - sp0;           // bytes on stack
-        if (temp < 0) ctx->ior = BCI_STACK_UNDERFLOW;
-        else for (n = 0; n < temp; n++) {
-            x = VMdropData(ctx);
-            ds[n] = x;
+        n = 0;
+        while (1) {
+            x = VMpopData(ctx);
+            if (x == VM_EMPTY_STACK) break;
+            if (n == EXEC_STACK_SIZE) {
+                ctx->ior = BCI_STACK_OVERFLOW;
+                break;
+            }
+            ds[n++] = x;
         }
         put8(ctx, n);                   // stack depth
         while (n--) {
             put32(ctx, ds[n]);
         }
-        put32(ctx, VMreadCell(ctx, 0));   // return packed status
-        put32(ctx, (uint32_t)ctx->cycles);
-        put32(ctx, (uint32_t)(ctx->cycles >> 32));  // return cycle count
-        ctx->status = status0;
+        put32(ctx, VMreadCell(ctx, 0)); // return packed status
+        ctx->status = status0;          // run if it was previously running
+    case BCIFN_GET_CYCLES:
+        ud = ctx->cycles;
+        put32(ctx, (uint32_t)ud);       // return cycle count
+        put32(ctx, (uint32_t)(ud >> 32));
         break;
     case BCIFN_CRC:
         put8(ctx, 4);

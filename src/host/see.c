@@ -262,12 +262,19 @@ static void DotBoiler(void) {
 #define SLEEPms(t) usleep(t*1000);
 #endif
 
+static void CommGetCycles(void) {
+    SendInit();
+    SendChar(BCIFN_GET_CYCLES);
+    SendFinal();
+    BCIwait();
+}
+
 static void ShowMIPS(void) {
-    uint64_t c0 = q->VMlist[CORE].ctx.cycles;
-    SLEEPms(200);
-    uint64_t c1 = q->VMlist[CORE].ctx.cycles;
-    float mips = (float)(c1 - c0) / 2e5;
-    printf("%f MIPS ", mips);
+    CommGetCycles();  uint64_t c0 = q->cycles;
+    SLEEPms(500);
+    CommGetCycles();  uint64_t c1 = q->cycles;
+    float mips = (float)(c1 - c0) / 5e5;
+    printf("%.2f MIPS ", mips);
 }
 
 void AddSeeKeywords(struct QuitStruct *state) {
