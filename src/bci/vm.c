@@ -147,7 +147,7 @@ int VMstep(vm_ctx *ctx, VMinst_t inst){
 #if (VM_CELLBITS == 32)
                 uint64_t ud;
 #endif
-                case VMO_NOP:        ctx->cycles++;
+                case VMO_NOP:        ctx->cycles--;
                 case VMO_DUP:
                 case VMO_DROP:                                            break;
                 case VMO_INV:        ctx->t = ~t & VM_MASK;               break;
