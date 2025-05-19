@@ -105,6 +105,9 @@ static const uint8_t stackeffects[32] = VM_STACKEFFECTS;
 // ctx->ior should be 0 upon entering the function.
 // Returns 1 if running and ready for BCI execution
 
+// cycles is incremented once per instruction, excluding nops, whether the
+// opcode is 5-bit or whole-instruction.
+
 #define IMASK2 ((1 << (VM_INSTBITS - 2)) - 1)
 #define APIfs (sizeof(APIfn)/sizeof(APIfns[0]))
 static int ops0001(vm_ctx *ctx, int inst);
@@ -144,7 +147,7 @@ int VMstep(vm_ctx *ctx, VMinst_t inst){
 #if (VM_CELLBITS == 32)
                 uint64_t ud;
 #endif
-                case VMO_NOP:
+                case VMO_NOP:        ctx->cycles++;
                 case VMO_DUP:
                 case VMO_DROP:                                            break;
                 case VMO_INV:        ctx->t = ~t & VM_MASK;               break;
@@ -242,7 +245,7 @@ int VMstep(vm_ctx *ctx, VMinst_t inst){
             }
         }
         ctx->lex = _lex;
-//        ctx->cycles += 3; // whole instructions take longer
+        ctx->cycles++;
     }
     ctx->pc = pc;
     return r;
