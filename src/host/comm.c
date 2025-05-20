@@ -91,8 +91,8 @@ static void BoilerHandlerB(const uint8_t *src) {
     printf("This us unusual: Target requested the host's ID. ");
 }
 
-const uint8_t HostBoilerSrc[] =   {"\x13noyb<HostPortUUID>0"};
-const uint8_t TargetBoilerSrc[] = {"\x13noyb<TargPortUUID>0"};
+const uint8_t HostBoilerSrc[] =   {"\x09mole0<ok>"};
+const uint8_t TargetBoilerSrc[] = {"\x15mole0<TargetPortUUID>"};
 static int busy;
 
 int BCIwait(const char *s) {
@@ -116,6 +116,9 @@ int BCIwait(const char *s) {
     return 0;
 }
 
+// If you are using com0com null modem with nothing connected on the other end,
+// molePair will hang because RS232_SendByte is hung.
+
 static int PairToTarget(void) {
     q->connected = 0;
     molePair(&HostPort);
@@ -126,8 +129,6 @@ static int PairToTarget(void) {
         if (t0 > end) {
             if (q->connected == 0) {
                 printf("BCI timeout while pairing\n");
-                printf("Press ENTER to continue ... ");
-                getchar();
             }
             else printf("Pairing failure\n\n");
             return 1;
@@ -151,9 +152,6 @@ static void BCItransmit(const uint8_t *src, int length) { // message m from mole
 }
 
 void get8debug(uint8_t c) {} // no debug output
-
-//static char TxMsg[MaxBCIresponseSize];
-//static uint16_t TxMsgLength = 0; // 3 functions for message formation
 
 static void BoilerHandlerA(const uint8_t *src) {
     memcpy(receivedBoilerplate, src, src[0] + 1);
@@ -239,7 +237,6 @@ void Reload(void) {
     q->reloaded[CORE] = 0;
     int avail = moleAvail(&HostPort);
     if (avail < flashNeeds) {
-        printf("\nTarget port accepts only %d bytes, %d bytes needed ", avail, flashNeeds);
         return;
     }
     VMsleep();                          // pause the remote VM while programming
@@ -389,7 +386,8 @@ static void ComOpen(void) {
         return;
     }
     HostPort.ciphrFn = uartCharOutput;  // connect to UART output
-    printf("Port %d opened at %d,N,8,1 ", q->port, q->baudrate);
+    printf("Port %d open ", q->port);
+    printf("at %d,N,8,1 ", q->baudrate);// be obvious about blocked port
     q->portisopen = 1;
 }
 
@@ -446,6 +444,7 @@ static void ConnectRemote(void) {
     if (ConnectPair()) {
         printf("Could not pair with remote, try again.\n");
         ComClose();
+        return;
     }
     Reload();
 }

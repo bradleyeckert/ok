@@ -5,9 +5,6 @@ Use with com0com null-modem emulator
 Single-threaded, macroloop polls for incoming RS232 and steps the VM while waiting.
 */
 
-// Use TRACE = 0 to avoid use of printf.
-#define TRACE 1
-
 #include <stdlib.h>
 #include <string.h>
 #include "../../src/mole/src/mole.h"
@@ -15,11 +12,11 @@ Single-threaded, macroloop polls for incoming RS232 and steps the VM while waiti
 #include "../../src/bci/bci.h"
 #include "../../src/RS-232/rs232.h"
 
-const uint8_t TargetBoilerSrc[] = {"\x13noyb<Remote__UUID>0"};
+const uint8_t TargetBoilerSrc[] = {"\x13mole0<Remote__UUID>"};
 
-#if (TRACE)
+#if (BCI_TRACE) // #define BCI_TRACE to display traffic
 #include <stdio.h>
-#define PRINTF  if (TRACE) printf
+#define PRINTF  printf
 #else
 #define PRINTF(...) do { } while (0)
 #endif
@@ -99,7 +96,7 @@ void get8debug(uint8_t c){
 
 static char cmode[] = {'8','N','1',0};
 static void ComList(void) { // list available COM ports
-    PRINTF("Possible serial port numbers at %d,N,8,1 ", baudrate);
+    PRINTF("Possible serial port numbers at %d,N,8,1: ", baudrate);
     for (int i = 0; i < 38; i++) {
         int ior = RS232_OpenComport(i, baudrate, cmode, 0);
         if (!ior) {
@@ -128,6 +125,10 @@ int main(int argc, char* argv[]) {
     }
     if (argc > 2) {
         baudrate = atoi(argv[2]);
+    }
+    if ((port == 0) || (baudrate == 0)) {
+        PRINTF("\nCommand line parameters: <port#> <baudrate>\n");
+        return 9;
     }
     ctx->TextMem = TextMem;         // flash sector for read-only data
     ctx->CodeMem = CodeMem;         // flash sector for code

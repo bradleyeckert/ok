@@ -5,14 +5,6 @@
 #include "bci.h"
 #include "bciHW.h"
 
-/*
-BCIhandler takes input from a buffer and outputs to encrypted UART using these primitives:
-void hermesSendInit(port_ctx *ctx, uint8_t tag);
-void hermesSendChar(port_ctx *ctx, uint8_t c);
-void hermesSendFinal(port_ctx *ctx);
-which are late-bound in the port_ctx to decouple the BCI from its output stream.
-*/
-
 #ifdef BCI_TRACE
 #include <stdio.h>
 #define PRINTF  printf

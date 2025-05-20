@@ -11,8 +11,7 @@ There are at least three threads. They are:
 
 ## predefined macros
 
-You can define BCI_TRACE and VM_TRACE in the project to display traffic.
-For example, the rightmost of the bottom set of tabs in Code::Blocks compiler settings is "\#defines".
+You can define BCI_TRACE in the project to display traffic.
 
 ## Visual Studio
 

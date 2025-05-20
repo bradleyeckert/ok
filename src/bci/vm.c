@@ -5,7 +5,7 @@
 #include "vm.h"
 #include "bciHW.h"
 
-#ifdef VM_TRACE
+#ifdef BCI_TRACE
 #include <stdio.h>
 #define PRINTF  printf
 #else
