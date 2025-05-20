@@ -406,7 +406,7 @@ static void Chdir(void) { ERR = chdir(Source()) ? INVALID_DIRECTORY : 0; }
 
 void ShowLine(void) {
     if (File.fp != stdin) {
-        Color(COLOR_PATH);
+        Color(COLOR_CYAN);
         printf("%s, Line %d: ", q->FilePaths[File.FID].filepath, File.LineNumber);
         Color(COLOR_NONE);
         printf("%s\n", File.Line);
@@ -651,7 +651,7 @@ done:       q->elapsed_us = GetMicroseconds() - time0;
                 }
                 if (SP) {
                     printf("\\");
-                    if ((BASE != 10) && (BASE < 17)) {
+                    if (BASE < 17) {
                         printf("%c", BaseChar[BASE]);
                     }
                     printf(" ");
