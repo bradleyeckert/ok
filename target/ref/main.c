@@ -1,8 +1,8 @@
 /*
 Target VM with BCI over RS232
-Use with com0com null-modem emulator
+Use with com0com null-modem emulator or physical COM port
 
-Single-threaded, macroloop polls for incoming RS232 and steps the VM while waiting.
+Single-thread C99, macroloop polls for incoming RS232 and steps the VM while waiting.
 */
 
 #include <stdlib.h>
@@ -117,7 +117,6 @@ static int ComOpen(void) {
 }
 
 
-
 int main(int argc, char* argv[]) {
     PRINTF("Remote target for 'ok'\n");
     if (argc > 1) {
@@ -126,7 +125,8 @@ int main(int argc, char* argv[]) {
     if (argc > 2) {
         baudrate = atoi(argv[2]);
     }
-    if ((port == 0) || (baudrate == 0)) {
+    ComList();
+    if ((port == 0) || (baudrate == 0) || ComOpen()) {
         PRINTF("\nCommand line parameters: <port#> <baudrate>\n");
         return 9;
     }
@@ -145,14 +145,12 @@ int main(int argc, char* argv[]) {
         PRINTF("or the key has a bad HMAC");
         return 1;
     }
-    ComList();
-    ComOpen();
     VMreset(ctx);
     PRINTF("Raw UART traffic is dumped to console: \033[95mXX\033[0m=receive, ");
     PRINTF("\033[92mXX\033[0m=transmit, \033[93mXX\033[0m=BCIrx, \033[94mXX\033[0m=BCItx\n");
     while  (ctx->status != BCI_STATUS_SHUTDOWN) {
         if (ctx->status == BCI_STATUS_RUNNING) {
-            VMsteps(ctx, 1000); // compensates for the overhead of RS232_PollComport
+            VMsteps(ctx, 4096); // compensates for the overhead of RS232_PollComport
         }
         uint8_t busy;
         do {
@@ -164,7 +162,7 @@ int main(int argc, char* argv[]) {
                 PRINTF("\033[95m%02X\033[0m ", c);
                 if (c == 0x0A) PRINTF("\n");
                 int ior = molePutc(&TargetPort, c);
-                if (ior)  PRINTF("ior=%d ", ior);
+                if (ior)  PRINTF("\nior=%d (see mole.h)\n", ior);
             }
         } while (busy);
     }

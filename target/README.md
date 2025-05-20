@@ -8,6 +8,7 @@ Code::Blocks compiles it to a 37 KB executable, so there is hope it will port to
 
 You can define BCI_TRACE in the project to display traffic.
 For example, the rightmost of the bottom set of tabs in Code::Blocks compiler settings is "\#defines".
+Set (or drag) the terminal width to a multiple of 3 columns to get a cleaner display.
 
 Once compiled, optional command line arguments change the port and baud rate from their defaults.
 For example, `./targ 4 115200` changes to port 4, 115200 baud. 
