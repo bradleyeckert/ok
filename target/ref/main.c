@@ -8,7 +8,6 @@ Single-threaded, macroloop polls for incoming RS232 and steps the VM while waiti
 // Use TRACE = 0 to avoid use of printf.
 #define TRACE 1
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "../../src/mole/src/mole.h"
