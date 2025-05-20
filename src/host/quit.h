@@ -157,7 +157,6 @@ void message(const char* color, const char *s);
 #define MAGIC_LATER 1000
 #define MAGIC_OPCODE 1001
 
-
 // THROW Codes
 
 #define BAD_STACKOVER    -3 // Stack overflow
