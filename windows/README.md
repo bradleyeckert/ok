@@ -9,6 +9,11 @@ There are at least three threads. They are:
 - A thread to process incoming RS232 data.
 - A thread to execute code on the VM.
 
+## predefined macros
+
+You can define BCI_TRACE and VM_TRACE in the project to display traffic.
+For example, the rightmost of the bottom set of tabs in Code::Blocks compiler settings is "\#defines".
+
 ## Visual Studio
 
 The Visual Studio 2022 `ok.sln` uses a C++ version of `main`.
