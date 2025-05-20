@@ -21,12 +21,27 @@ uint64_t GetMicroseconds(void) {
     tt -= 11644473600000000ULL;
     return tt;
 }
+void uSleep(uint64_t usec)
+{
+    HANDLE timer;
+    LARGE_INTEGER ft;
+
+    ft.QuadPart = -(10*usec); // Convert to 100 nanosecond interval, negative value indicates relative time
+
+    timer = CreateWaitableTimer(NULL, TRUE, NULL);
+    SetWaitableTimer(timer, &ft, 0, NULL, NULL, 0);
+    WaitForSingleObject(timer, INFINITE);
+    CloseHandle(timer);
+}
 #else
 #include <sys/time.h> // GCC library
 uint64_t GetMicroseconds(void) {
     struct timeval tv;
     gettimeofday(&tv, NULL);
     return tv.tv_sec * (uint64_t)1000000 + tv.tv_usec;
+}
+void uSleep(uint64_t usec) {
+    usleep(usec);
 }
 #endif
 

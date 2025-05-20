@@ -10,7 +10,6 @@ extern "C" {
 #endif
 
 #include <stdint.h>
-#include <stdio.h>
 
 uint64_t GetMicroseconds(void);
 void strmove(char* dest, char* src, unsigned int maxlen);
@@ -19,6 +18,7 @@ void StrCat(char* dest, const char* src, int limit);
 FILE* fopenx(char* filename, char* fmt);
 char * ErrorMessage(int error, char* s);
 void cdump(const uint8_t *src, uint16_t len);
+void uSleep(uint64_t usec);
 
 #ifdef _MSC_VER
 #define MORESAFE // Linux does not like, Visual Studio does. Code::Blocks does not care.

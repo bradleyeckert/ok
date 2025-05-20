@@ -96,6 +96,7 @@ void* PollCommRX(void* threadid) {
             while (bytes--) {
                 TargetCharOutput(*s++);
             }
+            uSleep(10);     // not so rapid-fire polling
         }
         if (q->TxMsgSend) {
             moleSend(&HostPort, (const uint8_t*) q->TxMsg, q->TxMsgLength);
