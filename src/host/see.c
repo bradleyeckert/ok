@@ -116,7 +116,7 @@ static const char *uopName[] = UOP_NAMES;
 static const char *opName[] =  OP_NAMES;
 static const char *immName[] = IMM_NAMES;
 static const char *zooName[] = ZOO_NAMES;
-static const char *apiName[] = API_NAMES;
+static const char *aipName[] = API_NAMES;
 
 static char * DisassembleInsn(uint32_t inst) {
     static uint32_t lex;
@@ -180,7 +180,12 @@ static char * DisassembleInsn(uint32_t inst) {
                     case VMO_DUPAPI:
                     case VMO_APIDROP:
                     case VMO_API2DROP: ToLabel();
-                        appendDA(apiName[imm]);
+                        if (imm < sizeof(aipName) / sizeof(aipName[0])) {
+                            appendDA(aipName[imm]);
+                        }
+                        else {
+                            appendDA("api? ");
+                        }
                     default: break;
                 }
             }
@@ -305,14 +310,14 @@ static void CommGetCycles(void) {
     SendInit();
     SendChar(BCIFN_GET_CYCLES);
     SendFinal();
-    BCIwait();
+    BCIwait("CommGetCycles");
 }
 
 static void ShowMIPS(void) {
     CommGetCycles();  uint64_t c0 = q->cycles;
     SLEEPms(500);
     CommGetCycles();  uint64_t c1 = q->cycles;
-    float mips = (float)(c1 - c0) / 5e5;
+    double mips = (float)(c1 - c0) / 5e5;
     printf("%.2f MIPS ", mips);
 }
 

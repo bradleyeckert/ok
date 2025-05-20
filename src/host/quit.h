@@ -12,7 +12,6 @@ extern "C" {
 
 #define CPUCORES         1
 #define PAD_SIZE       128      /* cells of pad to place at the top od data space */
-#define HANG_LIMIT_MS 3000      /* milliseconds to wait for a response */
 
 #define LineBufferSize 128      /* Size of line buffer                      */
 #define MaxLineLength   80      /* Max TIB size                             */
@@ -124,6 +123,9 @@ struct QuitStruct {                     // The app has one of these...
     uint32_t current;
     uint32_t host;                      // common to all VMs
     uint32_t baudrate;
+    uint16_t TxMsgLength;
+    uint8_t TxMsg[MaxBCIresponseSize];
+    uint8_t TxMsgSend;
     uint8_t port;
     uint8_t portisopen;
     uint8_t connected;

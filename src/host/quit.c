@@ -590,7 +590,7 @@ int QuitLoop(char * line, int maxlength, struct QuitStruct *state) {
     AddCommKeywords(q);
     hp0 = HP; wordlist0 = WRDLISTS;     // for Empty
     BASE = 10;
-//    VERBOSE = VERBOSE_COLOR;
+    VERBOSE = VERBOSE_COLOR;
     Empty();
     while (1) {
         FILEDEPTH = 0;
@@ -627,7 +627,10 @@ int QuitLoop(char * line, int maxlength, struct QuitStruct *state) {
                 if (SP < 0) ERR = BAD_STACKUNDER;
                 if (ERR) {
                     switch (ERR) {
-                    case BYE: return 0;
+                    case BYE: {
+                        ComClose();
+                        return 0;
+                    }
                     default: Color(COLOR_RED);
                         printf("%s ", ErrorMessage (ERR, TOKEN));
                         Color(COLOR_NONE);

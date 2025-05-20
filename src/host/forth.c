@@ -57,7 +57,7 @@ static void CommStore(void) {
     SendCell(DataPop());
     SendCell(DataPop());
     SendFinal();
-    BCIwait();
+    BCIwait("CommStore");
 }
 
 static void CommFetch(void) {
@@ -66,7 +66,7 @@ static void CommFetch(void) {
     SendChar(1);  // 1 cell
     SendCell(DataPop());
     SendFinal();
-    BCIwait();
+    BCIwait("CommFetch");
 }
 
 static void InstExecute(uint32_t xt) {
@@ -84,7 +84,7 @@ static void InstExecute(uint32_t xt) {
     for (int i = 1; i <= SP; i++) SendCell(q->ds[i]);
     SendCell(xt); // xt or inst
     SendFinal();
-    BCIwait();
+    BCIwait("InstExecute");
 }
 
 static void Prim_Exec(void) {

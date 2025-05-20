@@ -13,10 +13,10 @@ extern "C" {
 #define DEFAULT_BAUDRATE      921600
 #define DEFAULT_HOSTPORT           2
 #define DEFAULT_TARGETPORT         3
+#define HANG_LIMIT_MS           3000    /* milliseconds to wait for a response */
 
 #define BLANK_FLASH_BYTE        0xFF    /* byte values after flash erase */
 #define FLASH_BLOCK_SIZE         256    /* bytes in a flash programming block */
-#define BCI_DEBUG_ACCESS           3    /* debug access, should be 0 for production */
 #define BCI_CYCLE_LIMIT     10000000    /* number of cycles to wait before resetting the VM */
 
 #define BCI_STACK_OVERFLOW        -3
@@ -24,8 +24,8 @@ extern "C" {
 #define BCI_IOR_INVALID_ADDRESS   -9
 #define BCI_BAD_COMMAND          -84
 #define BCI_SHUTDOWN_PIN       10000
-#define BCI_RESET_PIN          10011
-#define BCI_SLEEP_PIN          10022
+#define BCI_RESET_PIN          10123
+#define BCI_SLEEP_PIN          10321
 #define BCI_BEGIN                252    /* beginning-of-message */
 
 #define BCIFN_READ                 1

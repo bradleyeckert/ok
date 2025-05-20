@@ -5,9 +5,6 @@
 #include "bci.h"
 #include "bciHW.h"
 
-#define TRACE 0
-#include <stdio.h>
-
 /*
 BCIhandler takes input from a buffer and outputs to encrypted UART using these primitives:
 void hermesSendInit(port_ctx *ctx, uint8_t tag);
@@ -16,9 +13,9 @@ void hermesSendFinal(port_ctx *ctx);
 which are late-bound in the port_ctx to decouple the BCI from its output stream.
 */
 
-#if (TRACE)
+#ifdef BCI_TRACE
 #include <stdio.h>
-#define PRINTF  if (TRACE) printf
+#define PRINTF  printf
 #else
 #define PRINTF(...) do { } while (0)
 #endif
@@ -28,10 +25,13 @@ which are late-bound in the port_ctx to decouple the BCI from its output stream.
 
 static const uint8_t *cmd;
 static uint16_t len;
+void get8debug(uint8_t c);
 
 static uint8_t get8(void) {
     if (!len) return 0;
-    len--; return *cmd++;
+    len--; uint8_t c = *cmd++;
+    get8debug(c);
+    return c;
 }
 
 static uint32_t get32(void) {           // 32-bit stream data is little-endian
@@ -69,9 +69,10 @@ static void waitUntilVMready(vm_ctx *ctx){
 
 static int16_t simulate(vm_ctx *ctx, uint32_t xt){
     if (xt & 0x80000000) {
+        PRINTF("\nExecuting single instruction %04x, ", xt & 0x7FFFFFFF);
         VMstep(ctx, xt);             // single instruction
     } else {
-        PRINTF("\nCalling %d, ", xt);
+        PRINTF("\nCalling %04x, ", xt);
         int rdepth = ctx->rp;
         xt += VMI_CALL;
         VMstep(ctx, xt);             // trigger call to xt
@@ -79,19 +80,15 @@ static int16_t simulate(vm_ctx *ctx, uint32_t xt){
             VMstep(ctx, 0);          // execute instructions
             if (ctx->ior) break;     // break on error
         }
-        PRINTF("Done simulating");
+        PRINTF("Done simulating ");
     }
     return ctx->ior;
 }
 
-/*
-Since the VM has a context structure, these are late-bound in the context to allow stand-alone testing.
-*/
-
 #define EXEC_STACK_SIZE 16
 
 void BCIhandler(vm_ctx *ctx, const uint8_t *src, uint16_t length) {
-    BCIsendInit(ctx->id);               // empty the response buffer
+    BCIsendInit(ctx->id);               // empty the response buffer and send 2-byte node number
     cmd = src;  len = length;
     uint32_t ds[EXEC_STACK_SIZE];
     memset(ds, 0, EXEC_STACK_SIZE * sizeof(uint32_t));
@@ -103,7 +100,7 @@ void BCIhandler(vm_ctx *ctx, const uint8_t *src, uint16_t length) {
     uint8_t n = get8();
     put8(ctx, BCI_BEGIN);               // indicate a BCI response message
     put8(ctx, n);                       // indicate what kind of response it is
-    ctx->ior = 0;
+    ctx->ior = 0;                       // So, that's a 4-byte preamble before the response
     uint8_t status0 = ctx->status;
     switch (n) {
     case BCIFN_READ:
@@ -153,11 +150,18 @@ void BCIhandler(vm_ctx *ctx, const uint8_t *src, uint16_t length) {
         put32(ctx, (uint32_t)(ud >> 32));
         break;
     case BCIFN_CRC:
-        put8(ctx, 4);
-        put32(ctx, CRC32((uint8_t*)ctx->CodeMem, CODESIZE * sizeof(VMinst_t)));
-        put32(ctx, CODESIZE * sizeof(VMinst_t));
-        put32(ctx, CRC32((uint8_t*)ctx->TextMem, TEXTSIZE * sizeof(VMcell_t)));
-        put32(ctx, TEXTSIZE * sizeof(VMcell_t));
+        PRINTF("\nGetting CRCs of code and text spaces ");
+        n = get8();
+        uint32_t cp = get32();
+        uint32_t tp = get32();
+        temp = n;
+        while (temp--) {
+            if (temp & 0x80) break;
+            get32(); // discard extra inputs
+        }
+        put8(ctx, n);
+        put32(ctx, CRC32((uint8_t*)ctx->CodeMem, cp));
+        put32(ctx, CRC32((uint8_t*)ctx->TextMem, tp));
         break;
     case BCIFN_WRTEXT:
         x = TEXTSIZE * sizeof(VMcell_t);
@@ -187,7 +191,7 @@ write:  addr = get32();
         switch (x) {
             case BCI_SHUTDOWN_PIN: ctx->status = BCI_STATUS_SHUTDOWN;  break;
             case BCI_SLEEP_PIN:    ctx->status = BCI_STATUS_STOPPED;   break;
-            case BCI_RESET_PIN:    VMreset(ctx);                    break;
+            case BCI_RESET_PIN:    VMreset(ctx);                       break;
             default: break;
         }
         break;

@@ -13,6 +13,9 @@ Start each simulated CPU core in its own thread
 #include "../bci/bci.h"
 #include "comm.h"
 #include "../RS-232/rs232.h"
+#include "../mole/src/mole.h"
+
+extern port_ctx HostPort;
 
 static struct QuitStruct quit_internal_state;
 static uint8_t  responseBuf[CPUCORES][MaxBCIresponseSize];
@@ -56,7 +59,7 @@ void StopVMthread(vm_ctx *ctx) {
     }
 }
 
-#define CYCLES 1000
+#define CYCLES 4096
 
 void* SimulateCPU(void* threadid) {
     int id = (int)(size_t)threadid;
@@ -83,15 +86,20 @@ void* SimulateCPU(void* threadid) {
 static int CommDone = 0;
 
 void* PollCommRX(void* threadid) {
-    uint8_t buffer[4];
+    uint8_t buffer[16];
     struct QuitStruct *q = &quit_internal_state;
     g_begun++;
     while (CommDone == 0) { // 'bye' sets done
         if (q->portisopen) {
-            int bytes = RS232_PollComport(q->port, buffer, 1);
-            if (bytes) {
-                TargetCharOutput(buffer[0]);
+            uint8_t bytes = RS232_PollComport(q->port, buffer, 16);
+            uint8_t *s = buffer;
+            while (bytes--) {
+                TargetCharOutput(*s++);
             }
+        }
+        if (q->TxMsgSend) {
+            moleSend(&HostPort, (const uint8_t*) q->TxMsg, q->TxMsgLength);
+            q->TxMsgSend = 0;
         }
         YieldThread();
     }

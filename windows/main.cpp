@@ -11,6 +11,9 @@ using namespace std;
 #include "../src/bci/bci.h"
 #include "../src/host/comm.h"
 #include "../src/RS-232/rs232.h"
+#include "../src/mole/src/mole.h"
+
+extern port_ctx HostPort;
 
 static struct QuitStruct quit_internal_state;
 static uint8_t  responseBuf[CPUCORES][MaxBCIresponseSize];
@@ -56,10 +59,10 @@ VM state accessed in main: CodeMem, TextMem, id, status, statusNew
 #define CYCLES 1000
 
 #ifdef _MSC_VER
-DWORD WINAPI SimulateCPU(LPVOID threadid) {
+static DWORD WINAPI SimulateCPU(LPVOID threadid) {
     int id =  (int)(uintptr_t)threadid;
 #else
-void* SimulateCPU(void* threadid) {
+static void* SimulateCPU(void* threadid) {
     int id = (size_t)threadid & 0xFFFF;
 #endif
     vm_ctx* ctx = &quit_internal_state.VMlist[id].ctx;
@@ -89,19 +92,24 @@ void* SimulateCPU(void* threadid) {
 static int CommDone = 0;
 
 #ifdef _MSC_VER
-DWORD WINAPI PollCommRX(LPVOID threadid) {
+static DWORD WINAPI PollCommRX(LPVOID threadid) {
 #else
-void* PollCommRX(void* threadid) {
+static void* PollCommRX(void* threadid) {
 #endif
     uint8_t buffer[4];
     struct QuitStruct* q = &quit_internal_state;
     g_begun++;
     while (CommDone == 0) { // 'bye' sets done
         if (q->portisopen) {
-            int bytes = RS232_PollComport(q->port, buffer, 1);
-            if (bytes) {
-                TargetCharOutput(buffer[0]);
+            uint8_t bytes = RS232_PollComport(q->port, buffer, 16);
+            uint8_t *s = buffer;
+            while (bytes--) {
+                TargetCharOutput(*s++);
             }
+        }
+        if (q->TxMsgSend) {
+            moleSend(&HostPort, (const uint8_t*) q->TxMsg, q->TxMsgLength);
+            q->TxMsgSend = 0;
         }
         YieldThread();
     }
@@ -119,6 +127,7 @@ int main(int argc, char* argv[]) {
     g_begun = 0;
 #ifdef _MSC_VER
     HANDLE tid[CPUCORES];
+    memset(tid, 0, sizeof(tid));
     HANDLE commtask;
     for (int i = 0; i < CPUCORES; i++) {
         LPDWORD index = (LPDWORD)(size_t)i;
@@ -145,7 +154,7 @@ int main(int argc, char* argv[]) {
     while (g_begun != (CPUCORES + 1)) {  // wait for all tasks to start
         YieldThread();
     }
-    int ior = quitloop(linebuf, sizeof(linebuf), &quit_internal_state);
+    int ior = QuitLoop(linebuf, sizeof(linebuf), &quit_internal_state);
     for (int i = 0; i < CPUCORES; i++) { // tell VM threads to quit
         quit_internal_state.VMlist[i].ctx.status = BCI_STATUS_SHUTDOWN;
     }

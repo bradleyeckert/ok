@@ -30,7 +30,7 @@
 #if (VM_CELLBITS == 32)
 #define VM_MASK           0xFFFFFFFF
 #else
-#define VM_MASK     ((1 << VM_CELLBITS) - 1)
+#define VM_MASK      ((1 << VM_CELLBITS) - 1)
 #endif
 #define VM_EMPTY_STACK (0x55555555 & VM_MASK)
 #define VM_IMM_MASK  ((1 << (VM_INSTBITS - 3)) - 1)

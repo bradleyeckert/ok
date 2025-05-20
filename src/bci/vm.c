@@ -5,12 +5,9 @@
 #include "vm.h"
 #include "bciHW.h"
 
-#define TRACE 0
+#ifdef VM_TRACE
 #include <stdio.h>
-
-#if (TRACE)
-#include <stdio.h>
-#define PRINTF  if (TRACE) printf
+#define PRINTF  printf
 #else
 #define PRINTF(...) do { } while (0)
 #endif
@@ -50,12 +47,15 @@ void VMreset(vm_ctx *ctx) {
     ctx->statusNew = BCI_STATUS_STOPPED;
     VMinst_t blank = (VMinst_t)((BLANK_FLASH_BYTE << 24) | (BLANK_FLASH_BYTE << 16)
                               | (BLANK_FLASH_BYTE << 8) | BLANK_FLASH_BYTE);
-    if (ctx->CodeMem[0] != blank) // got code?
-    ctx->status = BCI_STATUS_RUNNING;
+    if (ctx->CodeMem[0] != (VMinst_t)blank) { // got code?
+        ctx->status = BCI_STATUS_RUNNING;
+        PRINTF("\nReset, VM is running\n");
+    } else {
+        PRINTF("\nReset, VM is stopped\n");
+    }
 }
 
 VMcell_t VMreadCell(vm_ctx *ctx, VMcell_t addr) {
-    PRINTF("\nLoad [0x%x]", addr);
     if (addr < DATASIZE)
         return ctx->DataMem[addr];      // Data
     if (addr < TEXTORIGIN) {
@@ -71,7 +71,6 @@ VMcell_t VMreadCell(vm_ctx *ctx, VMcell_t addr) {
 }
 
 void VMwriteCell(vm_ctx *ctx, VMcell_t addr, VMcell_t x) {
-    PRINTF("\nStore [0x%x] = %d", addr, x);
     if (addr < DATASIZE) ctx->DataMem[addr] = x;
     else ctx->ior = BCI_IOR_INVALID_ADDRESS;
 }
@@ -135,9 +134,6 @@ int VMstep(vm_ctx *ctx, VMinst_t inst){
     VMcell_t pc = ctx->pc;
     if (inst == 0) {
         inst = ctx->CodeMem[pc++];
-        PRINTF("\nPC=%04Xh inst=%04Xh", (pc-1), inst);
-    } else {
-        PRINTF("\nBCIstepVM execute instruction, %Xh", inst);
     }
     if (inst & (1 << (VM_INSTBITS - 1))) { // MSB
         if (inst & (1 << (VM_INSTBITS - 2))) pc = popReturn(ctx);
@@ -205,7 +201,6 @@ int VMstep(vm_ctx *ctx, VMinst_t inst){
                 case VMO_STOREBPLUS: BCIVMioWrite(ctx, ctx->b++, t);      break;
                 default: break;
             }
-            PRINTF(" uop:%02xh (%x %x)", uop, ctx->n, ctx->t);
             ctx->cycles++;
         }
     } else {
