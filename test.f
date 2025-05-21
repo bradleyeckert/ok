@@ -146,4 +146,4 @@ t{ table 2 + @ -> 10000 }t
 
 \ verbose_bci verbose!
 \ 4 port! \ use com-list to show the list of available COM ports
-
+\ use 'remote' to connect and upload to remote target over RS232
