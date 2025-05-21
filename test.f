@@ -119,8 +119,10 @@ variable counter
 : mystuff   1 counter +! ;
 
 \ @ is a "a! @a" macro, so within the loop 'a' must be protected as follows:
+\ or this may be an old problem. remove.
 
-:noname     begin
+:noname     console
+            begin
                 a mystuff a!
                 bcisync
             again
@@ -143,4 +145,5 @@ t{ table 1 + @ -> 1000 }t
 t{ table 2 + @ -> 10000 }t
 
 \ verbose_bci verbose!
+\ 4 port! \ use com-list to show the list of available COM ports
 
