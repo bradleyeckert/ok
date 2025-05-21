@@ -17,6 +17,7 @@ void SendFinal(void);           // Send the message to the BCI
 int BCIwait(const char *s);    // Wait for the BCI to return a message
 void AddCommKeywords(struct QuitStruct *state);
 void BCIsendToHost(const uint8_t *src, int length);
+int EncryptAndSend(uint8_t* m, int length);
 void TargetCharOutput(uint8_t c); // target --> host chars (see main.c)
 void Reload(void);              // load host images onto target
 void ComClose(void);

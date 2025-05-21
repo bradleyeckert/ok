@@ -26,9 +26,10 @@ void uSleep(uint64_t usec)
     HANDLE timer;
     LARGE_INTEGER ft;
 
-    ft.QuadPart = -(10*usec); // Convert to 100 nanosecond interval, negative value indicates relative time
+    ft.QuadPart = -(10*(signed)usec); // Convert to 100 nanosecond interval, negative value indicates relative time
 
     timer = CreateWaitableTimer(NULL, TRUE, NULL);
+    if (timer == NULL) return;
     SetWaitableTimer(timer, &ft, 0, NULL, NULL, 0);
     WaitForSingleObject(timer, INFINITE);
     CloseHandle(timer);
@@ -40,6 +41,7 @@ uint64_t GetMicroseconds(void) {
     gettimeofday(&tv, NULL);
     return tv.tv_sec * (uint64_t)1000000 + tv.tv_usec;
 }
+#include <unistd.h>
 void uSleep(uint64_t usec) {
     usleep(usec);
 }

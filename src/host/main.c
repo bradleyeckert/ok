@@ -13,9 +13,6 @@ Start each simulated CPU core in its own thread
 #include "../bci/bci.h"
 #include "comm.h"
 #include "../RS-232/rs232.h"
-#include "../mole/src/mole.h"
-
-extern port_ctx HostPort;
 
 static struct QuitStruct quit_internal_state;
 static uint8_t  responseBuf[CPUCORES][MaxBCIresponseSize];
@@ -99,7 +96,7 @@ void* PollCommRX(void* threadid) {
             uSleep(10);     // not so rapid-fire polling
         }
         if (q->TxMsgSend) {
-            moleSend(&HostPort, (const uint8_t*) q->TxMsg, q->TxMsgLength);
+            EncryptAndSend(q->TxMsg, q->TxMsgLength);
             q->TxMsgSend = 0;
         }
         YieldThread();

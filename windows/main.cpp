@@ -11,9 +11,6 @@ using namespace std;
 #include "../src/bci/bci.h"
 #include "../src/host/comm.h"
 #include "../src/RS-232/rs232.h"
-#include "../src/mole/src/mole.h"
-
-extern port_ctx HostPort;
 
 static struct QuitStruct quit_internal_state;
 static uint8_t  responseBuf[CPUCORES][MaxBCIresponseSize];
@@ -108,7 +105,7 @@ static void* PollCommRX(void* threadid) {
             }
         }
         if (q->TxMsgSend) {
-            moleSend(&HostPort, (const uint8_t*) q->TxMsg, q->TxMsgLength);
+            EncryptAndSend(q->TxMsg, q->TxMsgLength);
             q->TxMsgSend = 0;
         }
         YieldThread();

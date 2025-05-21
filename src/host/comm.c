@@ -65,8 +65,8 @@ static int getc_RNG(void) {
 	return rand() & 0xFF;	// DO NOT USE in a real application
 }                           // Use a TRNG instead
 
-port_ctx HostPort;
-port_ctx TargetPort;
+static port_ctx HostPort;
+static port_ctx TargetPort;
 
 static void HostCharOutput(uint8_t c) {
     if (VERBOSE & VERBOSE_BCI) {
@@ -107,8 +107,6 @@ int BCIwait(const char *s) {
             }
             else {
                 printf("BCI timeout in %s\n", s);
-                printf("Press ENTER to continue ... ");
-                getchar();
             }
             return 1;
         }
@@ -137,6 +135,10 @@ static int PairToTarget(void) {
     int ok = (moleAvail(&HostPort) != 0);
     q->connected = ok;
     return (!ok);
+}
+
+int EncryptAndSend(uint8_t* m, int length) {
+    return moleSend(&HostPort, (const uint8_t*)m, length);
 }
 
 
