@@ -206,12 +206,12 @@ void message(const char* color, const char *s);
 #define VERBOSE_CYCLES  32  // display cycle count of last executed word
 
 #define COLOR_NONE      "\033[0m"
-#define COLOR_RED       "\033[91m"
-#define COLOR_YELLOW    "\033[93m"
-#define COLOR_GREEN     "\033[92m"
-#define COLOR_CYAN      "\033[96m"
-#define COLOR_BLUE      "\033[94m"
-#define COLOR_MAGENTA   "\033[95m"
+#define COLOR_RED       "\e[0;91m"
+#define COLOR_YELLOW    "\e[0;93m"
+#define COLOR_GREEN     "\e[0;92m"
+#define COLOR_CYAN      "\e[0;96m"
+#define COLOR_BLUE      "\e[0;94m"
+#define COLOR_MAGENTA   "\e[0;95m"
 
 #ifdef __cplusplus
 }
