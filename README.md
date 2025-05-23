@@ -9,17 +9,21 @@ Multiple VMs are supported via pthreads, so `ok` can simulate an array of Forth 
 Some work would be required to simulate message passing between cores.
 ## compiling
 `make all` under Linux. For Windows, see [windows/README](./windows/README.md).
-## submodules
-Note: Contains [submodules](https://www.geeksforgeeks.org/how-to-clone-git-repositories-including-submodules/). Use `git clone --recurse <url>` to clone.
+## benchmarks
+`mips` sleeps the main thread for 1/2 second while the VM fetches and executes instructions in its own thread.
+Some approximate benchmarks:
 
-I've found that this updates submodules:
+| Processor | VM MIPS |
+| --------- | ------- |
+| AMD Ryzen 1950X | 150 |
+| Intel Alder Lake N97 | 60 |
 
-1. `git submodule update --force --recursive` re-clones the files
-2. `git submodule update --remote --recursive` points to the latest heads
-3. `git status` shows if `--remote` made changes. If so,
-4. `git add <filespec>` stages the change (use `git add --all` if living dangerously)
-5. `git commit -m "Changed submodule head"` commits the change
-5. `git push` pushes the commit
+I was a little worried the VM would be slow. As it is, it looks like 25 clock cycles per VM instruction.
+Branches are somewhat predictable and it's cache-friendly.
 
-`mole` is a submodule containing crytographic primitives as submodules.
-The rationale behind using submodules for these is that they can start as forks.
+MIPS truly are meaningless in this case. All of the heavy lifting in a real application would be done by C.
+Find a hot spot? Add it to the C API.
+
+VM binary code size borders on the ridiculous, thanks to the frequency of 5-bit Forth instructions and Forth's
+intrinsic leveraging of "don't care" states which other languages cannot exploit.
+A little memory goes a long way, which is very useful in MCUs.
