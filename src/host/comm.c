@@ -8,8 +8,8 @@
 #include "../bci/bci.h"
 #include "../bci/bciHW.h"
 #include "../RS-232/rs232.h"
-#include "../mole/src/mole.h"
-#include "../mole/src/moleconfig.h"
+#include "../mole/mole.h"
+#include "../mole/moleconfig.h"
 
 static struct QuitStruct *q;
 
