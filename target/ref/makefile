@@ -8,9 +8,9 @@ SRCS1 = ../../src/bci/vm.c \
 ../../src/bci/bci.c \
 ../../src/bci/bciHW.c \
 ../../src/RS-232/rs232.c \
-../../src/mole/src/mole.c \
-../../src/mole/src/blake2s/src/blake2s.c \
-../../src/mole/src/xchacha/src/xchacha.c \
+../../src/mole/mole.c \
+../../src/mole/blake2s.c \
+../../src/mole/xchacha.c \
 main.c
 
 OBJS1 = $(SRCS1:.c=.o)

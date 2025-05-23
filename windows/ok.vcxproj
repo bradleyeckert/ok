@@ -136,9 +136,9 @@
     <ClCompile Include="..\src\host\quit.c" />
     <ClCompile Include="..\src\host\see.c" />
     <ClCompile Include="..\src\host\tools.c" />
-    <ClCompile Include="..\src\mole\src\blake2s\src\blake2s.c" />
-    <ClCompile Include="..\src\mole\src\mole.c" />
-    <ClCompile Include="..\src\mole\src\xchacha\src\xchacha.c" />
+    <ClCompile Include="..\src\mole\blake2s.c" />
+    <ClCompile Include="..\src\mole\mole.c" />
+    <ClCompile Include="..\src\mole\xchacha.c" />
     <ClCompile Include="..\src\RS-232\rs232.c" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
@@ -152,10 +152,10 @@
     <ClInclude Include="..\src\host\see.h" />
     <ClInclude Include="..\src\host\threds.h" />
     <ClInclude Include="..\src\host\tools.h" />
-    <ClInclude Include="..\src\mole\src\blake2s\src\blake2s.h" />
-    <ClInclude Include="..\src\mole\src\mole.h" />
-    <ClInclude Include="..\src\mole\src\moleconfig.h" />
-    <ClInclude Include="..\src\mole\src\xchacha\src\xchacha.h" />
+    <ClInclude Include="..\src\mole\blake2s.h" />
+    <ClInclude Include="..\src\mole\mole.h" />
+    <ClInclude Include="..\src\mole\moleconfig.h" />
+    <ClInclude Include="..\src\mole\xchacha.h" />
     <ClInclude Include="..\src\RS-232\rs232.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
