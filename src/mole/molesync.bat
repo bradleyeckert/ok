@@ -1,3 +1,4 @@
+@echo off
 if exist ..\..\..\mole (
   copy ..\..\..\mole\src\mole.c mole.c /y
   copy ..\..\..\mole\src\mole.h mole.h /y
