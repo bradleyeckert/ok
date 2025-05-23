@@ -915,12 +915,3 @@ int RS232_GetPortnr(const char *devname)
 }
 
 
-
-
-
-
-
-
-
-
-
