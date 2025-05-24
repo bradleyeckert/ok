@@ -230,6 +230,17 @@ static void See (void) { // ( <name> -- )
 //------------------------------------------------------------------------------
 // other
 
+static void ColorizeWord(char* str, char* key, int line) {
+    size_t keylength = strlen(key);
+    size_t strlength = strlen(str);
+    char* leading = strstr(str, TOKEN);
+    memmove (leading + 1, leading, strlength + 1);
+    *leading = 0; // terminate the leading part
+    printf("%4d: %s", line, str);
+    message(COLOR_RED, key);
+    printf("%s", leading + keylength + 1);
+}
+
 static void Locate(void) {
     Tick();
     if (ERR) return;
@@ -239,6 +250,13 @@ static void Locate(void) {
     uint8_t i = HEADER[ME].srcFile;
     char* filename = q->FilePaths[i].filepath;
     int line = HEADER[ME].srcLine;
+    int offset = 0;
+    if (length < 0) {
+        line += length;
+        if (line < 0) line = 0;
+        offset = length;
+        length = 1 - offset;
+    }
     printf("%s", filename);
     FILE* fp = fopenx(filename, "r");
     if (fp == NULL) {
@@ -249,8 +267,12 @@ static void Locate(void) {
         char b[LineBufferSize];
         for (int i = 1 - line; i < length; i++) {
             if (fgets(b, LineBufferSize, fp) == NULL) break;
-            if (i >= 0)
-                printf("%4d: %s", line++, b);
+            if (i >= 0) {
+                if (i == -offset) {
+                    ColorizeWord(b, TOKEN, line++);
+                }
+                else printf("%4d: %s", line++, b);
+            }
         }
         fclose(fp);
     }
