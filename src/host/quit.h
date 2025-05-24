@@ -11,18 +11,17 @@ extern "C" {
 #include "../bci/bci.h"
 
 #define CPUCORES         1
-#define PAD_SIZE       128      /* cells of pad to place at the top od data space */
+#define PAD_SIZE       128      /* cells of pad to place at the top of data space */
 
 #define LineBufferSize 128      /* Size of line buffer                      */
 #define MaxLineLength   80      /* Max TIB size                             */
-#define MaxKeywords   2000      /* Number of headers                        */
+#define MaxKeywords   5000      /* Number of headers                        */
 #define MaxNameSize     32      /* Number of chars in a name (less 1)       */
-#define MaxAnchorSize   40      /* Number of chars in an anchor string (-1) */
 #define MaxFiles        16      /* Max open files                           */
-#define MaxFilePaths    32      /* Max unique files                         */
+#define MaxFilePaths   250      /* Max unique files                         */
 #define MaxWordlists  (20+CPUCORES)  /* Max number of wordlists             */
-#define MaxOrder         8      /* Max length of search order list          */
-#define DictionaryBytes (1024*1024)
+#define MaxOrder        10      /* Max length of search order list          */
+#define DictionaryBytes (0x100000)
 
 #define WRONG_NUM_OF_RESULTS    -88
 #define WRONG_TEST_RESULTS      -89

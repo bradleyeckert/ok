@@ -10,16 +10,17 @@ Some work would be required to simulate message passing between cores.
 ## compiling
 `make all` under Linux. For Windows, see [windows/README](./windows/README.md).
 ## benchmarks
-`mips` sleeps the main thread for 1/2 second while the VM fetches and executes instructions in its own thread.
+After the command line `ok include test.f` launches the `ok>` prompt, `mips` sleeps the main thread
+for 1/2 second while the VM fetches and executes instructions in its own thread.
 Some approximate benchmarks:
 
-| Processor | VM MIPS |
-| --------- | ------- |
-| AMD Ryzen 1950X | 150 |
-| Intel Alder Lake N97 | 60 |
+| Processor | VM MIPS | CPU Usage |
+| --------- | ------- | --------- |
+| AMD Ryzen 1950X | 165 | 6% |
+| Intel Alder Lake N97 | 65 | ? |
 
-I was a little worried the VM would be slow. As it is, it looks like 25 clock cycles per VM instruction.
-Branches are somewhat predictable and it's cache-friendly.
+It looks like 22 clock cycles per VM instruction. Branches are somewhat predictable and it's cache-friendly.
+Modern CPUs seem to tune themselves nicely to VMs. It helps if the VM is small, so it fits in cache.
 
 MIPS truly are meaningless in this case. All of the heavy lifting in a real application would be done by C.
 Find a hot spot? Add it to the C API.

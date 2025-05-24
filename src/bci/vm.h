@@ -43,6 +43,7 @@
 #endif
 
 // VM state accessed in main: CodeMem, TextMem, id, status, statusNew
+// Host should generally not access this struct directly. It may be remote.
 
 typedef struct
 {   VMcell_t pc;                // program counter
@@ -157,12 +158,12 @@ VMcell_t VMpopData(vm_ctx *ctx);
 #define VMI_ZOODROP             (1 << (VM_INSTBITS - 9))
 #define VMI_ZOO                 (VMI_PFX + (1 << (VM_INSTBITS - 7)))
 
-#define ZOO_NAMES  {"x!", "y!", "sp!", "rp!", "sp@", "rp@", "bcisync", "err!"}
+#define ZOO_NAMES  {"bcisync", "err!", "x!", "y!"}
 
-#define VMO_XSTORE              0
-#define VMO_YSTORE              1
-#define VMO_BCISYNC             2
-#define VMO_THROW               3
+#define VMO_BCISYNC             0
+#define VMO_THROW               1
+#define VMO_XSTORE              2
+#define VMO_YSTORE              3
 
 #define VMI_XSTORE              (VMI_ZOO + VMO_XSTORE  + VMI_ZOODROP)
 #define VMI_YSTORE              (VMI_ZOO + VMO_YSTORE  + VMI_ZOODROP)

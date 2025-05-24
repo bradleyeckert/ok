@@ -2,6 +2,8 @@
 
 \. testing uops
 
+empty
+
 t{ 1 nop -> 1 }t
 t{ 1 inv -> -2 }t
 t{ 1 2 over -> 1 2 1 }t
@@ -19,8 +21,6 @@ t{ 0 -> 0 }t
 t{ 100 a! 1000 !a -> }t
 t{ 100 a! @a -> 1000 }t
 t{ 0 a! @a -> 10 }t
-
-only forth definitions
 
 \ Forth definitions
 
@@ -119,7 +119,6 @@ variable counter
 : mystuff   1 counter +! ;
 
 \ @ is a "a! @a" macro, so within the loop 'a' must be protected as follows:
-\ or this may be an old problem. remove.
 
 :noname     console
             begin
@@ -145,5 +144,4 @@ t{ table 1 + @ -> 1000 }t
 t{ table 2 + @ -> 10000 }t
 
 \ verbose_bci verbose!
-\ 4 port! \ use com-list to show the list of available COM ports
-\ use 'remote' to connect and upload to remote target over RS232
+
