@@ -22,7 +22,7 @@ extern "C" {
 #define MaxFilePaths    32      /* Max unique files                         */
 #define MaxWordlists  (20+CPUCORES)  /* Max number of wordlists             */
 #define MaxOrder         8      /* Max length of search order list          */
-#define TEXTSTAKSIZE (MaxKeywords*32)
+#define DictionaryBytes (1024*1024)
 
 #define WRONG_NUM_OF_RESULTS    -88
 #define WRONG_TEST_RESULTS      -89
@@ -52,6 +52,7 @@ struct HeaderStruct {                   // Each dictionary has many of these...
     uint32_t w2;
     uint32_t target;                    // target address if used
     uint16_t references;                // how many times it has been referenced
+    uint32_t where;                     // link into dictionary where tick record is
     uint16_t link;                      // enough for 64k headers
     uint32_t *aux;                      // pointer to aux C data
     uint16_t core;                      // which core compiled for
@@ -138,6 +139,7 @@ void YieldThread(void);
 // export to forth.c, etc.
 void DataPush(uint32_t x);
 uint32_t DataPop(void);
+uint32_t FetchDictionaryN(int addr, int width);
 void DataDot(uint32_t x);
 void PrintDataStack(void);
 int parseword(char delimiter);

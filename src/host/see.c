@@ -247,23 +247,20 @@ static void Locate(void) {
     DataPop();
     int length = 10;
     if (SP == 1) length = DataPop();
-    uint8_t i = HEADER[ME].srcFile;
+    int i = HEADER[ME].srcFile;
     char* filename = q->FilePaths[i].filepath;
     int line = HEADER[ME].srcLine;
     int offset = 0;
+    int where = line;
     if (length < 0) {
         line += length;
         if (line < 0) line = 0;
         offset = length;
         length = 1 - offset;
     }
-    printf("%s", filename);
     FILE* fp = fopenx(filename, "r");
-    if (fp == NULL) {
-        printf(", Line# %d\n", line);
-    }
-    else {
-        printf("\n");
+    if (fp != NULL) {
+        printf("%s, Line# %d\n", filename, where);
         char b[LineBufferSize];
         for (int i = 1 - line; i < length; i++) {
             if (fgets(b, LineBufferSize, fp) == NULL) break;
@@ -278,14 +275,48 @@ static void Locate(void) {
     }
 }
 
+static void Where(void) {
+    Tick();
+    if (ERR) return;
+    DataPop();
+    int p = HEADER[ME].where;
+    int limit = 10; // in case of broken links
+    while (p) {
+        if (!(limit--)) break;
+        int fid = FetchDictionaryN(p + 3, 2);
+        char* filename = q->FilePaths[fid].filepath;
+        int line = FetchDictionaryN(p + 5, 3);
+        p = FetchDictionaryN(p, 3);
+        FILE* fp = fopenx(filename, "r");
+        if (fp != NULL) {
+            printf("%s, Line# %d\n", filename, line);
+            char b[LineBufferSize];
+            for (int i = 1 - line; i < 1; i++) {
+                if (fgets(b, LineBufferSize, fp) == NULL) break;
+                if (i >= 0) {
+                    ColorizeWord(b, TOKEN, line++);
+                }
+            }
+            fclose(fp);
+        }
+    }
+}
+
 static void words(int wid) {
     parseword(' ');                     // tok is the search key (none=ALL)
     uint16_t i = q->wordlist[wid];
     while (i) {
         size_t len = strlen(TOKEN);     // filter by substring
         char* s = strstr(HEADER[i].name, TOKEN);
-        if ((s != NULL) || (len == 0))
+        if ((s != NULL) || (len == 0)) {
+            int refs = HEADER[i].references;
+            if (refs) {
+                printf("(%d)", refs);
+                Color(COLOR_CYAN);
+            }
             printf("%s ", HEADER[i].name);
+            Color(COLOR_NONE);
+        }
         i = HEADER[i].link;             // traverse from oldest
     }
     printf("\n");
@@ -342,6 +373,7 @@ void AddSeeKeywords(struct QuitStruct *state) {
     AddKeyword("dasm",   "-see.htm#dasm [ a u ] --",            Dasm,       noCompile);
     AddKeyword("see",    "~tools/SEE <name> --",                See,        noCompile);
     AddKeyword("locate", "-see.htm#locate [lines] <name> --",   Locate,     noCompile);
+    AddKeyword("where",  "-see.htm#where <name> --",            Where,      noCompile);
     AddKeyword("words",  "~tools/WORDS [substr] --",            Words,      noCompile);
     AddKeyword("wrds",   "-see.htm#wrds [substr] wid --",       Wrds,       noCompile);
     AddKeyword("help",   "-see.htm#help <name> --",             help,       noCompile);

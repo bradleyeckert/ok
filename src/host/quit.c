@@ -65,22 +65,36 @@ static void Verbosity (void) { VERBOSE = DataPop(); }
 
 // Names are const data, which need "text" storage at runtime
 
-static char textstak[TEXTSTAKSIZE];
+static char dictspace[DictionaryBytes];
 static unsigned int textsp = 0;
+
+static void AppendDictionary(uint8_t c) {
+    if (textsp >= DictionaryBytes) ERR = BAD_TEXTSTAK;
+    dictspace[textsp++] = c;
+}
+static void AppendDictionaryN(uint32_t x, int width) {
+    uint8_t *s = (uint8_t*)&x;
+    while (width--) AppendDictionary(*s++);
+}
+uint32_t FetchDictionaryN(int addr, int width) {
+    uint32_t x = 0;
+    uint8_t *d = (uint8_t*)&x;
+    char *s = &dictspace[addr];
+    while (width--) *d++ = (uint8_t)*s++;
+    return x;
+}
+
 
 char * Const(char *name) {              // convert ephemeral string to constant
     int limit = 1024;
-    char * r = &textstak[textsp];
-    char * dest = r;
+    char * r = &dictspace[textsp];
     while (limit--) {
-        if (textsp >= TEXTSTAKSIZE) goto oops;
-        char c = *name++;
-        *dest++ = c;
-        textsp++;
+        uint8_t c = *name++;
+        AppendDictionary(c);
+        if (ERR) goto no;
         if (c == 0) return r;
     }
-oops: ERR = BAD_TEXTSTAK;
-    return "bad";
+no: return "bad";
 }
 
 void Color(const char * color) {
@@ -144,8 +158,15 @@ static int FindWord(char* key) {                // find in context, xt is ME
     for (int i = 0; i < ORDERS; i++) {
         int wid = CONTEXT[i];
         if (findinWL(key, wid)) {
-            HEADER[ME].references += 1; // bump reference counter
             q->WidName = WLNAME[i];
+            if (File.fp != stdin) {
+                HEADER[ME].references++;
+                int link = HEADER[ME].where;
+                HEADER[ME].where = textsp;
+                AppendDictionaryN(link, 3);
+                AppendDictionaryN(File.FID, 2);
+                AppendDictionaryN(File.LineNumber, 3);
+            }
             return -1;
         }
     }
@@ -481,19 +502,12 @@ int AddHead (char* name, char* help) { // add a header to the list
     int r = 1;
     HP++;
     if (HP < MaxKeywords) {
+        memset(&HEADER[HP], 0, sizeof(HEADER[0]));
         HEADER[HP].name = name;
         HEADER[HP].help = help;
-        HEADER[HP].length = 0;          // set defaults to 0
-        HEADER[HP].notail = 0;
-        HEADER[HP].target = 0;
-        HEADER[HP].notail = 0;
-        HEADER[HP].smudge = 0;
-        HEADER[HP].isALU = 0;
         HEADER[HP].srcFile = File.FID;
         HEADER[HP].srcLine = File.LineNumber;
         HEADER[HP].link = WORDLIST[CURRENT];
-        HEADER[HP].references = 0;
-        HEADER[HP].w2 = 0;
         WORDLIST[CURRENT] = HP;
     } else {
         message(COLOR_RED, "Please increase MaxKeywords and rebuild.\n");
