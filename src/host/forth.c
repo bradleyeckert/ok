@@ -50,25 +50,6 @@ static uint32_t CodeMemSize(void) {return (getBP(6) + 1) << 8;}
 static uint32_t TextMemSize(void) {return (getBP(7) + 1) << 10;}
 static uint32_t TextMemOrigin(void) {return getBP(8) << 12;}
 
-static void CommStore(void) {
-    SendInit();
-    SendChar(BCIFN_WRITE);
-    SendChar(1);  // 1 cell
-    SendCell(DataPop());
-    SendCell(DataPop());
-    SendFinal();
-    BCIwait("CommStore");
-}
-
-static void CommFetch(void) {
-    SendInit();
-    SendChar(BCIFN_READ);
-    SendChar(1);  // 1 cell
-    SendCell(DataPop());
-    SendFinal();
-    BCIwait("CommFetch");
-}
-
 static void InstExecute(uint32_t xt) {
     if (!(xt & INST_TAG)) { // instructions do not need reload
         if (q->reloaded[CORE] == 0) {
@@ -489,8 +470,6 @@ void AddForthKeywords(struct QuitStruct *state) {
     AddKeyword("equ",      "-forth.htm#equ x <name> --",    Constant,   noCompile);
     AddKeyword(".s",       "~tools/DotS wid --",            dotESS,     noCompile);
     AddKeyword(".",        "~core/d n --",                  dot,        noCompile);
-    AddKeyword("@",        "~core/Fetch a -- x",            CommFetch,  noCompile);
-    AddKeyword("!",        "~core/Store x a --",            CommStore,  noCompile);
     AddKeyword("cp",       "-forth.htm#cp -- ca",           cpFetch,    noCompile);
     AddKeyword("cp!",      "-forth.htm#cpstore ca --",      cpStore,    noCompile);
     AddKeyword("dp",       "-forth.htm#dp -- a",            dpFetch,    noCompile);
