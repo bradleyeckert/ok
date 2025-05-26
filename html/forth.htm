@@ -1,0 +1,343 @@
+<html>
+<body style="font-family: sans-serif">
+<h1>forth.c words</h1>
+<hr>
+<h2 id="bpc">bits/cell ( -- n )</h2>
+<p>Returns or compiles the number of bits in a cell.
+</p>
+
+<h2 id="pad">pad ( -- n )</h2>
+<p>Returns address of the scratchpad. <code>pad</code> is a static buffer whose location is determined by polling the VM. It is placed at the top of data space.
+</p>
+<p><code>pad</code> is used for numeric output, with the string growing downward from the top.
+The application may grow <code>pad</code> strings upward,
+taking care that they don't collide with numeric output.
+</p>
+
+<h2 id="padsize">|pad| ( -- n )</h2>
+<p>Returns size of the scratchpad.
+</p>
+
+<h2 id="host">host ( -- wid )</h2>
+<p>wid of the host wordlist.
+</p>
+
+<h2 id="cp">cp ( -- ca )</h2>
+<p>Code pointer. Returns code address of next available instruction.
+<code>cp</code> is for managing the placement of compiled code in code space.
+Code space is for code, not data. Any compiled data goes into text space.
+</p>
+
+<h2 id="cpstore">cp! ( ca -- )</h2>
+<p>Store to code pointer.
+</p>
+
+<h2 id="dp">dp ( -- a )</h2>
+<p>Data pointer. Returns address of next available cell in data space (RAM).
+<code>dp</code> is used by variables and buffers. Data space initializes to 0.
+</p>
+
+<h2 id="dpstore">dp! ( a -- )</h2>
+<p>Store to data pointer.
+</p>
+
+<h2 id="tp">tp ( -- a )</h2>
+<p>Text pointer. Returns address of next available cell in text space (ROM).
+<code>tp</code> is used by compiled data.
+For example, <code>tp equ MyTable 3 , 5 , 8 , 13 ,</code> would compile a table addressed by <code>MyTable</code>.
+For compatibility with existing ANS Forths, that would be better coded as
+<code>tp 3 , 5 , 8 , 13 , equ MyTable</code> to allow interleaving of text and code spaces.
+</p>
+
+<h2 id="here">here ( -- a )</h2>
+<p>Alias of <code>tp</code>.
+</p>
+
+<h2 id="tpstore">tp! ( a -- )</h2>
+<p>Store to text pointer.
+</p>
+
+<h2 id="comma">, ( x -- )</h2>
+<p>Compile x into text space at <code>tp</code>.
+</p>
+
+<h2 id="comstr">, ( string&quot; -- a )</h2>
+<p>Compile string into text space at <code>tp</code> and return the start address.
+Example usage is:
+</p>
+<p>When interpreting, <code>," Hello World" equ MyString</code>.
+</p>
+<p>When compiling, <code>," Hello World" literal @+ type</code>.
+</p>
+
+<h2 id="help">\h ( ccc&lt;eol&gt; -- )</h2>
+<p>Compile help string. The first character is '~' for Internet (with Forth standard prefix),
+'-' for file (with project html folder prefix).
+</p>
+
+<hr>
+<h1>μops</h1>
+<hr>
+<h2 id="nop">nop ( -- )</h2>
+<p>Do nothing.
+</p>
+
+<h2 id="over">over ( x1 x2 -- x1 x2 x1 )</h2>
+<p>2nd item on the stack.
+</p>
+
+<h2 id="xor">xor ( x1 x2 -- x3 )</h2>
+<p>Exclusive or. No carry effect.
+</p>
+
+<h2 id="and">and ( x1 x2 -- x3 )</h2>
+<p>Logical and. No carry effect.
+</p>
+
+<h2 id="add">+ ( x1 x2 -- x3 )</h2>
+<p>Add and save to carry.
+</p>
+
+<h2 id="inv">inv ( x -- ~x )</h2>
+<p>Alias of <code>invert</code>. Like <code>~</code> in C.
+</p>
+
+<h2 id="twostar">2* ( x -- ~x )</h2>
+<p>Logical left shift, saves carry.
+</p>
+
+<h2 id="twodiv">2/ ( x -- ~x )</h2>
+<p>Arithmetic right shift, saves carry.
+</p>
+
+<h2 id="twodivc">2/c ( x -- ~x )</h2>
+<p>Logical right shift with carry into MSB, saves carry.
+</p>
+
+<h2 id="cystore">cy! ( x -- )</h2>
+<p>Store to carry bit.
+</p>
+
+<h2 id="cy">cy ( -- x )</h2>
+<p>Carry bit.
+</p>
+
+<h2 id="dup">dup ( x1 -- x1 x1 )</h2>
+<p>Duplicate top of stack.
+</p>
+
+<h2 id="drop">drop ( x1 -- )</h2>
+<p>Drop from stack.
+</p>
+
+<h2 id="swap">swap ( x1 x2 -- x2 x1 )</h2>
+<p>Swap top two stack items.
+</p>
+
+<h2 id="astore">a! ( x -- )</h2>
+<p>Store to the A register, which addresses data and text spaces.
+</p>
+
+<h2 id="a">a ( -- x )</h2>
+<p>The A register.
+</p>
+
+<h2 id="bstore">b! ( x -- )</h2>
+<p>Store to the B register, which addresses peripheral space.
+</p>
+
+<h2 id="fetcha">@a ( -- x )</h2>
+<p>Fetch from data or text space depending on address A.
+</p>
+
+<h2 id="fetchaplus">@a+ ( -- x )</h2>
+<p>Fetch from data or text space depending on address A. Increment A by 1.
+</p>
+
+<h2 id="fetchb">@b ( -- x )</h2>
+<p>Fetch from peripheral space address B.
+</p>
+
+<h2 id="fetchbplus">@b+ ( -- x )</h2>
+<p>Fetch from peripheral space address B. Increment B by 1.
+</p>
+
+<h2 id="storea">!a ( x -- )</h2>
+<p>Store to data or text space depending on address A.
+</p>
+
+<h2 id="storeaplus">!a+ ( x -- )</h2>
+<p>Store to data or text space depending on address A. Increment A by 1.
+</p>
+
+<h2 id="storeb">!b ( x -- )</h2>
+<p>Store to peripheral space address B.
+</p>
+
+<h2 id="storebplus">!b+ ( x -- )</h2>
+<p>Store to peripheral space address B. Increment B by 1.
+</p>
+
+<h2 id="zero">0 ( -- 0 )</h2>
+<p>Constant 0. For example, <code>: off ( a -- ) a! 0 !a ;</code> compiles to <code>CE54</code> (2 bytes).
+</p>
+
+<h2 id="ustore">u! ( x -- )</h2>
+<p>Store to the U register, which supplies the upper bits of a 32-bit bus in data space.
+There is no U register when cells are 32-bit.
+</p>
+
+<h2 id="u">u ( -- x )</h2>
+<p>The U register. 0 if there is no U register.
+</p>
+
+<h2 id="push">&gt;r ( x -- )</h2>
+<p>Push x to the return stack.
+</p>
+
+<h2 id="r">r@ ( -- x )</h2>
+<p>Top of the return stack.
+</p>
+
+<h2 id="pop">r&gt; ( -- x )</h2>
+<p>Pop x from the return stack.
+</p>
+
+<h2 id="unext">unext ( -- x )</h2>
+<p>Decrement R and loop back to μop 0 if R >= 0. Otherwise, drop from the return stack.
+</p>
+
+<hr>
+<h1>μop macros</h1>
+<hr>
+
+<h2 id="fetch">@ ( a -- x )</h2>
+<p><code>a! @a</code> macro.
+</p>
+
+<h2 id="store">! ( x a -- )</h2>
+<p><code>a! !a</code> macro.
+</p>
+
+<h2 id="minusone">-1 ( -- -1 )</h2>
+<p><code>0 inv</code> macro.
+</p>
+
+<h2 id="nip">nip ( x1 x2 -- x2 )</h2>
+<p><code>swap drop</code> macro.
+</p>
+
+<h2 id="twodup">2dup ( x1 x2 -- x1 x2 x1 x2 )</h2>
+<p><code>over over</code> macro.
+</p>
+
+<h2 id="twodrop">2drop ( x1 x2 -- )</h2>
+<p><code>drop drop</code> macro.
+</p>
+
+<h2 id="threedrop">3drop ( x1 x2 x3 -- )</h2>
+<p><code>drop drop drop</code> macro.
+</p>
+
+<hr>
+<h1>full-word instructions</h1>
+<hr>
+
+<h2 id="xstore">x! ( a -- )</h2>
+<p>Store to base address register X.
+</p>
+
+<h2 id="ystore">y! ( a -- )</h2>
+<p>Store to base address register Y.
+</p>
+
+<h2 id="throw">err! ( x -- )</h2>
+<p>Report an error. Use Forth <a href="https://forth-standard.org/standard/exception">THROW </a> codes.
+</p>
+
+<hr>
+<h1>Control structures</h1>
+<hr>
+
+<h2 id="for">for ( C: -- dest )</h2>
+<p>Begin a <code> begin again </code> structure. Compiles<code>>r</code>.
+</p>
+
+<h2 id="next">next ( C: dest -- )</h2>
+<p>End a loop structure with a <code>next</code> instruction, which decrements R and branches if it is not zero. A<code> for ... next </code>structure iterates 1 or more times and drops R from the return stack. For example,<code> 4 for r@ u. next </code> would print 4 3 2 1.
+</p>
+
+<h2 id="begin">begin ( C: -- dest )</h2>
+<p>Begin a loop structure such as <code> begin again </code>, <code> begin until </code>,
+or <code> begin while repeat </code>.
+</p>
+
+<h2 id="again">again ( C: dest -- )</h2>
+<p>End a loop structure with an unconditional branch.
+</p>
+
+<h2 id="until">until ( C: dest -- | E: flag -- )</h2>
+<p>End a loop structure with a branch-if-zero.
+</p>
+<p><code>until</code> drops the top of the stack.
+</p>
+
+<h2 id="muntil">-until ( C: dest -- | E: n -- n )</h2>
+<p>End a loop structure with a branch-if-non-negative.
+</p>
+<p><code>-until</code> does not drop the top of the stack.
+</p>
+
+<h2 id="if">if ( C: -- orig | E: flag -- )</h2>
+<p>Begin an <code> if then </code> or <code> if else then </code>structure.
+</p>
+<p><code>if</code> drops the top of the stack and branches if n = 0.
+</p>
+
+<h2 id="mif">-if ( C: -- orig | E: n -- n )</h2>
+<p>Begin a <code> -if then </code> or <code> -if else then </code>structure.
+</p>
+<p><code>-if</code> does not drop the top of the stack.
+It checks the MSB of n and branches if it is '0'.
+</p>
+
+<h2 id="else">else ( C: orig1 -- orig2 )</h2>
+<p>Compile an unconditional forward branch, producing orig2, and resolve <code> if </code> using orig1.
+</p>
+
+<h2 id="then">then ( C: orig -- )</h2>
+<p>Resolve<code> if </code>.
+</p>
+
+<h2 id="while">while ( C: dest -- orig dest | E: flag -- )</h2>
+<p>Compile an<code> if </code>, leaving dest on the top of the control stack.
+</p>
+
+<h2 id="mwhile">-while ( C: dest -- orig dest | E: n -- n )</h2>
+<p>Compile a<code> -if </code>, leaving dest on the top of the control stack.
+</p>
+
+<h2 id="repeat">repeat ( C: orig dest -- )</h2>
+<p>Compile an unconditional forward branch to dest and resolve the forward branch of orig.
+</p>
+
+<p>Structures like <code> begin ... while ... while ... repeat ... else ... then </code>are possible but not recommended due to complexity. 
+
+<hr>
+<h1>API calls</h1>
+<hr>
+
+<p>The VM has an instruction to call a C function from a table of API functions. Some functions are:
+</p>
+
+<h2 id="semit">semit ( c -- )</h2>
+<p>Append c to the BCI response buffer, translating to UTF-8 if necessary. If a word that calls semit is executed via BCI, c will show up in the response. Otherwise, <code>ctx->FinalFn(ctx->id);</code> will be needed to asynchronously send a message over mole.
+</p>
+
+<h2 id="mumod">mu/mod ( ud u -- dq r )</h2>
+<p>Similar to um/mod but returns a double quotient. Used by #.
+</p>
+
+
+<hr>
+</body></html>

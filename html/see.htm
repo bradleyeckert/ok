@@ -1,0 +1,59 @@
+<html>
+<body style="font-family: sans-serif">
+<h1>see.c words</h1>
+<hr>
+<h2 id="help">help ( <i>&lt;name&gt;</i> -- )</h2>
+<p>Show stack effect of <i>&lt;name&gt;</i>.
+Open an HTML page showing more detailed information on <i>&lt;name&gt;</i>.
+</p>
+
+<h2 id="locate">locate ( [lines] <i>&lt;name&gt;</i> -- )</h2>
+<p>Show source code of <i>&lt;name&gt;</i>. If [lines] is not supplied (stack is empty),
+the default is 10 lines. If [lines] is negative, the located word is on the last line.
+</p>
+
+<h2 id="where">where ( <i>&lt;name&gt;</i> -- )</h2>
+<p>Show where <i>&lt;name&gt;</i> is referenced in files.
+</p>
+
+<h2 id="words">words ( [substring] -- )</h2>
+<p>List the definition names in the first word list of the search order. Standard TOOLS word.
+An optional <i>&lt;substring&gt;</i> filters the results to words containing the substring.
+</p>
+
+<h2 id="wrds">wrds ( wid [substring] -- )</h2>
+<p>List the definition names in a wordlist.
+An optional <i>&lt;substring&gt;</i> filters the results to words containing the substring.
+</p>
+
+<h2 id="see">see ( <i>&lt;name&gt;</i> -- )</h2>
+<p>Disassemble <i>&lt;name&gt;</i>. Standard TOOLS word. 
+</p>
+
+<h2 id="dasm">dasm ( [ a u ] -- )</h2>
+<p>Disassemble <b>u</b> code words starting at address <b>a</b>.
+If the stack is empty, disassemble all (up to <b>cp</b>) starting at address 0.
+</p>
+
+<h2 id="dotir">.ir ( inst -- )</h2>
+<p>Disassemble inst.
+</p>
+
+<h2 id="helpprefix">helpprefix ( -- )</h2>
+<p>List the system command prefixes to open help pages in a web browser.
+</p>
+
+<h2 id="helpforth">help_forth: ( &quot;ccc&lt;eol&gt;&quot; -- )</h2>
+<p>The rest of the line is the new system command prefix for web help.
+</p>
+
+<h2 id="helplocal">help_local: ( &quot;ccc&lt;eol&gt;&quot; -- )</h2>
+<p>The rest of the line is the new system command prefix for local help.
+</p>
+
+<h2 id="dotboiler">.boiler: ( -- )</h2>
+<p>Fetch the boilerplate from the target and display it.
+</p>
+
+<hr>
+</body></html>
