@@ -31,13 +31,6 @@ static void Message(const char *s) {
 
 const uint8_t TargetBoilerSrc[] = {"\x13mole0<Remote__UUID>"};
 
-#if (BCI_TRACE) // #define BCI_TRACE to display traffic
-#include <stdio.h>
-#define PRINTF  printf
-#else
-#define PRINTF(...) do { } while (0)
-#endif
-
 //------------------------------------------------------------------------------
 // mole support
 
@@ -64,9 +57,7 @@ static int getc_RNG(void) {
 }                           // Use a TRNG instead
 
 // should never happen
-static void BoilerHandler(const uint8_t *src) {
-    PRINTF("\nTarget received %d-byte boilerplate {%s}", src[0], &src[1]);
-}
+static void BoilerHandler(const uint8_t *src) {}
 
 //------------------------------------------------------------------------------
 // VM
@@ -80,7 +71,6 @@ static uint8_t  responseBuf[MaxBCIresponseSize];
 static uint16_t responseLen;
 // These functions are used by the BCI to return a response
 void BCIsendChar(int id, uint8_t c) {
-    PRINTF("\033[94m%02X\033[0m ", c);
     responseBuf[responseLen++] = c;
 }
 void BCIsendInit(int id) {
@@ -97,13 +87,10 @@ static void BCItransmit(const uint8_t *src, int length) {
 }
 
 static void uartCharOutput(uint8_t c) {
-    PRINTF("\033[92m%02X\033[0m ", c);
-    if (c == 0x0A) PRINTF("\n");
     UART_putc(c);
 }
 
 void get8debug(uint8_t c){
-    PRINTF("\033[93m%02X\033[0m ", c);
 }
 
 int TargetInit(void) {
@@ -117,12 +104,8 @@ int TargetInit(void) {
     int ior = moleAddPort(&TargetPort, TargetBoilerSrc, MOLE_PROTOCOL, "TARGET", 17, getc_RNG,
                   BoilerHandler, BCItransmit, uartCharOutput, UpdateKeySet);
     if (ior) {
-        PRINTF("\nError %d, ", ior);
-        PRINTF("MOLE_ALLOC_MEM_UINT32S too small by %d ", -moleRAMunused()/4);
-        PRINTF("or the key has a bad HMAC");
         return 1;
     }
-//    PRINTF("MOLE_ALLOC_MEM_UINT32S too big by %d ", moleRAMunused()/4);
     moleNewKeys(&TargetPort, my_keys);
     VMreset(ctx);
     return 0;
@@ -130,17 +113,13 @@ int TargetInit(void) {
 
 void ApplicationStep(void) {
     if (ctx->status == BCI_STATUS_RUNNING) {
-        VMsteps(ctx, 4096); // compensates for the overhead of RS232_PollComport
+        VMsteps(ctx, 512); // ~100 usec
     }
     while (UART_received()) {
         uint8_t c = UART_getc();
-        PRINTF("\033[95m%02X\033[0m ", c);
-        if (c == 0x0A) PRINTF("\n");
-        int ior = molePutc(&TargetPort, c);
-        if (ior)  PRINTF("\nior=%d (see mole.h)\n", ior);
+        molePutc(&TargetPort, c);
     }
 }
-
 
 void ApplicationInit(void) {
 	  UARTx_init(&uart3, USART3);
