@@ -1,16 +1,33 @@
 /*
-Target VM with BCI over RS232
-Use with com0com null-modem emulator or physical COM port
+ * app.c
+ *
+ *  Created on: May 27, 2025
+ *      Author: User
+ */
 
-Single-thread C99, macroloop polls for incoming RS232 and steps the VM while waiting.
+#include "UARTs/okuart.h"
+
+UART_t uart3;
+void USART3_IRQHandler(void) { UARTx_IRQHandler(&uart3); }
+void UART_putc(uint8_t c)  { UARTx_putc(&uart3, c); }
+void UART_puts(const uint8_t *src, int length) { UARTx_puts(&uart3, src, length); }
+uint8_t UART_getc(void)  { return UARTx_getc(&uart3); }
+uint8_t UART_received(void)  { return UARTx_received(&uart3); }
+
+/*
+static void Message(const char *s) {
+	char c;
+	while ((c = *s++)) UART_putc(c);
+	UART_putc('\r');
+	UART_putc('\n');
+}
 */
 
 #include <stdlib.h>
 #include <string.h>
-#include "../../src/mole/mole.h"
-#include "../../src/mole/moleconfig.h"
-#include "../../src/bci/bci.h"
-#include "../../src/RS-232/rs232.h"
+#include "mole/mole.h"
+#include "mole/moleconfig.h"
+#include "bci/bci.h"
 
 const uint8_t TargetBoilerSrc[] = {"\x13mole0<Remote__UUID>"};
 
@@ -20,35 +37,6 @@ const uint8_t TargetBoilerSrc[] = {"\x13mole0<Remote__UUID>"};
 #else
 #define PRINTF(...) do { } while (0)
 #endif
-
-static int port = DEFAULT_TARGETPORT;
-static int baudrate = DEFAULT_BAUDRATE;
-
-//------------------------------------------------------------------------------
-// Byte-oriented interface to RS232
-
-static uint8_t rxBuffer[256];
-static uint8_t head, tail;
-
-static uint8_t UART_received(void) {
-    uint8_t temp[256];
-    if (head == tail) {
-        uint8_t bytes = RS232_PollComport(port, temp, 256 - (head - tail));
-        uint8_t *s = temp;
-        while (bytes--) rxBuffer[head++] = *s++; // top up the buffer
-    }
-    return head - tail;
-}
-
-static uint8_t UART_getc(void) {
-    if (UART_received()) return rxBuffer[tail++];
-    return 0; // do not call on an empty buffer
-}
-
-static void UART_putc(uint8_t c) {
-    int r = RS232_SendByte(port, c);
-    if (r) PRINTF("\n*** RS232_SendByte returned %d, ", r);
-}
 
 //------------------------------------------------------------------------------
 // mole support
@@ -118,7 +106,7 @@ void get8debug(uint8_t c){
     PRINTF("\033[93m%02X\033[0m ", c);
 }
 
-int InitializeTarget(void) {
+int TargetInit(void) {
     ctx->TextMem = TextMem;         // flash sector for read-only data
     ctx->CodeMem = CodeMem;         // flash sector for code
     memset(TextMem, BLANK_FLASH_BYTE, sizeof(TextMem));
@@ -140,7 +128,7 @@ int InitializeTarget(void) {
     return 0;
 }
 
-void StepTarget(void) {
+void ApplicationStep(void) {
     if (ctx->status == BCI_STATUS_RUNNING) {
         VMsteps(ctx, 4096); // compensates for the overhead of RS232_PollComport
     }
@@ -153,48 +141,10 @@ void StepTarget(void) {
     }
 }
 
-//------------------------------------------------------------------------------
-// main
 
-static char cmode[] = {'8','N','1',0};
-static void ComList(void) { // list available COM ports
-    PRINTF("Possible serial port numbers at %d,N,8,1: ", baudrate);
-    for (int i = 0; i < 38; i++) {
-        int ior = RS232_OpenComport(i, baudrate, cmode, 0);
-        if (!ior) {
-            RS232_CloseComport(i);
-            PRINTF("%d ", i);
-        }
-    }
+void ApplicationInit(void) {
+	  UARTx_init(&uart3, USART3);
+	  NVIC_EnableIRQ(USART3_IRQn); // since you didn't set it in the NVIC in MX
+	  TargetInit();
 }
 
-static int ComOpen(void) {
-    int ior = RS232_OpenComport(port, baudrate, cmode, 0);
-    if (ior) {
-        PRINTF("\nError opening port %d\n", port);
-        return 1;
-    }
-    PRINTF("\nPort %d opened at %d,N,8,1\n", port, baudrate);
-    return 0;
-}
-
-int main(int argc, char* argv[]) {
-    PRINTF("Remote target for 'ok'\n");
-    if (argc > 1) {
-        port = atoi(argv[1]);
-    }
-    if (argc > 2) {
-        baudrate = atoi(argv[2]);
-    }
-    ComList();
-    if ((port == 0) || (baudrate == 0) || ComOpen()) {
-        PRINTF("\nCommand line parameters: <port#> <baudrate>\n");
-        return 9;
-    }
-    PRINTF("Raw UART traffic is dumped to console: \033[95mXX\033[0m=receive, ");
-    PRINTF("\033[92mXX\033[0m=transmit, \033[93mXX\033[0m=BCIrx, \033[94mXX\033[0m=BCItx\n");
-    if (InitializeTarget()) return 8;
-    while (ctx->status != BCI_STATUS_SHUTDOWN) StepTarget();
-    RS232_CloseComport(port);
-    return 0;
-}

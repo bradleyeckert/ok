@@ -9,7 +9,7 @@
 #define CODESIZE              0x2000    /* cells in code space: 16KB */
 #define DATASIZE              0x0800    /* cells in data space: 8KB */
 #define TEXTORIGIN            0x1000    /* base address of internal Flash data in cells */
-#define TEXTSIZE              0x2000    /* size of internal Flash data in cells */
+#define TEXTSIZE              0x2000    /* size of internal "Flash" data in cells: 64KB */
 #define BOILERPLATE_SIZE          16
 
 #if (VM_CELLBITS > 16)
@@ -172,7 +172,7 @@ VMcell_t VMpopData(vm_ctx *ctx);
 
 #define IMM_NAMES { \
     "pfx", "zoo", "ax", "by", "if", "bran", "-if", "next", \
-    "?", "?", "?", "?", "APIcall", "APIcall+", "APIcall-", "APIcall–-"}
+    "?", "?", "?", "?", "APIcall", "APIcall+", "APIcall-", "APIcallï¿½-"}
 
 #define VMO_LEX                 0
 #define VMO_ZOO                 1
