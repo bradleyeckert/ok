@@ -178,7 +178,7 @@ int VMstep(vm_ctx *ctx, VMinst_t inst){
                 case VMO_AND:        ctx->t = t & n;                      break;
                 case VMO_SWAP:       ctx->t = n;  ctx->n = t;             break;
                 case VMO_CY:         ctx->t = ctx->cy;                    break;
-                case VMO_ZERO:       ctx->t = 0;                          break;
+                case VMO_B:          ctx->t = ctx->b;                     break;
                 case VMO_OVER:       ctx->t = n;                          break;
                 case VMO_PUSH:       pushReturn(ctx, t);                  break;
                 case VMO_R:          ctx->t = ctx->r;                     break;

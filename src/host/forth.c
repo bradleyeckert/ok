@@ -505,7 +505,7 @@ void AddForthKeywords(struct QuitStruct *state) {
     AddUop("a!",     "-forth.htm#astore a --",              IS_UOP(VMO_ASTORE));
     AddUop("b!",     "-forth.htm#bstore a --",              IS_UOP(VMO_BSTORE));
     AddUop("cy",     "-forth.htm#cy -- carry",              IS_UOP(VMO_CY));
-    AddUop("0",      "-forth.htm#zero -- 0",                IS_UOP(VMO_ZERO));
+    AddUop("b",      "-forth.htm#b -- x",                   IS_UOP(VMO_B));
     AddUop("u!",     "-forth.htm#ustore --",                IS_UOP(VMO_USTORE));
     AddUop("u",      "-forth.htm#u -- u",                   IS_UOP(VMO_U));
     AddUop("+",      "~core/Plus n1 n2 -- n3",              IS_UOP(VMO_PLUS));
@@ -553,7 +553,6 @@ void AddForthKeywords(struct QuitStruct *state) {
     AddKeyword("next",     "-forth.htm#next C: dest --",    noExecute,    doNext);
     AddMacro("@",     "~core/Fetch a -- x",               (VMO_ASTORE << 5)  | VMO_FETCHA);
     AddMacro("!",     "~core/Store x a --",               (VMO_ASTORE << 5)  | VMO_STOREA);
-    AddMacro("-1",    "-forth.htm#minusone -- -1",        (VMO_ZERO << 5)    | VMO_INV);
     AddMacro("nip",   "~core/NIP -- x1 x2 -- x2",         (VMO_SWAP << 5)    | VMO_DROP);
     AddMacro("2dup",  "~core/TwoDUP -- x1 x2 -- x1 x2 x1 x2", (VMO_OVER << 5) | VMO_OVER);
     AddMacro("2drop", "~core/NIP -- x1 x2 --",            (VMO_DROP << 5)    | VMO_DROP);

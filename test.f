@@ -117,11 +117,13 @@ variable counter
 
 : mystuff   1 counter +! ;
 
-\ @ is a "a! @a" macro, so within the loop 'a' must be protected as follows:
+2 buffer: tempAB
 
 :noname     console
             begin
-                a mystuff a!
+                a b tempAB a! !a+ !a+           \ save A and B registers
+                mystuff
+                tempAB a! @a+ @a+ b! a!         \ restore A and B registers
                 bcisync
             again
 ; resolves coldboot
@@ -143,4 +145,5 @@ t{ table 1 + @ -> 1000 }t
 t{ table 2 + @ -> 10000 }t
 
 \ verbose_bci verbose!
+17 port!
 

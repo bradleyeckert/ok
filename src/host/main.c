@@ -32,6 +32,7 @@ void BCIsendInit(int id) {
 
 void BCIsendFinal(int id) {
     BCIsendToHost((const uint8_t*)&responseBuf[id], responseLen[id]);
+    responseLen[id] = 0;
 }
 
 void YieldThread(void) {
@@ -83,20 +84,21 @@ void* SimulateCPU(void* threadid) {
 static int CommDone = 0;
 
 void* PollCommRX(void* threadid) {
-    uint8_t buffer[16];
+    uint8_t buffer[64];
     struct QuitStruct *q = &quit_internal_state;
     g_begun++;
     while (CommDone == 0) { // 'bye' sets done
         if (q->portisopen) {
-            uint8_t bytes = RS232_PollComport(q->port, buffer, 16);
+            uint8_t bytes = RS232_PollComport(q->port, buffer, 64);
             uint8_t *s = buffer;
             while (bytes--) {
                 TargetCharOutput(*s++);
             }
-            uSleep(10);     // not so rapid-fire polling
+            uSleep(100);    // not so rapid-fire polling
         }
         if (q->TxMsgSend) {
             EncryptAndSend(q->TxMsg, q->TxMsgLength);
+            q->TxMsgLength = 0;
             q->TxMsgSend = 0;
         }
         YieldThread();

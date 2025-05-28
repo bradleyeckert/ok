@@ -98,7 +98,7 @@ VMcell_t VMpopData(vm_ctx *ctx);
 #define UOP_NAMES { \
     "nop",   "inv",   "over",  "a!",    "+",     "xor",   "and",   ">r", \
     "unext", "2*",    "dup",   "drop",  "@a",    "@a+",   "r@",    "r>", \
-    "2/c",   "2/",    "0",     "b!",    "!a",    "!a+",   "!b",    "!b+", \
+    "2/c",   "2/",    "b",     "b!",    "!a",    "!a+",   "!b",    "!b+", \
     "swap",  "?",     "u",     "u!",    "@b",    "@b+",   "a",     "cy"}
 
 #define VM_STACKEFFECTS { /* 0=none, 1=dup, 2=drop */ \
@@ -128,14 +128,14 @@ VMcell_t VMpopData(vm_ctx *ctx);
 #define VMO_POP                 0x0F
 #define VMO_TWODIVC             0x10
 #define VMO_TWODIV              0x11
-#define VMO_ZERO                0x12
+#define VMO_B                   0x12
 #define VMO_BSTORE              0x13
 #define VMO_STOREA              0x14
 #define VMO_STOREAPLUS          0x15
 #define VMO_STOREB              0x16
 #define VMO_STOREBPLUS          0x17
 #define VMO_SWAP                0x18
-//#define VMO_ZEROLESS          0x19 // unused
+//#define VMO_BLESS          0x19 // unused
 #define VMO_U                   0x1A
 #define VMO_USTORE              0x1B
 #define VMO_FETCHB              0x1C
