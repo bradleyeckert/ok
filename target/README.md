@@ -4,7 +4,14 @@ The STM32CubeIDE (Eclipse) project in the H753 folder runs on a [NUCLEO-H753ZI](
 
 ## compiling
 
-Install the STM32Cube tools (MX, IDE, and Prog) on your PC. MX and IDE will want a decent computer.
+Install the STM32Cube tools (MX, IDE, and Prog) on your PC. 
+
+For development, the SDK consists of three apps to download and install:
+
+- [STM32CubeMX](https://www.st.com/content/st_com/en/stm32cubemx.html), a configurator tool for generating startup code.
+- [STM32CubeIDE](https://www.st.com/content/st_com/en/stm32cubeide.html), a bloated Eclipse® C IDE.
+- [STM32CubeProgrammer](https://www.st.com/en/development-tools/stm32cubeprog.html), a very nice programming tool. Supports firmware encryption.
+
 Import the project into the IDE's workspace and Build it.
 Turn on the "binary output" option of you like to program by DFU drag-and-drop.
 
@@ -23,11 +30,6 @@ Once it is running, you can use `ok` to connect to it. In ok's console,
 
 - 1.14 MIPS with Icache and Dcache disabled
 - 4.95 MIPS with Icache and Dcache enabled
-
-On a $140 GMKtec NucBox G5 Mini PC (If you have the means, I highly recommend picking one up),
-the VM runs at 65 MIPs. The Intel Alder Lake N97 runs at up to 3.6GHz,
-so perhaps that is 55 clocks per instruction.
-The STM32H753 is 81 clocks per instruction.
 
 The VM is ~250 lines of C, which could be replaced by assembly to get get more MIPS.
 
