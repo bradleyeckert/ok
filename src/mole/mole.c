@@ -14,7 +14,7 @@ AEAD-secured ports (for UARTs, etc.)
 
 #ifndef MOLE_TRACE
 #define MOLE_TRACE 0
-#endif // MOLE_TRACE
+#endif
 
 #if (MOLE_TRACE)
 #include <stdio.h>
@@ -136,6 +136,7 @@ static void SendTxBuf(port_ctx *ctx) {
 }
 
 static void SendHeader(port_ctx *ctx, int tag) {
+    SendEnd(ctx);                               // reset state in case of oops
     BeginHash(CTX->thCtx, ctx->hmackey, MOLE_HMAC_LENGTH, ctx->hashCounterTX);
     SendByte(ctx, tag);                         // Header consists of a TAG byte,
 }
@@ -359,7 +360,6 @@ void molePair(port_ctx *ctx) {
     ctx->rReady = 0;
     ctx->tReady = 0;
     ctx->state = IDLE;                          // reset local FSM
-    SendEnd(ctx);                               // reset remote FSM
     SendHeader(ctx, MOLE_TAG_RESET);
     SendEnd(ctx);
 }
@@ -367,7 +367,6 @@ void molePair(port_ctx *ctx) {
 void moleBoilerReq(port_ctx *ctx) {
     PRINTf("\n%s sending Boilerplate request, ", ctx->name);
     ctx->state = IDLE;                          // reset local FSM
-    SendEnd(ctx);                               // reset remote FSM
     SendHeader(ctx, MOLE_TAG_GET_BOILER);
     SendEnd(ctx);
 }
@@ -545,7 +544,7 @@ noend:  if (ended) {                            // premature end not allowed
                 DUMP(ctx->rxbuf, MOLE_ADMINPASS_LENGTH);
                 PRINTF("Actual Passcode");
             if (memcmp(ctx->rxbuf, ctx->adminpasscode, MOLE_ADMINPASS_LENGTH) == 0)
-                ctx->adminOK = 0x55;
+                ctx->adminOK = MOLE_ADMIN_ACTIVE;
             break;
         case MOLE_TAG_MESSAGE:
             if (r) {
@@ -606,6 +605,7 @@ int moleFileNew(port_ctx *ctx) {                // start a new one-way message
 
 void moleFileFinal (port_ctx *ctx) {            // end the one-way message
     SendTxHash(ctx, 0);                         // finish last chunk
+    SendEnd(ctx);
     SendByteU(ctx, MOLE_TAG_EOF);
     EndHash(CTX->rhCtx, ctx->hmac);
     SendAsHash(ctx, ctx->hmac);                 // send overall hash
@@ -660,12 +660,29 @@ static uint8_t NextByte(void) {
     return (uint8_t)c;
 }
 
-static void SkipEndTag(void) {
+static uint8_t SkipChars(uint8_t c) {           // skip run of chars
+    uint8_t n = c;
+    while ((n == c) && (!done)) {
+        n = NextByte();
+    }
+    return n;
+}
+
+static void FindEndTag(void) {                  // skip to 1st byte after end tag
     uint8_t c;
     do {
         c = NextByte();                         // .. .. .. 0A .. ..
         if (done) return;                       //             ^-- position
     } while (c != MOLE_TAG_END);
+}
+
+static int SkipEndTags(int n) {                 // expect n sequential end tags
+    int r = 0;
+    while (n--) {
+        uint8_t c = NextByte();
+        if (c != MOLE_TAG_END) return 1;
+    }
+    return r;
 }
 
 #define HMAC_TAG 0x100
@@ -713,22 +730,20 @@ int moleFileIn (port_ctx *ctx, mole_inFn cFn, mole_outFn mFn) {
     inFn = cFn;
         PRINTf("\n%s decrypting input stream c, producing output stream m", ctx->name);
     if (mFn == NULL) PRINTf("\nAuthenticate Only");
-    SkipEndTag();                               // skip boilerplate
-    int c = 0xFF;
-    while ((c == 0xFF) && (!done)) {            // skip blanks
-        c = NextByte();
-    }
+    FindEndTag();                               // skip boilerplate
+    int c = SkipChars(0xFF);                    // skip blanks, if there are any
+        c = SkipChars(MOLE_TAG_END);            // skip end tags
     if (c != MOLE_TAG_IV_A) return MOLE_ERROR_MISSING_IV;
         PRINTf("\nIV tag is at position 0x%x ", position - 1);
     ctx->hashCounterRX = 0;
     BeginHash(CTX->rhCtx, ctx->hmackey, MOLE_HMAC_LENGTH, 0);
-    Hash(CTX->rhCtx, c);
+    Hash(CTX->rhCtx, c);                        // hash includes the tag
     NextBlock (ctx, mIV);
         DUMP(mIV, MOLE_HMAC_LENGTH); PRINTF("mIV read");
     BeginTx  (CTX->rcCtx, ctx->cryptokey, mIV);
     NextBlock (ctx, mIV);
         DUMP(mIV, MOLE_HMAC_LENGTH); PRINTF("cIV read");
-    RX; RX;                                      // skip avail field
+    RX; RX;                                     // skip avail field
     BlockCipher(CTX->rcCtx, mIV, cIV, 0);
     memcpy(&ctx->hashCounterRX, cIV, 8);
         DUMP(cIV, MOLE_HMAC_LENGTH); PRINTF("IV calculated\n");
@@ -743,14 +758,13 @@ badmac: DUMP(ctx->hmac, MOLE_HMAC_LENGTH); PRINTF("expected key hmac ");
         DUMP(mIV, MOLE_HMAC_LENGTH); PRINTF("actual key hmac\n");
         return MOLE_ERROR_BAD_HMAC;
     }
-    SkipEndTag();
-    SkipEndTag();
+    if (SkipEndTags(3)) return MOLE_ERROR_BAD_END_RUN;
         PRINTf("\nRandom IV (nonce) has been set up and authenticated");
-        PRINTf("\nDecrypting the stream at position 0x%x\n", position);
     ctx->chunks = 0;
     while(1) {
         BeginHash(CTX->rhCtx, ctx->hmackey, MOLE_HMAC_LENGTH, ctx->hashCounterRX);
         int n = RX;
+        PRINTf("\nDecrypting the stream at position 0x%x, c=%d\n", position, n);
         if (n == MOLE_TAG_EOF)    break;
         if (n != MOLE_TAG_RAWTX)  return MOLE_ERROR_NO_RAWPACKET;
         if (RX != MOLE_ANYLENGTH) return MOLE_ERROR_NO_ANYLENGTH;
@@ -767,8 +781,9 @@ badmac: DUMP(ctx->hmac, MOLE_HMAC_LENGTH); PRINTF("expected key hmac ");
         }
         NextBlock(ctx, mIV);                    // get expected HMAC
         if (testHMAC(ctx, mIV)) goto badmac;
-        SkipEndTag();
-        SkipEndTag();
+        if (SkipEndTags(1)) return MOLE_ERROR_BAD_END_RUN;
+        SkipChars(0);                           // skip padding
+        if (SkipEndTags(1)) return MOLE_ERROR_BAD_END_RUN;
         ctx->chunks++;
     }   PRINTf("\nEOF found at position 0x%x, %d chunks\n", position, ctx->chunks);
     EndHash(CTX->thCtx, ctx->hmac);

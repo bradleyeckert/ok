@@ -46,6 +46,7 @@ extern "C" {
 #define MOLE_ANYLENGTH              0x01
 #define MOLE_END_UNPADDED              0
 #define MOLE_END_PADDED               32
+#define MOLE_ADMIN_ACTIVE           0x55
 
 // Error tags
 #define MOLE_ERROR_INVALID_STATE       1 /* FSM reached an invalid state */
@@ -66,6 +67,7 @@ extern "C" {
 #define MOLE_ERROR_STREAM_ENDED       16
 #define MOLE_ERROR_NO_RAWPACKET       17
 #define MOLE_ERROR_NO_ANYLENGTH       18
+#define MOLE_ERROR_BAD_END_RUN        19
 
 enum States {
   IDLE = 0,
@@ -174,7 +176,7 @@ int moleAddPort(port_ctx *ctx, const uint8_t *boilerplate, int protocol, char* n
                    mole_boilrFn boiler, mole_plainFn plain, mole_ciphrFn ciphr,
                    mole_WrKeyFn WrKeyFn);
 
-/** Establish keys.
+/** Append to the port list.
  * @param ctx         Port identifier
  * @param key         32-byte encryption key, 16-byte HMAC key, and 16-byte HMAC of these
  * @return 0 if okay, otherwise MOLE_ERROR_?
