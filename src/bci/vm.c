@@ -69,8 +69,8 @@ void VMwriteCell(vm_ctx *ctx, VMcell_t addr, VMcell_t x) {
 }
 
 static void VMdupData(vm_ctx *ctx) {
-    ctx->DataStack[ctx->sp] = ctx->n;
     ctx->sp = (ctx->sp + 1) & (VM_STACKSIZE - 1);
+    ctx->DataStack[ctx->sp] = ctx->n;
     ctx->n = ctx->t;
 }
 
@@ -82,13 +82,20 @@ void VMpushData(vm_ctx *ctx, VMcell_t x) {
 VMcell_t VMpopData(vm_ctx *ctx) {
     VMcell_t r = ctx->t;
     ctx->t = ctx->n;
-    ctx->sp = (ctx->sp - 1) & (VM_STACKSIZE - 1);
     ctx->n = ctx->DataStack[ctx->sp];
+    ctx->sp = (ctx->sp - 1) & (VM_STACKSIZE - 1);
     return r;
 }
 
+void VMpushReturn(vm_ctx *ctx, VMcell_t x) {
+    ctx->rp = (ctx->rp + 1) & (VM_STACKSIZE - 1);
+    ctx->ReturnStack[ctx->rp] = ctx->r;
+    ctx->r = x;
+}
+
 VMcell_t VMpopReturn(vm_ctx *ctx) {
-    VMcell_t r = ctx->ReturnStack[ctx->rp];
+    VMcell_t r = ctx->r;
+    ctx->r = ctx->ReturnStack[ctx->rp];
     ctx->rp = (ctx->rp - 1) & (VM_STACKSIZE - 1);
     return r;
 }
@@ -120,7 +127,7 @@ int VMstep(vm_ctx *ctx, VMinst_t inst){
         inst = ctx->CodeMem[pc++];
     }
     if (inst & (1 << (VM_INSTBITS - 1))) { // MSB
-        if (inst & (1 << (VM_INSTBITS - 2))) pc = ctx->ReturnStack[ctx->rp--];
+        if (inst & (1 << (VM_INSTBITS - 2))) pc = VMpopReturn(ctx);
         inst &= IMASK2;
         for (int i = SLOT0_POSITION; i > -5; i -= 5) {
             uint8_t uop;
@@ -164,12 +171,12 @@ int VMstep(vm_ctx *ctx, VMinst_t inst){
                 case VMO_CY:         ctx->t = ctx->cy;                    break;
                 case VMO_B:          ctx->t = ctx->b;                     break;
                 case VMO_OVER:       ctx->t = n;                          break;
-                case VMO_PUSH:       ctx->ReturnStack[++ctx->rp] = t;     break;
-                case VMO_R:          ctx->t = ctx->ReturnStack[ctx->rp];  break;
-                case VMO_POP:        ctx->t = ctx->ReturnStack[ctx->rp--];break;
-                case VMO_UNEXT:      ctx->ReturnStack[ctx->rp]--;
-                    if (ctx->ReturnStack[ctx->rp] == 0) {
-                        ctx->rp--;
+                case VMO_PUSH:       VMpushReturn(ctx, t);                break;
+                case VMO_R:          ctx->t = ctx->r;                     break;
+                case VMO_POP:        ctx->t = VMpopReturn(ctx);           break;
+                case VMO_UNEXT:      ctx->r--;
+                    if (ctx->r == 0) {
+                        VMpopReturn(ctx);
                         break;
                     }
                     else {
@@ -199,7 +206,7 @@ int VMstep(vm_ctx *ctx, VMinst_t inst){
         int32_t immex = (ctx->lex << (VM_INSTBITS - 3))
                     | (inst & ((1 << (VM_INSTBITS - 3)) - 1));
         switch ((inst >> (VM_INSTBITS - 3)) & 3) { // upper bits 000, 001, 010, 011
-            case VMO_CALL: ctx->ReturnStack[++ctx->rp] = pc;
+            case VMO_CALL: VMpushReturn(ctx, pc);
             case VMO_JUMP: pc = immex;                                  break;
             case VMO_LIT: VMdupData(ctx);  ctx->t = immex;              break;
             default: // inst = 011 oooo imm...
@@ -223,8 +230,8 @@ int VMstep(vm_ctx *ctx, VMinst_t inst){
                     pc = ctx->pc + immex;
                     } break;
                 case VMO_NEXT:
-                    ctx->ReturnStack[ctx->rp]--;
-                    if (ctx->ReturnStack[ctx->rp] == 0) ctx->rp--;
+                    ctx->r--;
+                    if (ctx->r == 0) VMpopReturn(ctx);
                     else pc = ctx->pc + immex;
                     break;
                 case VMO_DUPAPI: VMdupData(ctx);
