@@ -15,7 +15,7 @@ extern "C" {
 
 #define LineBufferSize 128      /* Size of line buffer                      */
 #define MaxLineLength   80      /* Max TIB size                             */
-#define MaxKeywords  65536      /* Number of headers                        */
+#define MaxKeywords  20000      /* Number of headers                        */
 #define MaxNameSize     32      /* Number of chars in a name (less 1)       */
 #define MaxFiles        16      /* Max open files                           */
 #define MaxFilePaths   250      /* Max unique files                         */

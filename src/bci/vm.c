@@ -12,41 +12,12 @@
 #define PRINTF(...) do { } while (0)
 #endif
 
-static const uint8_t boilerplate[BOILERPLATE_SIZE] = {
-    1,                          // format 1
-    VM_CELLBITS,                // bits per data cell
-    VM_INSTBITS,                // bits per instruction icell
-    VM_STACKSIZE - 1,         // max stack depths
-    VM_STACKSIZE - 1,
-    (DATASIZE >> 8) - 1,        // 256-cell pages of data memory less 1
-    (CODESIZE >> 8) - 1,        // 256-icell pages of code memory less 1
-    (TEXTSIZE >> 10) - 1,       // 1K-cell pages of text memory less 1
-    TEXTORIGIN >> 12,           // start address of text memory
-};
-
 typedef VMcell_t (*APIfn) (vm_ctx *ctx);
 
 static const APIfn APIfns[] = {
     NVMbeginRead, NVMbeginWrite, NVMread, NVMwrite, NVMendRW,
     API_Emit, API_umstar, API_mudivmod
 };
-
-void VMreset(vm_ctx *ctx) {
-    memset(ctx, 0, sizeof(ctx->DataMem)); // data space initializes to 0
-    memset(ctx, 0, 64);         // wipe the first 16 longs
-    ctx->boilerplate = boilerplate;
-    ctx->DataMem[0] = 10;
-    ctx->status = BCI_STATUS_STOPPED;
-    ctx->statusNew = BCI_STATUS_STOPPED;
-    VMinst_t blank = (VMinst_t)((BLANK_FLASH_BYTE << 24) | (BLANK_FLASH_BYTE << 16)
-                              | (BLANK_FLASH_BYTE << 8) | BLANK_FLASH_BYTE);
-    if (ctx->CodeMem[0] != (VMinst_t)blank) { // got code?
-        ctx->status = BCI_STATUS_RUNNING;
-        PRINTF("\nReset, VM is running\n");
-    } else {
-        PRINTF("\nReset, VM is stopped\n");
-    }
-}
 
 VMcell_t VMreadCell(vm_ctx *ctx, VMcell_t addr) {
     if (addr < DATASIZE)
@@ -269,3 +240,33 @@ static int ops0001(vm_ctx *ctx, int inst) { // alternate instructions 0110001...
     if (inst & VMI_ZOODROP) VMpopData(ctx);
     return r;
 }
+
+static const uint8_t boilerplate[BOILERPLATE_SIZE] = {
+    1,                          // format 1
+    VM_CELLBITS,                // bits per data cell
+    VM_INSTBITS,                // bits per instruction icell
+    VM_STACKSIZE - 1,         // max stack depths
+    VM_STACKSIZE - 1,
+    (DATASIZE >> 8) - 1,        // 256-cell pages of data memory less 1
+    (CODESIZE >> 8) - 1,        // 256-icell pages of code memory less 1
+    (TEXTSIZE >> 10) - 1,       // 1K-cell pages of text memory less 1
+    TEXTORIGIN >> 12,           // start address of text memory
+};
+
+void VMreset(vm_ctx *ctx) {
+    memset(ctx, 0, sizeof(ctx->DataMem)); // data space initializes to 0
+    memset(ctx, 0, 64);         // wipe the first 16 longs
+    ctx->boilerplate = boilerplate;
+    ctx->DataMem[0] = 10;
+    ctx->status = BCI_STATUS_STOPPED;
+    ctx->statusNew = BCI_STATUS_STOPPED;
+    VMinst_t blank = (VMinst_t)((BLANK_FLASH_BYTE << 24) | (BLANK_FLASH_BYTE << 16)
+                              | (BLANK_FLASH_BYTE << 8) | BLANK_FLASH_BYTE);
+    if (ctx->CodeMem[0] != (VMinst_t)blank) { // got code?
+        ctx->status = BCI_STATUS_RUNNING;
+        PRINTF("\nReset, VM is running\n");
+    } else {
+        PRINTF("\nReset, VM is stopped\n");
+    }
+}
+
