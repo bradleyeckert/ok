@@ -5,7 +5,7 @@
 
 #define VM_CELLBITS               32    /* simulator bits per cell: 16 to 32 */
 #define VM_INSTBITS               16    /* bits per instruction: 16, 17, 20, 21, 22, 25, 26, or 27 bits */
-#define VM_STACKSIZE              16    /* depth of stacks */
+#define VM_STACKSIZE              32    /* depth of stacks */
 #define CODESIZE              0x2000    /* cells in code space: 16KB */
 #define DATASIZE              0x0800    /* cells in data space: 8KB */
 #define TEXTORIGIN            0x1000    /* base address of internal Flash data in cells */
