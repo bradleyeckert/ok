@@ -435,6 +435,8 @@ static void ComPad     (void) { CompLit (DataMemSize() - PAD_SIZE); }
 static void Literal    (void) { CompLit (DataPop()); }
 static void AddHelp    (void) { HEADER[HP].help = TIBtoEnd(); }
 static void CompStr    (void) { CommaStr(); Literal(); }
+static void byte2cell  (void) { DataPush(DataPop() >> C_BYTESHIFT); }
+
 
 void AddAPIcall(char* name, char* help, uint32_t value) {
     if (AddHead(name, help)) {
@@ -466,6 +468,7 @@ void AddForthKeywords(struct QuitStruct *state) {
     AddEquate("verbose_src",    "-forth.htm#vsrc -- mask",      VERBOSE_SRC);
     AddEquate("verbose_source", "-forth.htm#vsource -- mask",   VERBOSE_SOURCE);
     AddEquate("verbose_cycles", "-forth.htm#vcycles -- mask",   VERBOSE_CYCLES);
+    AddKeyword("bytes>cells",   "-forth.htm#b2c  ba -- ca",     byte2cell, noCompile);
     AddEquate("host",           "-forth.htm#host -- wid",       q->host);
     AddKeyword("equ",      "-forth.htm#equ x <name> --",    Constant,   noCompile);
     AddKeyword(".s",       "~tools/DotS wid --",            dotESS,     noCompile);

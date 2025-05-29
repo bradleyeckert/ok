@@ -15,11 +15,15 @@
 #if (VM_CELLBITS > 16)
 #define VMcell_t            uint32_t
 #define VMdblcell_t         uint64_t
-#define C_CELLBITS          32
+#define C_CELLBITS                32
+#define C_BYTESHIFT                2
+#define VM_EMPTY_STACK    0xAAAAAAAA
 #else
 #define VMcell_t            uint16_t
 #define VMdblcell_t         uint32_t
-#define C_CELLBITS          16
+#define C_CELLBITS                16
+#define C_BYTESHIFT                1
+#define VM_EMPTY_STACK        0xAAAA
 #endif
 
 #if ((VM_STACKSIZE-1) & VM_STACKSIZE)
@@ -32,7 +36,6 @@
 #else
 #define VM_MASK      ((1 << VM_CELLBITS) - 1)
 #endif
-#define VM_EMPTY_STACK (0x55555555 & VM_MASK)
 #define VM_IMM_MASK  ((1 << (VM_INSTBITS - 3)) - 1)
 #define VM_IMMS_MASK ((1 << (VM_INSTBITS - 7)) - 1)
 

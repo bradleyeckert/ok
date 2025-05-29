@@ -87,6 +87,12 @@ VMcell_t VMpopData(vm_ctx *ctx) {
     return r;
 }
 
+VMcell_t VMpopReturn(vm_ctx *ctx) {
+    VMcell_t r = ctx->ReturnStack[ctx->rp];
+    ctx->rp = (ctx->rp - 1) & (VM_STACKSIZE - 1);
+    return r;
+}
+
 static const uint8_t stackeffects[32] = VM_STACKEFFECTS;
 
 // Single-step the VM and set ctx->status to 1 if the PC goes out of bounds.

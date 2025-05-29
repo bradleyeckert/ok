@@ -5,7 +5,7 @@
 
 #define VM_CELLBITS               32    /* simulator bits per cell: 16 to 32 */
 #define VM_INSTBITS               16    /* bits per instruction: 16, 17, 20, 21, 22, 25, 26, or 27 bits */
-#define VM_STACKSIZE             256    /* depth of stacks */
+#define VM_STACKSIZE              16    /* depth of stacks */
 #define CODESIZE              0x2000    /* cells in code space: 16KB */
 #define DATASIZE              0x0800    /* cells in data space: 8KB */
 #define TEXTORIGIN            0x1000    /* base address of internal Flash data in cells */
@@ -15,18 +15,19 @@
 #if (VM_CELLBITS > 16)
 #define VMcell_t            uint32_t
 #define VMdblcell_t         uint64_t
-#define C_CELLBITS          32
+#define C_CELLBITS                32
+#define C_BYTESHIFT                2
+#define VM_EMPTY_STACK    0xAAAAAAAA
 #else
 #define VMcell_t            uint16_t
 #define VMdblcell_t         uint32_t
-#define C_CELLBITS          16
+#define C_CELLBITS                16
+#define C_BYTESHIFT                1
+#define VM_EMPTY_STACK        0xAAAA
 #endif
 
 #if ((VM_STACKSIZE-1) & VM_STACKSIZE)
 #error VM_STACKSIZE must be an exact power of 2
-#endif
-#if (VM_STACKSIZE != 256)
-#error VM_STACKSIZE must be 256
 #endif
 
 #define VM_SIGN     (1 << (VM_CELLBITS - 1)) // MSB
@@ -49,7 +50,7 @@
 
 typedef struct
 {   VMcell_t pc;                // program counter
-    VMcell_t n, t, a, b, x, y;
+    VMcell_t r, n, t, a, b, x, y;
     uint8_t  sp, rp, cy;
     uint16_t lex;
     int16_t  ior;

@@ -228,12 +228,11 @@ static int OrderPop(void) {
 
 static void Only       (void) { ORDERS = 0; OrderPush(q->host); OrderPush(q->host); }
 static void ForthLex   (void) { CONTEXT[0] = CORE.forth; }
-static void ForthWID   (void) { DataPush(CORE.forth); }
+//static void ForthWID (void) { DataPush(CORE.forth); }
 static void Definitions(void) { CURRENT = CONTEXT[0]; }
-static void PlusOrder  (void) { OrderPush(DataPop()); }
-static void MinusOrder (void) { DataPush(OrderPop()); }
-static void SetCurrent (void) { CURRENT = DataPop(); }
-static void GetCurrent (void) { DataPush(CURRENT); }
+static void Also       (void) { OrderPush(CONTEXT[0]); }
+static void Previous   (void) { OrderPop(); }
+static void SetVocab   (void) { CONTEXT[0] = HEADER[ME].w; }
 
 //##############################################################################
 //##  File I/O and parsing
@@ -552,13 +551,21 @@ static void Empty(void) {
     Only(); ForthLex(); Definitions();
 }
 
+static void Vocabulary(void) {
+    char *name = Const(GetToken());
+    int wid = AddWordlist(name);
+    if (AddHead(name, "")) {
+        SetFns(wid, SetVocab, noCompile);
+    }
+}
+
 static void AddRootKeywords(void) {
     HP = 0; // start empty
     WRDLISTS = 0;
     // Forth definitions
     q->host = AddWordlist("host");
     for (int i = 0; i < CPUCORES; i++) {
-        CORE.forth = AddWordlist("frth");
+        CORE.forth = AddWordlist("forth");
         q->dp[i] = 1;                   // data[0] reserved for BCI
     }
     Only(); Definitions();
@@ -567,18 +574,17 @@ static void AddRootKeywords(void) {
     AddKeyword("empty",      "-quit.htm#empty --",                  Empty,       noCompile);
     AddKeyword("cd",         "-quit.htm#cdir ccc<EOL> --",          Chdir,       noCompile);
     AddKeyword("base!",      "-quit.htm#basestore n --",            BaseStore,   noCompile);
+    AddKeyword("vocabulary", "-quit.htm#vocab <name> --",           Vocabulary,  noCompile);
     AddKeyword("only",       "~search/ONLY --",                     Only,        noCompile);
     AddKeyword("order",      "~search/ORDER --",                    Order,       noCompile);
-    AddKeyword("set-current","~search/SET-CURRENT wid --",          SetCurrent,  noCompile);
-    AddKeyword("get-current","~search/GET-CURRENT -- wid",          GetCurrent,  noCompile);
     AddKeyword("definitions","~search/DEFINITIONS --",              Definitions, noCompile);
-    AddKeyword("+order",     "-quit.htm#porder wid --",             PlusOrder,   noCompile);
-    AddKeyword("-order",     "-quit.htm#morder -- wid",             MinusOrder,  noCompile);
+    AddKeyword("also",       "~search/ALSO <name> --",              Also,        noCompile);
+    AddKeyword("previous",   "~search/PREVIOUS -- ",                Previous,    noCompile);
     AddKeyword("include",    "~file/INCLUDE i*x \"name\" -- j*x",   Include,     noCompile);
     AddKeyword("'",          "~core/Tick <spaces>\"name\" -- xt",   Tick,        noCompile);
     AddKeyword("[']",        "~core/BracketTick <spaces>\"name\" -- xt", noExecute, BracketTick);
     AddKeyword("forth",      "~search/FORTH --",                    ForthLex,    noCompile);
-    AddKeyword("frth",       "~-quit.htm#frth -- wid",              ForthWID,    noCompile);
+//  AddKeyword("*forth",     "~-quit.htm#frth -- wid",              ForthWID,    noCompile);
     AddKeyword("verbose!",   "-quit.htm#verbsto mask --",           Verbosity,   noCompile);
     AddKeyword("(",          "~core/p ccc<paren> --",               SkipToPar,   SkipToPar);
     AddKeyword("\\",         "~core/bs ccc<EOL> --",                SkipToEOL,   SkipToEOL);

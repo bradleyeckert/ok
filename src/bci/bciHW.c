@@ -89,11 +89,14 @@ VMcell_t NVMendRW (vm_ctx *ctx){
     return 0;
 }
 
+// Absolute memory access - your PC's MMU will crash the app
 
 VMcell_t BCIVMioRead (vm_ctx *ctx, VMcell_t addr){
-    return 0;
+    return *(VMcell_t*)(size_t)(addr << C_BYTESHIFT);
 }
+
 void BCIVMioWrite (vm_ctx *ctx, VMcell_t addr, VMcell_t data){
+    *(VMcell_t*)(size_t)(addr << C_BYTESHIFT) = data;
 }
 
 // Write to flash region using byte address
