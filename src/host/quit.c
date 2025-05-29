@@ -626,7 +626,7 @@ int QuitLoop(char * line, int maxlength, struct QuitStruct *state) {
                 if (VERBOSE & VERBOSE_TOKEN) {
                     printf("  `%s`", TOKEN);
                 }
-                if (FindWord(TOKEN)) {          // the token is a word
+                if (FindWord(TOKEN)) {  // the token is a word
                     if (STATE) HEADER[ME].CompFn();
                     else       HEADER[ME].ExecFn();
                 } else {                // or a number

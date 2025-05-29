@@ -113,26 +113,28 @@ void BCIhandler(vm_ctx *ctx, const uint8_t *src, uint16_t length) {
         waitUntilVMready(ctx);          // stop the VM if it is running
         ctx->cycles = 0;
         VMwriteCell(ctx, 0, get32());   // packed status at data[0]
+        uint8_t sp0 = ctx->sp;
         n = get8();
-        VMpushData(ctx, VM_EMPTY_STACK);// use special "empty stack" symbol
-        while (n--) {                   // to mark the stack, SP might not exist
+        while (n--) {
             VMpushData(ctx, get32());
         }
         ctx->ior = simulate(ctx, get32()); // xt
         put8(ctx, BCI_BEGIN);           // indicate end of random chars, if any
-        n = 0;
-        while (1) {
-            x = VMpopData(ctx);
-            if (x == VM_EMPTY_STACK) break;
-            if (n == EXEC_STACK_SIZE) {
-                ctx->ior = BCI_STACK_OVERFLOW;
-                break;
-            }
-            ds[n++] = x;
+        temp = ctx->sp - sp0;
+        if (temp < 0) {
+            ctx->ior = BCI_STACK_UNDERFLOW;
+            temp = 0;
         }
-        put8(ctx, n);                   // stack depth
-        while (n--) {
-            put32(ctx, ds[n]);
+        if (temp > EXEC_STACK_SIZE) {
+            ctx->ior = BCI_STACK_OVERFLOW;
+            temp = EXEC_STACK_SIZE;
+        }
+        for (int i = 0; i < temp; i++) {//
+            ds[i] = VMpopData(ctx);
+        }
+        put8(ctx, temp);                // stack items returned
+        while (temp--) {
+            put32(ctx, ds[temp]);
         }
         put32(ctx, VMreadCell(ctx, 0)); // return packed status
         ctx->status = status0;          // run if it was previously running

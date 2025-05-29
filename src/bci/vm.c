@@ -34,13 +34,6 @@ static const APIfn APIfns[] = {
 void VMreset(vm_ctx *ctx) {
     memset(ctx, 0, sizeof(ctx->DataMem)); // data space initializes to 0
     memset(ctx, 0, 64);         // wipe the first 16 longs
-    for (int i = 0; i < VM_STACKSIZE; i++) {
-        ctx->DataStack[i] = VM_EMPTY_STACK;
-        ctx->ReturnStack[i] = VM_EMPTY_STACK;
-    }
-    ctx->t = VM_EMPTY_STACK;
-    ctx->n = VM_EMPTY_STACK;
-    ctx->r = VM_EMPTY_STACK;
     ctx->boilerplate = boilerplate;
     ctx->DataMem[0] = 10;
     ctx->status = BCI_STATUS_STOPPED;
@@ -91,21 +84,6 @@ VMcell_t VMpopData(vm_ctx *ctx) {
     ctx->t = ctx->n;
     ctx->sp = (ctx->sp - 1) & (VM_STACKSIZE - 1);
     ctx->n = ctx->DataStack[ctx->sp];
-    ctx->DataStack[ctx->sp] = VM_EMPTY_STACK;
-    return r;
-}
-
-static void pushReturn(vm_ctx *ctx, VMcell_t x) {
-    ctx->ReturnStack[ctx->rp] = ctx->r;
-    ctx->rp = (ctx->rp + 1) & (VM_STACKSIZE - 1);
-    ctx->r = x;
-}
-
-static VMcell_t popReturn(vm_ctx *ctx) {
-    VMcell_t r = ctx->r;
-    ctx->rp = (ctx->rp - 1) & (VM_STACKSIZE - 1);
-    ctx->r = ctx->ReturnStack[ctx->rp];
-    ctx->ReturnStack[ctx->rp] = VM_EMPTY_STACK;
     return r;
 }
 
@@ -136,7 +114,7 @@ int VMstep(vm_ctx *ctx, VMinst_t inst){
         inst = ctx->CodeMem[pc++];
     }
     if (inst & (1 << (VM_INSTBITS - 1))) { // MSB
-        if (inst & (1 << (VM_INSTBITS - 2))) pc = popReturn(ctx);
+        if (inst & (1 << (VM_INSTBITS - 2))) pc = ctx->ReturnStack[ctx->rp--];
         inst &= IMASK2;
         for (int i = SLOT0_POSITION; i > -5; i -= 5) {
             uint8_t uop;
@@ -180,12 +158,18 @@ int VMstep(vm_ctx *ctx, VMinst_t inst){
                 case VMO_CY:         ctx->t = ctx->cy;                    break;
                 case VMO_B:          ctx->t = ctx->b;                     break;
                 case VMO_OVER:       ctx->t = n;                          break;
-                case VMO_PUSH:       pushReturn(ctx, t);                  break;
-                case VMO_R:          ctx->t = ctx->r;                     break;
-                case VMO_POP:        ctx->t = popReturn(ctx);             break;
-                case VMO_UNEXT: ctx->r--;
-                    if (ctx->r == 0) {popReturn(ctx); break;}
-                    else {i = 15; continue;}
+                case VMO_PUSH:       ctx->ReturnStack[++ctx->rp] = t;     break;
+                case VMO_R:          ctx->t = ctx->ReturnStack[ctx->rp];  break;
+                case VMO_POP:        ctx->t = ctx->ReturnStack[ctx->rp--];break;
+                case VMO_UNEXT:      ctx->ReturnStack[ctx->rp]--;
+                    if (ctx->ReturnStack[ctx->rp] == 0) {
+                        ctx->rp--;
+                        break;
+                    }
+                    else {
+                        i = 15;
+                        continue;
+                    }
                 case VMO_U:          ctx->t = 0;                          break;
                 // memory operations
                 case VMO_BSTORE:     ctx->b = t;                          break;
@@ -209,7 +193,7 @@ int VMstep(vm_ctx *ctx, VMinst_t inst){
         int32_t immex = (ctx->lex << (VM_INSTBITS - 3))
                     | (inst & ((1 << (VM_INSTBITS - 3)) - 1));
         switch ((inst >> (VM_INSTBITS - 3)) & 3) { // upper bits 000, 001, 010, 011
-            case VMO_CALL: pushReturn(ctx, pc);
+            case VMO_CALL: ctx->ReturnStack[++ctx->rp] = pc;
             case VMO_JUMP: pc = immex;                                  break;
             case VMO_LIT: VMdupData(ctx);  ctx->t = immex;              break;
             default: // inst = 011 oooo imm...
@@ -233,8 +217,8 @@ int VMstep(vm_ctx *ctx, VMinst_t inst){
                     pc = ctx->pc + immex;
                     } break;
                 case VMO_NEXT:
-                    ctx->r--;
-                    if (ctx->r == 0) popReturn(ctx);
+                    ctx->ReturnStack[ctx->rp]--;
+                    if (ctx->ReturnStack[ctx->rp] == 0) ctx->rp--;
                     else pc = ctx->pc + immex;
                     break;
                 case VMO_DUPAPI: VMdupData(ctx);
