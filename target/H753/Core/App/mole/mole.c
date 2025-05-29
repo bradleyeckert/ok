@@ -174,9 +174,9 @@ static int SendIV(port_ctx *ctx, int tag) {     // send random IV with random IV
     int r = 0;
     int c;
     for (int i = 0; i < MOLE_IV_LENGTH ; i++) {
-        c = ctx->rngFn();  r |= c;  mIV[i] = (uint8_t)c;
-        c = ctx->rngFn();  r |= c;  cIV[i] = (uint8_t)c;
-        if (r & 0x100) {
+        c = moleTRNG();  r |= c;  mIV[i] = (uint8_t)c;
+        c = moleTRNG();  r |= c;  cIV[i] = (uint8_t)c;
+        if (r < 0) {
             return MOLE_ERROR_TRNG_FAILURE;
         }
     }
@@ -309,16 +309,18 @@ void moleNoPorts(void) {
 }
 
 // Add a secure port
-int moleAddPort(port_ctx *ctx, const uint8_t *boilerplate, int protocol, char* name,
-                   uint16_t rxBlocks, mole_rngFn rngFn,
-                   mole_boilrFn boiler, mole_plainFn plain, mole_ciphrFn ciphr,
-                   mole_WrKeyFn WrKeyFn) {
+int moleAddPort(port_ctx *ctx, const uint8_t *boilerplate, int protocol,
+                char* name, uint16_t rxBlocks, mole_boilrFn boiler,
+                mole_plainFn plain, mole_ciphrFn ciphr, mole_WrKeyFn WrKeyFn) {
     memset(ctx, 0, sizeof(port_ctx));
     ctx->plainFn = plain;                       // plaintext output handler
     TX = ciphr;                                 // ciphertext output handler
     ctx->boilrFn = boiler;                      // boilerplate output handler
-    ctx->rxbuf = Allocate(rxBlocks << BLOCK_SHIFT);
+    ctx->boilerplate = boilerplate;             // counted string
+    ctx->name = name;                           // Zstring name for debugging
+    ctx->WrKeyFn = WrKeyFn;
     ctx->rBlocks = rxBlocks;                    // block size (1<<BLOCK_SHIFT) bytes
+    ctx->rxbuf = Allocate(rxBlocks << BLOCK_SHIFT);
     if (rxBlocks < 1) return MOLE_ERROR_BUF_TOO_SMALL;
     switch (protocol) {
     default: // 0
@@ -333,10 +335,6 @@ int moleAddPort(port_ctx *ctx, const uint8_t *boilerplate, int protocol, char* n
         BlockCipher = xc_crypt_block_g;
     }
     if (ALLOC_HEADROOM < 0) return MOLE_ERROR_OUT_OF_MEMORY;
-    ctx->WrKeyFn = WrKeyFn;
-    ctx->rngFn = rngFn;
-    ctx->boilerplate = boilerplate;             // counted string
-    ctx->name = name;                           // Zstring name for debugging
     return 0;
 }
 

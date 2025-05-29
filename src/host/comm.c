@@ -59,14 +59,14 @@ Return NULL if key cannot be updated
 
 static uint8_t * UpdateKeySet(uint8_t* keyset) {
     memcpy(TargetKey, keyset, MOLE_PASSCODE_LENGTH);
-	return TargetKey;
+    return TargetKey;
 }
 static uint8_t * UpdateNothing(uint8_t* keyset) {
-	return NULL;
+    return NULL;
 }
 
-static int getc_RNG(void) {
-	return rand() & 0xFF;	// DO NOT USE in a real application
+int moleTRNG(void) {
+    return rand() & 0xFF;   // DO NOT USE in a real application
 }                           // Use a TRNG instead
 
 static port_ctx HostPort;
@@ -485,9 +485,9 @@ void AddCommKeywords(struct QuitStruct *state) {
     // set up the mole ports
     memcpy(TargetKey, default_keys, sizeof(TargetKey));
     moleNoPorts();
-    int ior = moleAddPort(&HostPort, HostBoilerSrc, MOLE_PROTOCOL, "HOST", 100, getc_RNG,
+    int ior = moleAddPort(&HostPort, HostBoilerSrc, MOLE_PROTOCOL, "HOST", 100,
                   BoilerHandlerA, BCIreceive, HostCharOutput, UpdateNothing);
-    if (!ior) ior = moleAddPort(&TargetPort, TargetBoilerSrc, MOLE_PROTOCOL, "TARGET", 17, getc_RNG,
+    if (!ior) ior = moleAddPort(&TargetPort, TargetBoilerSrc, MOLE_PROTOCOL, "TARGET", 17,
                   BoilerHandlerB, BCItransmit, TargetCharOutput, UpdateKeySet);
     if (ior) {
         printf("\nError %d, ", ior);

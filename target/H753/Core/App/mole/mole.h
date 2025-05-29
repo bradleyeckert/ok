@@ -115,7 +115,6 @@ typedef struct
     mole_plainFn plainFn;   // plaintext handler (from molePutc)
     mole_ciphrFn ciphrFn;   // ciphertext transmit function
     mole_WrKeyFn WrKeyFn;   // rewrite key set for this port
-    mole_rngFn rngFn;       // get a reasonably random byte
     hmac_initFn hInitFn;    // HMAC initialization function
     hmac_putcFn hputcFn;    // HMAC putc function
     hmac_finalFn hFinalFn;  // HMAC finalization function
@@ -147,6 +146,9 @@ typedef struct
     uint8_t adminOK;        // adminOK password was received
 } port_ctx;
 
+// external functions call by mole:
+int moleTRNG(void);         // return random # between 0 and 255, -1 if error
+
 // Streaming I/O function types
 typedef int (*mole_inFn)(void);
 typedef void (*mole_outFn)(uint8_t c);
@@ -164,7 +166,6 @@ void moleNoPorts(void);
  * @param protocol    AEAD protocol used: 0 = xchacha20-blake2s
  * @param name        Name of port (for debugging)
  * @param rxBlocks    Size of receive buffer in 64-byte blocks
- * @param rngFn       Function to generate a random byte
  * @param boiler      Handler for received boilerplate (src, n)
  * @param plain       Handler for received data (src, n)
  * @param ciphr       Handler for char transmission (c)
@@ -172,7 +173,7 @@ void moleNoPorts(void);
  * @return 0 if okay, otherwise MOLE_ERROR_?
  */
 int moleAddPort(port_ctx *ctx, const uint8_t *boilerplate, int protocol, char* name,
-                   uint16_t rxBlocks, mole_rngFn rngFn,
+                   uint16_t rxBlocks,
                    mole_boilrFn boiler, mole_plainFn plain, mole_ciphrFn ciphr,
                    mole_WrKeyFn WrKeyFn);
 

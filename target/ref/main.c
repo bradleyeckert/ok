@@ -71,7 +71,7 @@ static uint8_t * UpdateKeySet(uint8_t* keyset) {
 	return my_keys;
 }
 
-static int getc_RNG(void) {
+int moleTRNG(void) {
 	return rand() & 0xFF;	// DO NOT USE in a real application
 }                           // Use a TRNG instead
 
@@ -126,7 +126,7 @@ int InitializeTarget(void) {
     // set up the mole ports
     memcpy(my_keys, default_keys, sizeof(my_keys));
     moleNoPorts();
-    int ior = moleAddPort(&TargetPort, TargetBoilerSrc, MOLE_PROTOCOL, "TARGET", 17, getc_RNG,
+    int ior = moleAddPort(&TargetPort, TargetBoilerSrc, MOLE_PROTOCOL, "TARGET", 17,
                   BoilerHandler, BCItransmit, uartCharOutput, UpdateKeySet);
     if (ior) {
         PRINTF("\nError %d, ", ior);
