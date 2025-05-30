@@ -598,6 +598,8 @@ static void AddRootKeywords(void) {
     AddKeyword("}t",         "-quit.htm#tend --",                   EndTest,     noCompile);
     AddKeyword("->",         "-quit.htm#tmiddle ... --",            DoTest,      noCompile);
     AddKeyword("t{",         "-quit.htm#tbegin ... --",             BeginTest,   noCompile);
+    AddKeyword("cells",      "~core/CELLS x1 -- x2",                Nothing,     Nothing);
+    AddKeyword("chars",      "~core/CHARS x1 -- x2",                Nothing,     Nothing);
 }
 
 static const uint8_t BaseChar[] = {"??%.....&.#.....$"};

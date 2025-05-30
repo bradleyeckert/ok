@@ -54,7 +54,7 @@ static void waitUntilVMready(vm_ctx *ctx){
     uint32_t limit = BCI_CYCLE_LIMIT;
     StopVMthread(ctx);
     while (limit--) {
-        if (VMstep(ctx, 0)) return;
+        if (VMstep(ctx, 0)) return; // bcisync instruction
     }
     VMreset(ctx); // hung
 }
@@ -66,8 +66,7 @@ static int16_t simulate(vm_ctx *ctx, uint32_t xt){
     } else {
         PRINTF("\nCalling %04x, ", xt);
         int rdepth = ctx->rp;
-        xt += VMI_CALL;
-        VMstep(ctx, xt);             // trigger call to xt
+        VMstep(ctx, xt | VMI_CALL);  // trigger call to xt
         while (rdepth != ctx->rp) {
             VMstep(ctx, 0);          // execute instructions
             if (ctx->ior) break;     // break on error

@@ -18,7 +18,7 @@ if exist ..\..\..\ok (
   copy ..\..\src\mole\xchacha.h    .\Core\App\mole\xchacha.h /y
   copy ..\..\src\bci\bci.c         .\Core\App\bci\bci.c /y
   copy ..\..\src\bci\bci.h         .\Core\App\bci\bci.h /y
-rem  copy ..\..\src\bci\bciHW.c       .\Core\App\bci\bciHW.c /y
+  copy ..\..\src\bci\bciHW.c       .\Core\App\bci\bciHW.c /y
   copy ..\..\src\bci\bciHW.h       .\Core\App\bci\bciHW.h /y
   copy ..\..\src\bci\vm.c          .\Core\App\bci\vm.c /y
   copy ..\..\src\bci\vm.h          .\Core\App\bci\vm.h /y

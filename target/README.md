@@ -10,7 +10,7 @@ For development, the SDK consists of three apps to download and install:
 
 - [STM32CubeMX](https://www.st.com/content/st_com/en/stm32cubemx.html), a configurator tool for generating startup code.
 - [STM32CubeIDE](https://www.st.com/content/st_com/en/stm32cubeide.html), a bloated Eclipse® C IDE.
-- [STM32CubeProgrammer](https://www.st.com/en/development-tools/stm32cubeprog.html), a very nice programming tool. Supports firmware encryption.
+- [STM32CubeProgrammer](https://www.st.com/en/development-tools/stm32cubeprog.html), a very nice programming tool. Supports firmware encryption. I have not needed it.
 
 Import the project into the IDE's workspace and Build it.
 Turn on the "binary output" option of you like to program by DFU drag-and-drop.
@@ -29,7 +29,7 @@ Once it is running, you can use `ok` to connect to it. In ok's console,
 `mips` measures the speed of the VM. On the STM32H753 with a 400 MHz system clock, it reads:
 
 - 1.14 MIPS with Icache and Dcache disabled
-- 4.95 MIPS with Icache and Dcache enabled
+- 5.45 MIPS with Icache and Dcache enabled
 
 The VM is ~250 lines of C, which could be replaced by assembly to get get more MIPS.
 

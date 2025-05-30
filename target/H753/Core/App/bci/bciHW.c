@@ -5,7 +5,7 @@
 #include "bci.h"
 #include "bciHW.h"
 
-#define THIRD ctx->DataStack[(ctx->sp - 1)]
+#define THIRD ctx->DataStack[ctx->sp]
 
 VMcell_t API_Emit (vm_ctx *ctx){
     uint32_t codepoint = ctx->t;

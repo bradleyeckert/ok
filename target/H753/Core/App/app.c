@@ -122,8 +122,8 @@ void ApplicationStep(void) {
 }
 
 void ApplicationInit(void) {
-	  UARTx_init(&uart3, USART3);
-	  NVIC_EnableIRQ(USART3_IRQn); // since you didn't set it in the NVIC in MX
-	  TargetInit();
+	UARTx_init(&uart3, USART3);
+	NVIC_EnableIRQ(USART3_IRQn); // since you didn't set it in the NVIC in MX
+	TargetInit();
 }
 

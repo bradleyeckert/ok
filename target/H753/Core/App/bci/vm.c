@@ -12,13 +12,6 @@
 #define PRINTF(...) do { } while (0)
 #endif
 
-typedef VMcell_t (*APIfn) (vm_ctx *ctx);
-
-static const APIfn APIfns[] = {
-    NVMbeginRead, NVMbeginWrite, NVMread, NVMwrite, NVMendRW,
-    API_Emit, API_umstar, API_mudivmod
-};
-
 VMcell_t VMreadCell(vm_ctx *ctx, VMcell_t addr) {
     if (addr < DATASIZE)
         return ctx->DataMem[addr];      // Data
@@ -82,9 +75,9 @@ static const uint8_t stackeffects[32] = VM_STACKEFFECTS;
 // opcode is 5-bit or whole-instruction.
 
 #define IMASK2 ((1 << (VM_INSTBITS - 2)) - 1)
-#define APIfs (sizeof(APIfn)/sizeof(APIfns[0]))
 static int ops0001(vm_ctx *ctx, int inst);
 
+static VMcell_t VMapiCall(vm_ctx *ctx, int fn);
 int VMstep(vm_ctx *ctx, VMinst_t inst);
 int VMsteps(vm_ctx *ctx, uint32_t times) {
     while (times--) VMstep(ctx, 0);
@@ -92,7 +85,7 @@ int VMsteps(vm_ctx *ctx, uint32_t times) {
 }
 
 int VMstep(vm_ctx *ctx, VMinst_t inst){
-    int r = 0;
+    int retval = 0;
     VMcell_t pc = ctx->pc;
     if (inst == 0) {
         inst = ctx->CodeMem[pc++];
@@ -191,7 +184,7 @@ int VMstep(vm_ctx *ctx, VMinst_t inst){
             switch (opcode) {
                 case VMO_LEX: _lex = (ctx->lex << (VM_INSTBITS - 7)) | imm;
                     break;
-                case VMO_ZOO: r = ops0001(ctx, imm);                    break;
+                case VMO_ZOO: retval = ops0001(ctx, imm);               break;
                 case VMO_AX: ctx->a = ctx->x + imm;                     break;
                 case VMO_BY: ctx->b = ctx->y + imm;                     break;
                 case VMO_ZBRAN: flag = (ctx->t == 0);  VMpopData(ctx);
@@ -208,9 +201,7 @@ int VMstep(vm_ctx *ctx, VMinst_t inst){
                 case VMO_DUPAPI: VMdupData(ctx);
                 case VMO_API:
                 case VMO_APIDROP:
-                case VMO_API2DROP:
-                    if (imm < APIfs) ctx->t = -1;
-                    else {ctx->t = APIfns[imm](ctx);}                   break;
+                case VMO_API2DROP: ctx->t = VMapiCall(ctx, imm);        break;
                 default: break;
             }
             switch (opcode) {
@@ -223,7 +214,7 @@ int VMstep(vm_ctx *ctx, VMinst_t inst){
         ctx->cycles++;
     }
     ctx->pc = pc;
-    return r;
+    return retval;
 }
 
 static int ops0001(vm_ctx *ctx, int inst) { // alternate instructions 0110001...
@@ -241,21 +232,36 @@ static int ops0001(vm_ctx *ctx, int inst) { // alternate instructions 0110001...
     return r;
 }
 
+typedef VMcell_t (*APIfn) (vm_ctx *ctx);
+
+static const APIfn APIfns[] = {
+    NVMbeginRead, NVMbeginWrite, NVMread, NVMwrite, NVMendRW,
+    API_Emit, API_umstar, API_mudivmod
+};
+
+#define APIfs (sizeof(APIfns)/sizeof(APIfns[0]))
+static VMcell_t VMapiCall(vm_ctx *ctx, int fn) {
+    fn &= 0x7F;
+    if (fn < APIfs) return APIfns[fn](ctx);
+    return -1;
+}
+
 static const uint8_t boilerplate[BOILERPLATE_SIZE] = {
     1,                          // format 1
     VM_CELLBITS,                // bits per data cell
     VM_INSTBITS,                // bits per instruction icell
-    VM_STACKSIZE - 1,         // max stack depths
+    VM_STACKSIZE - 1,           // max stack depths
     VM_STACKSIZE - 1,
     (DATASIZE >> 8) - 1,        // 256-cell pages of data memory less 1
     (CODESIZE >> 8) - 1,        // 256-icell pages of code memory less 1
     (TEXTSIZE >> 10) - 1,       // 1K-cell pages of text memory less 1
     TEXTORIGIN >> 12,           // start address of text memory
 };
+#include <stdio.h>
 
 void VMreset(vm_ctx *ctx) {
     memset(ctx, 0, sizeof(ctx->DataMem)); // data space initializes to 0
-    memset(ctx, 0, 64);         // wipe the first 16 longs
+    memset(ctx, 0, 64);         // wipe all up to stacks
     ctx->boilerplate = boilerplate;
     ctx->DataMem[0] = 10;
     ctx->status = BCI_STATUS_STOPPED;

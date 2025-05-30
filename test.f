@@ -7,13 +7,14 @@ empty
 \ The VM may be running, so it may stomp on cy. cy not tested.
 
 t{ 1 nop -> 1 }t
+t{ 1 dup -> 1 1 }t
+t{ 3 5 drop -> 3 }t
 t{ 1 inv -> -2 }t
 t{ 1 2 over -> 1 2 1 }t
 t{ 100 a! a -> 100 }t
 t{ 3 5 +   -> 8 }t
 t{ 3 5 xor -> 6 }t
 t{ 3 5 and -> 1 }t
-t{ 3 5 drop -> 3 }t
 t{ 3 5 swap -> 5 3 }t
 t{ 3 2* -> 6 }t
 t{ 3 dup -> 3 3 }t
@@ -117,14 +118,14 @@ variable counter
 
 : mystuff   1 counter +! ;
 
-2 buffer: tempAB
+2 cells buffer: tempAB
 
 :noname     console
             begin
-                a b tempAB a! !a+ !a+           \ save A and B registers
-                mystuff
-                tempAB a! @a+ @a+ b! a!         \ restore A and B registers
                 bcisync
+                a b tempAB a! !a+ !a            \ save A and B registers
+                mystuff
+                tempAB a! @a+ b! @a a!          \ restore A and B registers
             again
 ; resolves coldboot
 

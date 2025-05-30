@@ -49,12 +49,11 @@
 // Host should generally not access this struct directly. It may be remote.
 
 typedef struct
-{   VMcell_t pc;                // program counter
-    VMcell_t r, n, t, a, b, x, y;
-    uint8_t  sp, rp, cy;
+{   VMcell_t pc, r, n, t, a, b, x, y;
+    uint64_t cycles;
     uint16_t lex;
     int16_t  ior;
-    uint64_t cycles;
+    uint8_t  sp, rp, cy;
     VMcell_t DataStack[VM_STACKSIZE];
     VMcell_t ReturnStack[VM_STACKSIZE];
     VMcell_t DataMem[DATASIZE]; // RAM can be anywhere

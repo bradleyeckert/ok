@@ -8,7 +8,7 @@ To address modern cybersecurity requirements, the serial connection is encrypted
 Status: Works on with **ok** connected to:
 
 - An internal target VM
-- An [external](./target/ref) target VM through a Virtual Null-Modem (com0com)
+- An external [ref](./target/ref) target VM through a Virtual Null-Modem (com0com)
 - A [NUCLEO-H753ZI](./target/ref/H753) target VM through a USB cable
 
 Multiple VMs are supported via pthreads, so `ok` can simulate an array of Forth cores (one core per thread).
@@ -18,12 +18,12 @@ Some work would be required to simulate message passing between cores.
 ## benchmarks
 After the command line `ok include test.f` launches the `ok>` prompt, `mips` sleeps the main thread
 for 1/2 second while the VM fetches and executes instructions in its own thread.
-Some approximate benchmarks when compiled with Code::Blocks 20.03:
+Some approximate benchmarks (a little unpredictable on a PC) when compiled with Code::Blocks 20.03:
 
 | Processor | VM MIPS | CPU Usage |
 | --------- | ------- | --------- |
-| AMD Ryzen 1950X | 165 | 6% |
-| Intel Alder Lake N97 | 65 | 40% |
+| AMD Ryzen 1950X | 150 | 6% |
+| Intel Alder Lake N97 | 60 | 40% |
 
 MIPS truly are meaningless in this case. All of the heavy lifting in a real application would be done by C.
 Find a hot spot? Add it to the C API.
@@ -32,6 +32,6 @@ VM binary code size borders on the ridiculous, thanks to the frequency of 5-bit 
 intrinsic leveraging of "don't care" states which other languages cannot exploit.
 A little memory goes a long way, which is very useful in MCUs.
 ## snooping
-COM port snooping is supported by the [reference](./target/ref) target.
+COM port snooping is supported by the [ref](./target/ref) target.
 There are also commercial apps that snoop traffic on your PC's COM ports.
 Either will show the encrypted traffic flowing across the serial connection.
