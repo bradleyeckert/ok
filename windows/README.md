@@ -25,7 +25,5 @@ Maybe the wrong version of `make` was in the path.
 ## Code::Blocks
 
 Code::Blocks works under Windows after creating a project and adding files recursively.
-
-`libwinpthread-1.dll` may be needed by the `ok.exe` compiled by Code::Blocks, regardless of instructions to compile static libraries.
-I found several DLLs on my computer named libwinpthread-1.dll. I tried one from 2021, it did not work. The one from 2016 worked.
-The working DLL is included in the repo in case Windows complains.
+You should enable static linking, otherwise the runtime may complain about a missing `libwinpthread-1.dll`.
+There are likely multiple versions of `libwinpthread-1.dll` on your computer. Some will work, some won't.
