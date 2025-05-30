@@ -22,8 +22,8 @@ Some approximate benchmarks (a little unpredictable on a PC) when compiled with 
 
 | Processor | VM MIPS | CPU Usage |
 | --------- | ------- | --------- |
-| AMD Ryzen 1950X | 150 | 6% |
-| Intel Alder Lake N97 | 60 | 40% |
+| AMD Ryzen 1950X | 120 | 6% |
+| Intel Alder Lake N97 | 50 | 40% |
 
 MIPS truly are meaningless in this case. All of the heavy lifting in a real application would be done by C.
 Find a hot spot? Add it to the C API.

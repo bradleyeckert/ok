@@ -379,7 +379,7 @@ static void RegBY(void) {
     char *name = Const(GetToken());
     uint32_t byteoffset = DataPop();
     if (byteoffset & 3) ERR = IOR_NOT_CELL_ADDRESS;
-    byteoffset >>= 2;
+    byteoffset >>= C_BYTESHIFT;
     if (byteoffset > VM_IMMS_MASK) ERR = IOR_OFFSET_TOO_BIG;
     AddRegBY(name, "", byteoffset);
 }
@@ -392,9 +392,8 @@ static void AddBaseY(char* name, char* help, uint32_t value) {
 static void BaseY(void) {
     char *name = Const(GetToken());
     uint32_t ba = DataPop();
-    if (ba & 3) ERR = IOR_NOT_CELL_ADDRESS;
-    ba = (ba >> 2) - 0x10000000;
-    if (ba & 0x80000000) ERR = IOR_BAD_BASEADDRESS;
+    ba = (ba >> C_BYTESHIFT) - 0x10000000;
+    if (ba & 0x800000FF) ERR = IOR_BAD_BASEADDRESS;
     if (VM_INSTBITS < 31)
     if (ba >= (1 << (VM_INSTBITS + 1))) ERR = IOR_BAD_BASEADDRESS;
     AddBaseY(name, "", ba);
