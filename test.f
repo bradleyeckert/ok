@@ -118,14 +118,14 @@ variable counter
 
 : mystuff   1 counter +! ;
 
-2 cells buffer: tempAB
+4 cells buffer: tempAB
 
 :noname     console
             begin
                 bcisync
-                a b tempAB a! !a+ !a            \ save A and B registers
+                a b tempAB a! !a+ y@ !a+ x@ !a+ !a+    \ save B, Y, X, and A registers
                 mystuff
-                tempAB a! @a+ b! @a a!          \ restore A and B registers
+                tempAB a! @a+ b! @a+ y! @a+ x! @a a!   \ restore registers
             again
 ; resolves coldboot
 
@@ -148,3 +148,11 @@ t{ table 2 + @ -> 10000 }t
 \ verbose_bci verbose!
 17 port!
 
+hex
+
+40004800 peripheral USART3_BASE
+
+000 register USART_CR1 \ USART Control register 1
+
+decimal
+: com3cr  USART3_BASE USART_CR1 @b+ ;

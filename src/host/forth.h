@@ -15,4 +15,8 @@ void AddForthKeywords(struct QuitStruct *state);
 int BitsPerCell(void);
 void ShowLine(void);
 
+#define IOR_NOT_CELL_ADDRESS  -90
+#define IOR_OFFSET_TOO_BIG    -91
+#define IOR_BAD_BASEADDRESS   -92
+
 #endif // __FORTH_H__

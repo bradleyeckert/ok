@@ -208,6 +208,9 @@ char * ErrorMessage(int error, char* s) {
     case  -87: return "PC is at address 0";
     case  -88: return "Assertion failure: Wrong number of results";
     case  -89: return "Assertion failure: Incorrect result";
+    case  -90: return "Byte address is not a multiple of 4";
+    case  -91: return "B offset is too big to fit";
+    case  -92: return "Invalid peripheral base address";
     case -100: return "ALLOCATE failed";
     case -101: return "RESIZE failed";
     case -102: return "FREE failed";

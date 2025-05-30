@@ -160,21 +160,25 @@ VMcell_t VMpopData(vm_ctx *ctx);
 #define VMI_ZOODROP             (1 << (VM_INSTBITS - 9))
 #define VMI_ZOO                 (VMI_PFX + (1 << (VM_INSTBITS - 7)))
 
-#define ZOO_NAMES  {"bcisync", "err!", "x!", "y!"}
+#define ZOO_NAMES  {"bcisync", "err!", "x!", "y!", "x@", "y@"}
 
 #define VMO_BCISYNC             0
 #define VMO_THROW               1
 #define VMO_XSTORE              2
 #define VMO_YSTORE              3
+#define VMO_XFETCH              4
+#define VMO_YFETCH              5
 
-#define VMI_XSTORE              (VMI_ZOO + VMO_XSTORE  + VMI_ZOODROP)
-#define VMI_YSTORE              (VMI_ZOO + VMO_YSTORE  + VMI_ZOODROP)
 #define VMI_BCISYNC             (VMI_ZOO + VMO_BCISYNC)
 #define VMI_THROW               (VMI_ZOO + VMO_THROW   + VMI_ZOODROP)
+#define VMI_XSTORE              (VMI_ZOO + VMO_XSTORE  + VMI_ZOODROP)
+#define VMI_YSTORE              (VMI_ZOO + VMO_YSTORE  + VMI_ZOODROP)
+#define VMI_XFETCH              (VMI_ZOO + VMO_XFETCH  + VMI_ZOODUP)
+#define VMI_YFETCH              (VMI_ZOO + VMO_YFETCH  + VMI_ZOODUP)
 
 #define IMM_NAMES { \
     "pfx", "zoo", "ax", "by", "if", "bran", "-if", "next", \
-    "?", "?", "?", "?", "APIcall", "APIcall+", "APIcall-", "APIcall–-"}
+    "py!", "?", "?", "?", "APIcall", "APIcall+", "APIcall-", "APIcall–-"}
 
 #define VMO_LEX                 0
 #define VMO_ZOO                 1
@@ -184,6 +188,7 @@ VMcell_t VMpopData(vm_ctx *ctx);
 #define VMO_BRAN                5
 #define VMO_PBRAN               6
 #define VMO_NEXT                7
+#define VMO_PY                  8
 #define VMO_API                 12
 #define VMO_DUPAPI              13
 #define VMO_APIDROP             14
@@ -195,6 +200,7 @@ VMcell_t VMpopData(vm_ctx *ctx);
 #define VMI_BRAN                (VMI_PFX + (VMO_BRAN     << (VM_INSTBITS - 7)))
 #define VMI_PBRAN               (VMI_PFX + (VMO_PBRAN    << (VM_INSTBITS - 7)))
 #define VMI_NEXT                (VMI_PFX + (VMO_NEXT     << (VM_INSTBITS - 7)))
+#define VMI_PY                  (VMI_PFX + (VMO_PY       << (VM_INSTBITS - 7)))
 #define VMI_API                 (VMI_PFX + (VMO_API      << (VM_INSTBITS - 7)))
 #define VMI_DUPAPI              (VMI_PFX + (VMO_DUPAPI   << (VM_INSTBITS - 7)))
 #define VMI_APIDROP             (VMI_PFX + (VMO_APIDROP  << (VM_INSTBITS - 7)))

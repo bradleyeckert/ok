@@ -188,6 +188,15 @@ static char * DisassembleInsn(uint32_t inst) {
                         else {
                             appendDA("api? ");
                         }
+                    case VMO_BY: ToLabel();
+                        appendDA("b = y +");
+                        appendDA(itos(imm, 16, 1, 1, 32));
+                        break;
+                    case VMO_PY: ToLabel();
+                        appendDA("y =");
+                        appendDA(itos((imm << 10) + 0x40000000, 16, 1, 1, 32));
+                        appendDA("/ 4");
+                        break;
                     default: break;
                 }
             }

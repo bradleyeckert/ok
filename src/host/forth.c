@@ -27,12 +27,12 @@ static struct QuitStruct *q;
 #define IS_UOP(x) (INST_TAG | VM_UOPS \
                   | (x << ((VM_INSTBITS - 2) % 5)))
 
-static void dotESS (void) {                      // ( ... -- ... )
+static void dotESS (void) {             // ( ... -- ... )
     PrintDataStack();
     printf("<-Top\n");
 }
 
-static void dot(void) {                          // ( n -- )
+static void dot(void) {                 // ( n -- )
     DataDot(DataPop());
 }
 
@@ -98,7 +98,7 @@ static void NewInst(void) {
     instruction = 0;
 }
 
-static void CompInst(uint32_t inst) {   // compile instruction
+static void InstCompile(uint32_t inst) {// compile instruction
     NewInst();                          // flush any uops
     CodeComma(inst);
 }
@@ -123,9 +123,9 @@ static void CompUop  (uint32_t uop) {
 }
 
 static void uOp_Comp (void) { CompUop(my() >> LAST_SLOT_WIDTH); }
-static void Op_Comp  (void) { CompInst(my()); }
+static void Op_Comp  (void) { InstCompile(my()); }
 
-static void CompLit(uint32_t x) {                // unsigned cellbits-1 bits
+static void CompLit(uint32_t x) {       // unsigned cellbits-1 bits
     int depth = SP;
     DataPush(VMI_LIT | (x & VM_IMM_MASK));
     x = x >> (VM_INSTBITS - 3);
@@ -134,7 +134,7 @@ static void CompLit(uint32_t x) {                // unsigned cellbits-1 bits
         x = x >> (VM_INSTBITS - 7);
     }
     while (depth != SP) {
-        CompInst(DataPop());
+        InstCompile(DataPop());
     }
 }
 
@@ -153,7 +153,7 @@ void ForthLiteral(uint32_t x){
 
 
 static int latest;
-static int CtrlStack[256];                    // control stack
+static int CtrlStack[256];              // control stack
 static uint8_t ConSP = 0;
 static int DefMarkID, DefMark;
 static int notail; // inhibit tail calls
@@ -190,7 +190,7 @@ static void tpStore    (void) {
 static void NoName(void) {
     NewInst();
     DataPush(CP);
-    DefMarkID = 0;          // no length
+    DefMarkID = 0;                      // no length
     DefMark = CP;
     toCompile();
     latest = CP;
@@ -209,7 +209,7 @@ static void Definition(void) {
     }
 }
 
-static void EndDefinition(void) {                   // resolve length of definition
+static void EndDefinition(void) {       // resolve length of definition
     if (DefMarkID) {
         HEADER[DefMarkID].length = CP - DefMark;
         HEADER[DefMarkID].smudge = 0;
@@ -233,18 +233,18 @@ static int UsesRetStack(uint32_t inst) {
 
 static void Later(void) {
     Definition();  HEADER[HP].w2 = MAGIC_LATER;
-    CompInst(VMI_JUMP);
+    InstCompile(VMI_JUMP);
     EndDefinition();
 }
 
 static void MuchLater(void) {
     Definition();  HEADER[HP].w2 = MAGIC_LATER;
-    CompInst(VMI_PFX);
-    CompInst(VMI_JUMP);
+    InstCompile(VMI_PFX);
+    InstCompile(VMI_JUMP);
     EndDefinition();
 }
 
-static void Resolves(void) {                     // ( xt <name> -- )
+static void Resolves(void) {            // ( xt <name> -- )
     Tick();
     int orig = DataPop();
     uint32_t addr = DataPop();
@@ -331,7 +331,7 @@ static void ResolveFwd(void) {
 static void ResolveRev(int inst) {
     NewInst();
     int addr = CtrlStack[ConSP--];
-    CompInst(inst | ((addr - CP) & VM_IMMS_MASK));
+    InstCompile(inst | ((addr - CP) & VM_IMMS_MASK));
     latest = CP;
 }
 
@@ -340,10 +340,10 @@ static void doBegin(void) { MarkFwd(); }
 static void doAgain(void) { ResolveRev(VMI_BRAN); }
 static void doUntil(void) { ResolveRev(VMI_ZBRAN); }
 static void doMuntil(void){ ResolveRev(VMI_PBRAN); }
-static void doIf(void)    { MarkFwd();  CompInst(VMI_ZBRAN); }
-static void doMif(void)   { MarkFwd();  CompInst(VMI_PBRAN); }
+static void doIf(void)    { MarkFwd();  InstCompile(VMI_ZBRAN); }
+static void doMif(void)   { MarkFwd();  InstCompile(VMI_PBRAN); }
 static void doThen(void)  { ResolveFwd(); }
-static void doElse(void)  { MarkFwd();  CompInst(VMI_BRAN);  ControlSwap();  ResolveFwd(); }
+static void doElse(void)  { MarkFwd();  InstCompile(VMI_BRAN);  ControlSwap();  ResolveFwd(); }
 static void doWhile(void) { doIf();  ControlSwap(); }
 static void doMwhile(void){ doMif();  ControlSwap(); }
 static void doRepeat(void){ doAgain();  doThen(); }
@@ -351,9 +351,14 @@ static void doFor(void)   { CompUop(VMO_PUSH);  MarkFwd(); }
 static void doNext(void)  { ResolveRev(VMI_NEXT); }
 static void SemicoImm(void) { EndDefinition();  sane(); }
 static void SemiComp(void)  { CompExit();  SemicoImm();}
-static void API_Comp (void) { CompInst(my()); }
-static void Equ_Comp (void) { ForthLiteral(my()); }
+static void API_Comp (void) { InstCompile(my()); }
 static void Equ_Exec (void) { DataPush(my()); }
+static void Equ_Comp (void) { ForthLiteral(my()); }
+static void RegBY_Exec (void) { InstExecute(VMI_BY + my()); }
+static void RegBY_Comp (void) { InstCompile(VMI_BY + my()); }
+static void BaseY_Exec (void) { DataPush(my()); InstExecute(VMI_YSTORE); }
+static void BaseY_Comp (void) { uint32_t ba = my();
+    InstCompile(VMI_PY  | ((ba >> 8) & VM_IMMS_MASK)); }
 
 void AddEquate(char* name, char* help, uint32_t value) {
     if (AddHead(name, help)) {
@@ -363,6 +368,36 @@ void AddEquate(char* name, char* help, uint32_t value) {
 static void Constant(void) {
     char *name = Const(GetToken());
     AddEquate(name, "", DataPop());
+}
+
+static void AddRegBY(char* name, char* help, uint32_t value) {
+    if (AddHead(name, help)) {
+        SetFns(value, RegBY_Exec, RegBY_Comp);
+    }
+}
+static void RegBY(void) {
+    char *name = Const(GetToken());
+    uint32_t byteoffset = DataPop();
+    if (byteoffset & 3) ERR = IOR_NOT_CELL_ADDRESS;
+    byteoffset >>= 2;
+    if (byteoffset > VM_IMMS_MASK) ERR = IOR_OFFSET_TOO_BIG;
+    AddRegBY(name, "", byteoffset);
+}
+
+static void AddBaseY(char* name, char* help, uint32_t value) {
+    if (AddHead(name, help)) {
+        SetFns(value, BaseY_Exec, BaseY_Comp);
+    }
+}
+static void BaseY(void) {
+    char *name = Const(GetToken());
+    uint32_t ba = DataPop();
+    if (ba & 3) ERR = IOR_NOT_CELL_ADDRESS;
+    ba = (ba >> 2) - 0x10000000;
+    if (ba & 0x80000000) ERR = IOR_BAD_BASEADDRESS;
+    if (VM_INSTBITS < 31)
+    if (ba >= (1 << (VM_INSTBITS + 1))) ERR = IOR_BAD_BASEADDRESS;
+    AddBaseY(name, "", ba);
 }
 
 // char and [char] support utf-8:
@@ -471,6 +506,8 @@ void AddForthKeywords(struct QuitStruct *state) {
     AddKeyword("bytes>cells",   "-forth.htm#b2c  ba -- ca",     byte2cell, noCompile);
     AddEquate("host",           "-forth.htm#host -- wid",       q->host);
     AddKeyword("equ",      "-forth.htm#equ x <name> --",    Constant,   noCompile);
+    AddKeyword("register",      "-forth.htm#reg x <name> --",   RegBY,  noCompile);
+    AddKeyword("peripheral",    "-forth.htm#per x <name> --",   BaseY,  noCompile);
     AddKeyword(".s",       "~tools/DotS wid --",            dotESS,     noCompile);
     AddKeyword(".",        "~core/d n --",                  dot,        noCompile);
     AddKeyword("cp",       "-forth.htm#cp -- ca",           cpFetch,    noCompile);
@@ -532,6 +569,8 @@ void AddForthKeywords(struct QuitStruct *state) {
     AddOp("err!",    "-forth.htm#throw x --",               INST_TAG + VMI_THROW);
     AddOp("y!",      "-forth.htm#ystore x --",              INST_TAG + VMI_YSTORE);
     AddOp("x!",      "-forth.htm#xstore x --",              INST_TAG + VMI_XSTORE);
+    AddOp("y@",      "-forth.htm#yfetch x --",              INST_TAG + VMI_YFETCH);
+    AddOp("x@",      "-forth.htm#xfetch x --",              INST_TAG + VMI_XFETCH);
     AddAPIcall("semit",    "-forth.htm#semit c --",         INST_TAG + VMI_APIDROP + 5);
     AddAPIcall("um*",      "~core/UMTimes u1 u2 -- d1",     INST_TAG + VMI_API     + 6);
     AddAPIcall("um/mod",   "~core/UMDivMOD ud u -- q r",    INST_TAG + VMI_APIDROP + 7);

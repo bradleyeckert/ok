@@ -198,6 +198,7 @@ int VMstep(vm_ctx *ctx, VMinst_t inst){
                     if (ctx->r == 0) VMpopReturn(ctx);
                     else pc = ctx->pc + immex;
                     break;
+                case VMO_PY: ctx->y = 0x10000000 + (imm << 8);          break;
                 case VMO_DUPAPI: VMdupData(ctx);
                 case VMO_API:
                 case VMO_APIDROP:
@@ -222,10 +223,12 @@ static int ops0001(vm_ctx *ctx, int inst) { // alternate instructions 0110001...
     int imm = inst & 0x7F;
     if (inst & VMI_ZOODUP) VMdupData(ctx);
     switch(imm) {
-        case VMO_XSTORE: ctx->x = ctx->t;                               break;
-        case VMO_YSTORE: ctx->y = ctx->t;                               break;
+        case VMO_XSTORE:  ctx->x = ctx->t;                              break;
+        case VMO_YSTORE:  ctx->y = ctx->t;                              break;
         case VMO_BCISYNC: r = 1;                                        break;
-        case VMO_THROW: ctx->ior = ctx->t;                              break;
+        case VMO_THROW:   ctx->ior = ctx->t;                            break;
+        case VMO_XFETCH:  ctx->t = ctx->x;                              break;
+        case VMO_YFETCH:  ctx->t = ctx->y;                              break;
         default: break;
     }
     if (inst & VMI_ZOODROP) VMpopData(ctx);
