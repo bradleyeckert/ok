@@ -50,26 +50,23 @@ extern "C" {
 
 // Error tags
 #define MOLE_ERROR_INVALID_STATE       1 /* FSM reached an invalid state */
-#define MOLE_ERROR_UNKNOWN_CMD         2 /* Command not recognized */
-#define MOLE_ERROR_TRNG_FAILURE        3 /* Bad RNG value */
-#define MOLE_ERROR_MISSING_KEY         4
-#define MOLE_ERROR_BAD_HMAC            5
-#define MOLE_ERROR_INVALID_LENGTH      6
-#define MOLE_ERROR_LONG_BOILERPLT      7
-#define MOLE_ERROR_MSG_TRUNCATED       8
-#define MOLE_ERROR_OUT_OF_MEMORY       9
-#define MOLE_ERROR_REKEYED            10
-#define MOLE_ERROR_MSG_NOT_SENT       11
-#define MOLE_ERROR_BUF_TOO_SMALL      12
-#define MOLE_ERROR_KDFBUF_TOO_SMALL   13
-#define MOLE_ERROR_MISSING_HMAC       14
-#define MOLE_ERROR_MISSING_IV         15
-#define MOLE_ERROR_STREAM_ENDED       16
-#define MOLE_ERROR_NO_RAWPACKET       17
-#define MOLE_ERROR_NO_ANYLENGTH       18
-#define MOLE_ERROR_BAD_END_RUN        19
+#define MOLE_ERROR_TRNG_FAILURE        2 /* Bad RNG value */
+#define MOLE_ERROR_BAD_HMAC            3
+#define MOLE_ERROR_INVALID_LENGTH      4
+#define MOLE_ERROR_LONG_BOILERPLT      5
+#define MOLE_ERROR_OUT_OF_MEMORY       6
+#define MOLE_ERROR_REKEYED             7
+#define MOLE_ERROR_MSG_NOT_SENT        8
+#define MOLE_ERROR_BUF_TOO_SMALL       9
+#define MOLE_ERROR_KDFBUF_TOO_SMALL   10
+#define MOLE_ERROR_MISSING_HMAC       11
+#define MOLE_ERROR_MISSING_IV         12
+#define MOLE_ERROR_STREAM_ENDED       13
+#define MOLE_ERROR_NO_RAWPACKET       14
+#define MOLE_ERROR_NO_ANYLENGTH       15
+#define MOLE_ERROR_BAD_END_RUN        16
 
-enum States {
+enum moleStates {
   IDLE = 0,
   DISPATCH,
   GET_BOILER,
@@ -94,7 +91,6 @@ The FSM is not full-duplex. If the FSM has wait for the UART transmitter
 typedef void (*mole_ciphrFn)(uint8_t c);    // output raw ciphertext byte
 typedef void (*mole_plainFn)(const uint8_t *src, int length);
 typedef void (*mole_boilrFn)(const uint8_t *src);
-typedef int  (*mole_rngFn)  (void);
 typedef uint8_t* (*mole_WrKeyFn)(uint8_t* keyset);
 
 typedef int  (*hmac_initFn)(size_t *ctx, const uint8_t *key, int hsize, uint64_t ctr);
@@ -104,7 +100,7 @@ typedef void (*crypt_initFn)(size_t *ctx, const uint8_t *key, const uint8_t *iv)
 typedef void (*crypt_blockFn)(size_t *ctx, const uint8_t *in, uint8_t *out, int mode);
 
 typedef struct
-{   char* name;             // port name (for debugging)
+{   const char* name;       // port name (for debugging)
 // The 4 following could be declared type void*, but use actual structures for
 // the convenience of code completion in the editor.
     xChaCha_ctx *rcCtx;     // receiver encryption context
@@ -128,7 +124,7 @@ typedef struct
     const uint8_t *boilerplate;
     uint8_t *rxbuf;
     uint8_t txbuf[16];
-    enum States state;      // of the FSM
+    enum moleStates state;  // of the FSM
     uint8_t hmac[MOLE_HMAC_LENGTH];
     uint32_t counter;       // TX counter
     uint32_t chunks;        // for stream decryption
@@ -148,6 +144,7 @@ typedef struct
 
 // external functions call by mole:
 int moleTRNG(void);         // return random # between 0 and 255, -1 if error
+
 
 // Streaming I/O function types
 typedef int (*mole_inFn)(void);
@@ -172,14 +169,14 @@ void moleNoPorts(void);
  * @param WrKeyFn     Function to overwrite the key
  * @return 0 if okay, otherwise MOLE_ERROR_?
  */
-int moleAddPort(port_ctx *ctx, const uint8_t *boilerplate, int protocol, char* name,
+int moleAddPort(port_ctx *ctx, const uint8_t *boilerplate, int protocol, const char* name,
                    uint16_t rxBlocks,
                    mole_boilrFn boiler, mole_plainFn plain, mole_ciphrFn ciphr,
                    mole_WrKeyFn WrKeyFn);
 
-/** Append to the port list.
+/** Load new keys into the port.
  * @param ctx         Port identifier
- * @param key         32-byte encryption key, 16-byte HMAC key, and 16-byte HMAC of these
+ * @param key         32-byte user passcode, 16-byte admin passcode, and 16-byte HMAC
  * @return 0 if okay, otherwise MOLE_ERROR_?
  */
 int moleNewKeys(port_ctx *ctx, const uint8_t *key);
@@ -210,8 +207,8 @@ int moleTxInit(port_ctx *ctx);
 int moleSend(port_ctx *ctx, const uint8_t *m, int bytes);
 
 
-/** Encrypt and send a re-key message, returns key
- * @param key   64-byte key set
+/** Encrypt and send a re-key message
+ * @param key   64-byte passcode
  * @return      0 if okay, otherwise MOLE_ERROR_?
  */
 int moleReKey(port_ctx *ctx, const uint8_t *key);

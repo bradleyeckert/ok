@@ -178,7 +178,7 @@ VMcell_t VMpopData(vm_ctx *ctx);
 
 #define IMM_NAMES { \
     "pfx", "zoo", "ax", "by", "if", "bran", "-if", "next", \
-    "py!", "?", "?", "?", "APIcall", "APIcall+", "APIcall-", "APIcall–-"}
+    "py!", "?", "?", "?", "APIcall", "APIcall+", "APIcall-", "APIcall--"}
 
 #define VMO_LEX                 0
 #define VMO_ZOO                 1

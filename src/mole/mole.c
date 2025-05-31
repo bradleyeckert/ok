@@ -310,7 +310,7 @@ void moleNoPorts(void) {
 
 // Add a secure port
 int moleAddPort(port_ctx *ctx, const uint8_t *boilerplate, int protocol,
-                char* name, uint16_t rxBlocks, mole_boilrFn boiler,
+                const char* name, uint16_t rxBlocks, mole_boilrFn boiler,
                 mole_plainFn plain, mole_ciphrFn ciphr, mole_WrKeyFn WrKeyFn) {
     memset(ctx, 0, sizeof(port_ctx));
     ctx->plainFn = plain;                       // plaintext output handler
@@ -462,6 +462,7 @@ int molePutc(port_ctx *ctx, uint8_t c){
     case HANG:                                  // wait for end token
 noend:  if (ended) {                            // premature end not allowed
             ctx->state = IDLE;
+            PRINTf("\nHANG state ");
             r = MOLE_ERROR_INVALID_LENGTH;
         }
         break;
@@ -481,10 +482,11 @@ noend:  if (ended) {                            // premature end not allowed
         if (ended) {
             if ((i - 2) == ctx->rxbuf[0])
             ctx->boilrFn(ctx->rxbuf);
+            ctx->state = IDLE;
         } else {
             ctx->rxbuf[ctx->ridx++] = c;
         }
-        goto noend;
+        break;
     case GET_PAYLOAD:
         if (!ended) {                           // input terminated by end token
             if (i != (ctx->rBlocks << BLOCK_SHIFT)) {
@@ -497,6 +499,7 @@ noend:  if (ended) {                            // premature end not allowed
                 }
             } else {
                 ctx->state = HANG;
+                PRINTf("\nGET_PAYLOAD state ");
                 r = MOLE_ERROR_INVALID_LENGTH;
             }
             break;
@@ -518,6 +521,7 @@ noend:  if (ended) {                            // premature end not allowed
             ctx->rReady = 0;
             if (r) break;
             if (temp != (2 * MOLE_IV_LENGTH + ivADlength)) {
+                PRINTf("\nIV length was funny ");
                 r = MOLE_ERROR_INVALID_LENGTH;
                 break;
             }
