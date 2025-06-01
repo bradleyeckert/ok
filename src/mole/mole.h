@@ -65,6 +65,7 @@ extern "C" {
 #define MOLE_ERROR_NO_RAWPACKET       14
 #define MOLE_ERROR_NO_ANYLENGTH       15
 #define MOLE_ERROR_BAD_END_RUN        16
+#define MOLE_ERROR_BAD_BIST           17
 
 enum moleStates {
   IDLE = 0,

@@ -131,6 +131,27 @@ static void SendBoiler(port_ctx *ctx) {         // send boilerplate packet
 
 // Encryption
 
+static const uint8_t BISThmac[16] = {
+    0xF2, 0x27, 0xE9, 0x62, 0x94, 0x7A, 0xAB, 0xE5,
+    0xA7, 0x05, 0x88, 0x2A, 0xCF, 0xB3, 0x04, 0x82};
+
+static const uint8_t BISTdecode[16] = {
+    0xBC, 0xD0, 0x2A, 0x18, 0xBF, 0x3F, 0x01, 0xD1,
+    0x92, 0x92, 0xDE, 0x30, 0xA7, 0xA8, 0xFD, 0xAC};
+
+static int BIST(port_ctx *ctx, int protocol) {  // with keys and rxbuf = 0
+    BeginHash  (CTX->rhCtx, ctx->hmackey, MOLE_HMAC_LENGTH, 0);
+    BeginCipher(CTX->rcCtx, ctx->cryptokey, ctx->rxbuf, 0);
+    BlockCipher(CTX->rcCtx, ctx->rxbuf, ctx->rxbuf, 0);
+    if (memcmp(BISTdecode, ctx->rxbuf, MOLE_BLOCKSIZE)) return MOLE_ERROR_BAD_BIST;
+    for (int i = 0; i < MOLE_BLOCKSIZE; i++) {
+        Hash(CTX->rhCtx, ctx->rxbuf[i]);
+    }
+    EndHash(CTX->rhCtx, ctx->rxbuf);
+    if (memcmp(BISThmac, ctx->rxbuf, MOLE_HMAC_LENGTH)) return MOLE_ERROR_BAD_BIST;
+    return 0;
+}
+
 static void SendTxBuf(port_ctx *ctx) {
     BlockCipher(CTX->tcCtx, ctx->txbuf, ctx->txbuf, 0);
     SendBlock(ctx, ctx->txbuf);
@@ -337,7 +358,7 @@ int moleAddPort(port_ctx *ctx, const uint8_t *boilerplate, int protocol,
         BeginCipher = xc_crypt_init_g;
         BlockCipher = xc_crypt_block_g;
     }
-    return 0;
+    return BIST(ctx, protocol);
 }
 
 int moleRAMused (int ports) {
