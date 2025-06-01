@@ -96,7 +96,7 @@ typedef uint8_t* (*mole_WrKeyFn)(uint8_t* keyset);
 typedef int  (*hmac_initFn)(size_t *ctx, const uint8_t *key, int hsize, uint64_t ctr);
 typedef void (*hmac_putcFn)(size_t *ctx, uint8_t c);
 typedef int  (*hmac_finalFn)(size_t *ctx, uint8_t *out);
-typedef void (*crypt_initFn)(size_t *ctx, const uint8_t *key, const uint8_t *iv);
+typedef void (*crypt_initFn)(size_t *ctx, const uint8_t *key, const uint8_t *iv, int mode);
 typedef void (*crypt_blockFn)(size_t *ctx, const uint8_t *in, uint8_t *out, int mode);
 
 typedef struct

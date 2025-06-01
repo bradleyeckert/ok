@@ -16,7 +16,7 @@
 #define NAME "xChaCha"
 #define KEYSIZE 256                 /* 256-bits, 32 bytes */
 #define BLOCKSIZE 512               /* 512-bits, 64 bytes */
-#define IVSIZE 256                  /* 256-bits, 32 bytes */
+#define IVSIZE 128                  /* 128-bits, 16 bytes */
 
 /* The following macros are used to obtain exact-width results. */
 #define U8V(v)  ((uint8_t)(v) & (0xFF))
@@ -43,15 +43,16 @@ typedef struct
  * @param ctx   Encryption/Decryption context
  * @param key   Key, 32 bytes
  * @param iv    Initialization vector, 16 bytes
+ * @param mode  1 for encryption, 0 for decryption
  */
-void xc_crypt_init(xChaCha_ctx *ctx, const uint8_t *key, const uint8_t *iv);
-void xc_crypt_init_g   (size_t *ctx, const uint8_t *key, const uint8_t *iv);
+void xc_crypt_init(xChaCha_ctx *ctx, const uint8_t *key, const uint8_t *iv, int mode);
+void xc_crypt_init_g   (size_t *ctx, const uint8_t *key, const uint8_t *iv, int mode);
 
 /** 16-byte block encryption/decryption
  * @param ctx   Encryption/Decryption context
  * @param in    16-byte buffer holding the input data
  * @param out   16-byte buffer holding the output data
- * @param mode  ignored
+ * @param mode  1 for encryption, 0 for decryption
  */
 void xc_crypt_block(xChaCha_ctx *ctx, const uint8_t *in, uint8_t *out, int mode);
 void xc_crypt_block_g   (size_t *ctx, const uint8_t *in, uint8_t *out, int mode);

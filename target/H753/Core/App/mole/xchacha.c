@@ -115,14 +115,14 @@ void xchacha_decrypt_bytes(xChaCha_ctx *ctx, const uint8_t *c, uint8_t *m, uint3
 
 // A more AES/SM4-like API abstraction
 
-void xc_crypt_init(xChaCha_ctx *ctx, const uint8_t *key, const uint8_t *iv) {
+void xc_crypt_init(xChaCha_ctx *ctx, const uint8_t *key, const uint8_t *iv, int mode) {
     uint8_t nonce[24];
     memset(nonce, 0, 24);
     memcpy(nonce, iv, 16); // use 128 bits of the possible 192
     xchacha_init(ctx, key, nonce);
 }
-void xc_crypt_init_g(size_t *ctx, const uint8_t *key, const uint8_t *iv) {
-    xc_crypt_init((void *)ctx, key, iv);
+void xc_crypt_init_g(size_t *ctx, const uint8_t *key, const uint8_t *iv, int mode) {
+    xc_crypt_init((void *)ctx, key, iv, mode);
 }
 
 void xc_crypt_block(xChaCha_ctx *ctx, const uint8_t *in, uint8_t *out, int mode) {

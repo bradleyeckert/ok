@@ -40,7 +40,7 @@ static void DUMP(const uint8_t *src, uint8_t len) {}
 #define BeginHash ctx->hInitFn
 #define EndHash ctx->hFinalFn
 #define Hash ctx->hputcFn
-#define BeginTx ctx->cInitFn
+#define BeginCipher ctx->cInitFn
 #define TX ctx->ciphrFn
 #define BlockCipher ctx->cBlockFn
 
@@ -193,8 +193,8 @@ static int SendIV(port_ctx *ctx, int tag) {     // send random IV with random IV
         DUMP((uint8_t*)&ctx->hashCounterTX, 8); PRINTF("Current %s.hashCounterTX",ctx->name);
         DUMP((uint8_t*)mIV, MOLE_IV_LENGTH);    PRINTF("mIV used by %s to encrypt cIV",ctx->name);
         DUMP((uint8_t*)cIV, MOLE_IV_LENGTH);    PRINTF("IV (not output)");
-    BeginTx (CTX->tcCtx, ctx->cryptokey, mIV);  // begin encryption with plaintext IV
-    BlockCipher(CTX->tcCtx, cIV, mIV, 0);       // replace mIV with encrypted cIV
+    BeginCipher(CTX->tcCtx, ctx->cryptokey, mIV, 1); // begin encryption with plaintext IV
+    BlockCipher(CTX->tcCtx, cIV, mIV, 1);       // replace mIV with encrypted cIV
         DUMP((uint8_t*)mIV, MOLE_IV_LENGTH);    PRINTF("cIV output as encrypted IV\n");
 #if (MOLE_IV_LENGTH == MOLE_BLOCKSIZE)
     SendBlock(ctx, mIV);
@@ -203,7 +203,7 @@ static int SendIV(port_ctx *ctx, int tag) {     // send random IV with random IV
 #endif
     Send2(ctx, ctx->rBlocks);                   // RX buffer size[2]
     SendTxHash(ctx, MOLE_END_UNPADDED);         // HMAC
-    BeginTx(CTX->tcCtx, ctx->cryptokey, cIV);
+    BeginCipher(CTX->tcCtx, ctx->cryptokey, cIV, 1);
     ctx->tReady = 1;
     return 0;
 }
@@ -331,10 +331,10 @@ int moleAddPort(port_ctx *ctx, const uint8_t *boilerplate, int protocol,
         r = Allocate(sizeof(xChaCha_ctx),   &ctx->tcCtx);  if (r) return r;
         r = Allocate(sizeof(blake2s_state), &ctx->rhCtx);  if (r) return r;
         r = Allocate(sizeof(blake2s_state), &ctx->thCtx);  if (r) return r;
-        BeginHash  = b2s_hmac_init_g;
-        Hash       = b2s_hmac_putc_g;
-        EndHash    = b2s_hmac_final_g;
-        BeginTx    = xc_crypt_init_g;
+        BeginHash   = b2s_hmac_init_g;
+        Hash        = b2s_hmac_putc_g;
+        EndHash     = b2s_hmac_final_g;
+        BeginCipher = xc_crypt_init_g;
         BlockCipher = xc_crypt_block_g;
     }
     return 0;
@@ -472,7 +472,7 @@ noend:  if (ended) {                            // premature end not allowed
         ctx->rxbuf[ctx->ridx++] = c;
         if (ctx->ridx == MOLE_IV_LENGTH) {
             PRINTf("\nSet temporary IV for decrypting the secret IV ");
-            BeginTx (CTX->rcCtx, ctx->cryptokey, ctx->rxbuf);
+            BeginCipher(CTX->rcCtx, ctx->cryptokey, ctx->rxbuf, 0);
             ctx->state = GET_PAYLOAD;
         }
         goto noend;
@@ -527,7 +527,7 @@ noend:  if (ended) {                            // premature end not allowed
                 r = MOLE_ERROR_INVALID_LENGTH;
                 break;
             }
-            BeginTx (CTX->rcCtx, ctx->cryptokey, &ctx->rxbuf[MOLE_IV_LENGTH]);
+            BeginCipher(CTX->rcCtx, ctx->cryptokey, &ctx->rxbuf[MOLE_IV_LENGTH], 0);
             memcpy(&ctx->hashCounterTX, &ctx->rxbuf[MOLE_IV_LENGTH], 8);
             memcpy(&ctx->avail, &ctx->rxbuf[2*MOLE_IV_LENGTH], 2);
             ctx->rReady = 1;
@@ -741,23 +741,23 @@ int moleFileIn (port_ctx *ctx, mole_inFn cFn, mole_outFn mFn) {
     if (c != MOLE_TAG_IV_A) return MOLE_ERROR_MISSING_IV;
         PRINTf("\nIV tag is at position 0x%x ", position - 1);
     ctx->hashCounterRX = 0;
-    BeginHash(CTX->rhCtx, ctx->hmackey, MOLE_HMAC_LENGTH, 0);
+    BeginHash  (CTX->rhCtx, ctx->hmackey, MOLE_HMAC_LENGTH, 0);
     Hash(CTX->rhCtx, c);                        // hash includes the tag
-    NextBlock (ctx, mIV);
+    NextBlock  (ctx, mIV);
         DUMP(mIV, MOLE_HMAC_LENGTH); PRINTF("mIV read");
-    BeginTx  (CTX->rcCtx, ctx->cryptokey, mIV);
-    NextBlock (ctx, mIV);
+    BeginCipher(CTX->rcCtx, ctx->cryptokey, mIV, 0);
+    NextBlock  (ctx, mIV);
         DUMP(mIV, MOLE_HMAC_LENGTH); PRINTF("cIV read");
     RX; RX;                                     // skip avail field
     BlockCipher(CTX->rcCtx, mIV, cIV, 0);
     memcpy(&ctx->hashCounterRX, cIV, 8);
         DUMP(cIV, MOLE_HMAC_LENGTH); PRINTF("IV calculated\n");
         DUMP((uint8_t*)&ctx->hashCounterRX, 8); PRINTF("hashCounterRX ");
-    BeginHash(CTX->thCtx, ctx->hmackey, MOLE_HMAC_LENGTH, ctx->hashCounterRX);
-    BeginTx  (CTX->rcCtx, ctx->cryptokey, cIV);
+    BeginHash  (CTX->thCtx, ctx->hmackey, MOLE_HMAC_LENGTH, ctx->hashCounterRX);
+    BeginCipher(CTX->rcCtx, ctx->cryptokey, cIV, 0);
     if (NextBlock(ctx, mIV)) return MOLE_ERROR_MISSING_HMAC;
         PRINTf("\nIV HMAC is at position 0x%x ", position);
-    NextBlock(ctx, mIV);
+    NextBlock  (ctx, mIV);
     if (testHMAC(ctx, mIV)) {
 badmac: DUMP(ctx->hmac, MOLE_HMAC_LENGTH); PRINTF("expected key hmac ");
         DUMP(mIV, MOLE_HMAC_LENGTH); PRINTF("actual key hmac\n");
