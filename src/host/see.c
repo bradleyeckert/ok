@@ -387,7 +387,7 @@ void AddSeeKeywords(struct QuitStruct *state) {
     AddKeyword("locate", "-see.htm#locate [lines] <name> --",   Locate,     noCompile);
     AddKeyword("where",  "-see.htm#where <name> --",            Where,      noCompile);
     AddKeyword("words",  "~tools/WORDS [substr] --",            Words,      noCompile);
-    AddKeyword("wrds",   "-see.htm#wrds [substr] wid --",       Wrds,       noCompile);
+    AddKeyword("Words",  "-see.htm#wrds [substr] wid --",       Wrds,       noCompile);
     AddKeyword("help",   "-see.htm#help <name> --",             help,       noCompile);
     AddKeyword("help_prefix", "-see.htm#helpprefix --",         Prefixes,   noCompile);
     AddKeyword("help_forth:", "-see.htm#helpforth \"ccc<eol>\" --", PrefixSetForth, noCompile);

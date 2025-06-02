@@ -228,7 +228,8 @@ static int OrderPop(void) {
 
 static void Only       (void) { ORDERS = 0; OrderPush(q->host); OrderPush(q->host); }
 static void ForthLex   (void) { CONTEXT[0] = CORE.forth; }
-//static void ForthWID (void) { DataPush(CORE.forth); }
+static void HostLex    (void) { CONTEXT[0] = q->host; }
+static void ForthWID   (void) { DataPush(CORE.forth); }
 static void Definitions(void) { CURRENT = CONTEXT[0]; }
 static void Also       (void) { OrderPush(CONTEXT[0]); }
 static void Previous   (void) { OrderPop(); }
@@ -583,8 +584,9 @@ static void AddRootKeywords(void) {
     AddKeyword("include",    "~file/INCLUDE i*x \"name\" -- j*x",   Include,     noCompile);
     AddKeyword("'",          "~core/Tick <spaces>\"name\" -- xt",   Tick,        noCompile);
     AddKeyword("[']",        "~core/BracketTick <spaces>\"name\" -- xt", noExecute, BracketTick);
+    AddKeyword("host",       "-quit.htm#host --",                   HostLex,     noCompile);
     AddKeyword("forth",      "~search/FORTH --",                    ForthLex,    noCompile);
-//  AddKeyword("*forth",     "~-quit.htm#frth -- wid",              ForthWID,    noCompile);
+    AddKeyword("*forth",     "-quit.htm#frth -- wid",               ForthWID,    noCompile);
     AddKeyword("verbose!",   "-quit.htm#verbsto mask --",           Verbosity,   noCompile);
     AddKeyword("(",          "~core/p ccc<paren> --",               SkipToPar,   SkipToPar);
     AddKeyword("\\",         "~core/bs ccc<EOL> --",                SkipToEOL,   SkipToEOL);
@@ -593,8 +595,8 @@ static void AddRootKeywords(void) {
     AddKeyword("[if]",       "~tools/BracketIF flag --",            BrackIf,     noCompile);
     AddKeyword("[then]",     "~tools/BracketTHEN --",               Nothing,     noCompile);
     AddKeyword("[else]",     "~tools/BracketELSE --",               BrackElse,   noCompile);
-    AddKeyword("[undefined]","~tools/BracketUNDEFINED <name> -- flag", BrackUndefined, noCompile);
-    AddKeyword("[defined]",  "~tools/BracketDEFINED <name> -- flag", BrackDefined, noCompile);
+    AddKeyword("[undefined]","~tools/BracketUNDEFINED \"name\" -- flag", BrackUndefined, noCompile);
+    AddKeyword("[defined]",  "~tools/BracketDEFINED \"name\" -- flag", BrackDefined, noCompile);
     AddKeyword("}t",         "-quit.htm#tend --",                   EndTest,     noCompile);
     AddKeyword("->",         "-quit.htm#tmiddle ... --",            DoTest,      noCompile);
     AddKeyword("t{",         "-quit.htm#tbegin ... --",             BeginTest,   noCompile);

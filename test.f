@@ -42,7 +42,7 @@ variable outputs
 
 \ Define numeric output lexicon
 
-: -         1 swap invert + + ;                 \h ~core/Minus n1 n2 -- n3
+: -         invert 1 + + ;                      \h ~core/Minus n1 n2 -- n3
 : or        inv swap inv and inv ;              \h ~core/OR x1 x2 -- x3
 : rot       >r swap r> swap ;                   \h ~core/ROT x1 x2 x3 -- x2 x3 x1
 : dnegate   inv swap inv 1 + swap cy + ;        \h ~double/DNEGATE d -- -d
@@ -59,14 +59,15 @@ variable outputs
 
 variable hld                                    \h  -- a \ pointer for numeric output
 32 equ bl                                       \h ~core/BL -- char
-pad |pad| + equ numbuf
+64 buffer: pad
+64 pad + equ numbuf
 0 equ base                                      \h ~core/BASE -- a
 
 : space     bl emit ;                           \h ~core/SPACE --
 : spaces    goodN for space next ;              \h ~core/SPACES n --
 : digit     -10 + -if -7 + then [char] A + ;    \h  u -- char
 : <#        numbuf  hld ! ;                     \h ~core/num-start --
-: hold      hld a! @a -1 + dup !a ! ;           \h ~core/HOLD char --
+: hold      hld a! @a 1- dup !a ! ;             \h ~core/HOLD char --
 : #         base @ mu/mod rot digit hold ;      \h ~core/num ud1 -- ud2
 : #s        begin # 2dup or 0= until ;          \h ~core/numS ud1 -- ud2
 : sign      0< if [char] - hold then ;          \h ~core/SIGN n --
@@ -81,7 +82,7 @@ pad |pad| + equ numbuf
 
 .( Numeric output has been defined in ) cp -1 + . \. instructions.
 
-: negate    1 swap invert + ;                   \h ~core/NEGATE n1 -- n2
+: negate    invert 1 + ;                        \h ~core/NEGATE n1 -- n2
 : abs       -if negate then ;                   \h ~core/ABS n -- u
 : m*        2dup xor >r abs swap abs um*        \h ~core/MTimes n1 n2 -- d
             r> 0< if dnegate then ;
@@ -130,7 +131,6 @@ variable counter
 ; resolves coldboot
 
 reload \ synchronize code and text images to target
-\ executing words without reload will crash
 
 console \ initialize console output
 
@@ -148,6 +148,7 @@ t{ table 2 + @ -> 10000 }t
 \ verbose_bci verbose!
 17 port!
 
+\. defining some words that only execute on the STM32
 hex
 
 40004800 peripheral USART3_BASE
@@ -156,3 +157,5 @@ hex
 
 decimal
 : com3cr  USART3_BASE USART_CR1 @b+ ;
+
+reload \ synchronize again before leaving

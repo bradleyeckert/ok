@@ -189,6 +189,9 @@ void SendFinal(void) {
         printf("Sending to BCI through mole\n");
     }
     busy = 1;
+    if (q->TxMsgLength == 0) {
+        printf("SendFinal error, length should never be 0");
+    }
     q->TxMsgSend = 1;
 }
 void SendCell(uint32_t x) {
