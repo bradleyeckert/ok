@@ -250,6 +250,9 @@ static VMcell_t VMapiCall(vm_ctx *ctx, int fn) {
     return -1;
 }
 
+uint8_t VMgetRP(vm_ctx *ctx) {return ctx->rp;}
+uint8_t VMgetSP(vm_ctx *ctx) {return ctx->sp;}
+
 static const uint8_t boilerplate[BOILERPLATE_SIZE] = {
     1,                          // format 1
     VM_CELLBITS,                // bits per data cell

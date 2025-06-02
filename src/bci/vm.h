@@ -92,6 +92,8 @@ VMcell_t VMreadCell(vm_ctx *ctx, VMcell_t addr);
 void VMwriteCell(vm_ctx *ctx, VMcell_t addr, VMcell_t x);
 void VMpushData(vm_ctx *ctx, VMcell_t x);
 VMcell_t VMpopData(vm_ctx *ctx);
+uint8_t VMgetRP(vm_ctx *ctx);
+uint8_t VMgetSP(vm_ctx *ctx);
 
 #define VM_UOPS       (1 << (VM_INSTBITS - 1)) // uops bit location
 #define VM_RET        (1 << (VM_INSTBITS - 2)) // return bit location
