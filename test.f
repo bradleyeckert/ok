@@ -159,3 +159,9 @@ decimal
 : com3cr  USART3_BASE USART_CR1 @b+ ;
 
 reload \ synchronize again before leaving
+
+\.
+\. Interesting things to do:
+\. Disassemble all: dasm
+\. Benchmark: mips
+\. Sanity check: counter @ u.
