@@ -105,6 +105,7 @@ void BCIsendFinal(int id) {
 }
 
 static void BCItransmit(const uint8_t *src, int length) {
+    ctx->admin = TargetPort.adminOK;
     BCIhandler(ctx, &src[2], length);   // skip the CPUCORE id
 }
 

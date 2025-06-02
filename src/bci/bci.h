@@ -27,6 +27,7 @@ extern "C" {
 #define BCI_RESET_PIN          10123
 #define BCI_SLEEP_PIN          10321
 #define BCI_BEGIN                252    /* beginning-of-message */
+#define BCI_ADMIN_ACTIVE        0x55
 
 #define BCIFN_READ                 1
 #define BCIFN_WRITE                2

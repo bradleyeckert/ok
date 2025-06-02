@@ -78,6 +78,12 @@ static int16_t simulate(vm_ctx *ctx, uint32_t xt){
 
 #define EXEC_STACK_SIZE 16
 
+static int ValidAddress(vm_ctx *ctx, uint32_t addr) {
+    return ((ctx->admin == BCI_ADMIN_ACTIVE) ||
+           ((addr >= VM_MIN_USERADDRESS) &&
+            (addr <= VM_MAX_USERADDRESS)));
+}
+
 void BCIhandler(vm_ctx *ctx, const uint8_t *src, uint16_t length) {
     BCIsendInit(ctx->id);               // empty the response buffer and send 2-byte node number
     cmd = src;  len = length;
@@ -98,16 +104,28 @@ void BCIhandler(vm_ctx *ctx, const uint8_t *src, uint16_t length) {
         n = get8();
         addr = get32();
         put8(ctx, n);
-        while (n--) put32(ctx, VMreadCell(ctx, addr++));
+        while (n--) {                   // read is restricted if not in admin mode
+            if (ValidAddress(ctx, addr)) {
+                put32(ctx, VMreadCell(ctx, addr++)); }
+            else {
+                put32(ctx, 0);
+                ctx->ior = BCI_IOR_INVALID_ADDRESS;
+            }
+        }
         break;
     case BCIFN_WRITE:
         n = get8();
         addr = get32();
         while (n--) {
             x = get32();
-            VMwriteCell(ctx, addr++, x);
+            if (ValidAddress(ctx, addr)) {
+                VMwriteCell(ctx, addr++, x); }
+            else {
+                ctx->ior = BCI_IOR_INVALID_ADDRESS;
+            }
         }
         break;
+    default: if (ctx->admin == BCI_ADMIN_ACTIVE) switch (n) {
     case BCIFN_EXECUTE:
         waitUntilVMready(ctx);          // stop the VM if it is running
         ctx->cycles = 0;
@@ -159,11 +177,11 @@ void BCIhandler(vm_ctx *ctx, const uint8_t *src, uint16_t length) {
     case BCIFN_WRTEXT:
         x = TEXTSIZE * sizeof(VMcell_t);
         taddr = (uint8_t*)ctx->TextMem;
-        goto write;
+        goto prog;
     case BCIFN_WRCODE:
         x = CODESIZE * sizeof(VMinst_t);
         taddr = (uint8_t*)ctx->CodeMem;
-write:  addr = get32();
+prog:   addr = get32();
         temp = (x - addr);              // remaining
         if (temp < 0) temp = 0;         // nothing to program
         if (temp > FLASH_BLOCK_SIZE ) temp = FLASH_BLOCK_SIZE;
@@ -190,7 +208,7 @@ write:  addr = get32();
         break;
     default:
         ctx->ior = BCI_BAD_COMMAND;
-    }
+    }}
     putN(ctx, ctx->ior, 2);
     BCIsendFinal(ctx->id);
 }

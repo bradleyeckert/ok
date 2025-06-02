@@ -11,6 +11,8 @@
 #define TEXTORIGIN            0x1000    /* base address of internal Flash data in cells */
 #define TEXTSIZE              0x2000    /* size of internal Flash data in cells */
 #define BOILERPLATE_SIZE          16
+#define VM_MIN_USERADDRESS (DATASIZE-256)
+#define VM_MAX_USERADDRESS (DATASIZE-1)
 
 #if (VM_CELLBITS > 16)
 #define VMcell_t            uint32_t
@@ -53,7 +55,7 @@ typedef struct
     uint64_t cycles;
     uint16_t lex;
     int16_t  ior;
-    uint8_t  sp, rp, cy;
+    uint8_t  sp, rp, cy, admin;
     VMcell_t DataStack[VM_STACKSIZE];
     VMcell_t ReturnStack[VM_STACKSIZE];
     VMcell_t DataMem[DATASIZE]; // RAM can be anywhere
@@ -137,7 +139,7 @@ VMcell_t VMpopData(vm_ctx *ctx);
 #define VMO_STOREB              0x16
 #define VMO_STOREBPLUS          0x17
 #define VMO_SWAP                0x18
-//#define VMO_BLESS          0x19 // unused
+#define VMO_ZEROLESS            0x19
 #define VMO_U                   0x1A
 #define VMO_USTORE              0x1B
 #define VMO_FETCHB              0x1C

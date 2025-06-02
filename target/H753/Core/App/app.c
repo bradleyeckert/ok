@@ -83,6 +83,7 @@ void BCIsendFinal(int id) {
 }
 
 static void BCItransmit(const uint8_t *src, int length) {
+    ctx->admin = TargetPort.adminOK;
     BCIhandler(ctx, &src[2], length);   // skip the CPUCORE id
 }
 
@@ -113,7 +114,7 @@ int TargetInit(void) {
 
 void ApplicationStep(void) {
     if (ctx->status == BCI_STATUS_RUNNING) {
-        VMsteps(ctx, 512); // ~100 usec
+        VMsteps(ctx, 512); // ~100 usec, swamp the cache miss penalty
     }
     while (UART_received()) {
         uint8_t c = UART_getc();

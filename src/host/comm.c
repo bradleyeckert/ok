@@ -145,6 +145,7 @@ bad:        printf("Pairing failure\n\n");
     }
     int ok = (moleAvail(&HostPort) != 0);
     q->connected = ok;
+    if (ok) moleAdmin(&HostPort);
     return (!ok);
 }
 
@@ -160,9 +161,13 @@ static void BCItransmit(const uint8_t *src, int length) { // message m from mole
     memcpy(&id, src, sizeof(uint16_t));
     src += sizeof(uint16_t);
     length -= sizeof(uint16_t);
-    vm_ctx *ctx = &q->VMlist[id].ctx; // accessing the vm directly !!!
+    vm_ctx *ctx = &q->VMlist[id].ctx; // accessing the vm directly !!! [1]
+    ctx->admin = TargetPort.adminOK;
     BCIhandler(ctx, src, length);
 }
+
+// [1] Accessing the VM directly should only be done when necessary.
+//     You don't know if the VM is in your computer. Here, we know it is.
 
 void get8debug(uint8_t c) {} // no debug output
 

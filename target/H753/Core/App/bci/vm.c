@@ -147,6 +147,7 @@ int VMstep(vm_ctx *ctx, VMinst_t inst){
                         i = 15;
                         continue;
                     }
+                case VMO_ZEROLESS:   ctx->t = (t & VM_SIGN) ? VM_MASK :0; break;
                 case VMO_U:          ctx->t = 0;                          break;
                 // memory operations
                 case VMO_BSTORE:     ctx->b = t;                          break;
