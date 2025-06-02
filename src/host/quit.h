@@ -11,7 +11,6 @@ extern "C" {
 #include "../bci/bci.h"
 
 #define CPUCORES         1
-#define PAD_SIZE       128      /* cells of pad to place at the top of data space */
 
 #define LineBufferSize 128      /* Size of line buffer                      */
 #define MaxLineLength   80      /* Max TIB size                             */

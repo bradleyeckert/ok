@@ -188,6 +188,7 @@ static char * DisassembleInsn(uint32_t inst) {
                         else {
                             appendDA("api? ");
                         }
+                        break;
                     case VMO_BY: ToLabel();
                         appendDA("b = y +");
                         appendDA(itos(imm, 16, 1, 1, 32));

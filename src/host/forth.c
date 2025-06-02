@@ -464,8 +464,8 @@ static void Hex        (void) { BASE = 16; }
 static void Decimal    (void) { BASE = 10; }
 static void BitsCell   (void) { DataPush(BitsPerCell()); }
 static void ComBitsCell(void) { CompLit (BitsPerCell()); }
-static void Pad        (void) { DataPush(DataMemSize() - PAD_SIZE); }
-static void ComPad     (void) { CompLit (DataMemSize() - PAD_SIZE); }
+static void MemTop     (void) { DataPush(DataMemSize()); }
+static void ComTop     (void) { CompLit (DataMemSize()); }
 static void Literal    (void) { CompLit (DataPop()); }
 static void AddHelp    (void) { HEADER[HP].help = TIBtoEnd(); }
 static void CompStr    (void) { CommaStr(); Literal(); }
@@ -495,8 +495,7 @@ void AddForthKeywords(struct QuitStruct *state) {
     q = state;
     AddKeyword("\\h",       "-forth.htm#help --",           AddHelp,    AddHelp);
     AddKeyword("bits/cell", "-forth.htm#bpc -- n",          BitsCell,   ComBitsCell);
-    AddKeyword("pad",       "~core/PAD -- n",               Pad,        ComPad);
-    AddEquate("|pad|",          "-forth.htm#padsize -- n",      PAD_SIZE);
+    AddKeyword("memtop",        "-forth.htm#memtop -- a",       MemTop, ComTop);
     AddEquate("verbose_bci",    "-forth.htm#vbci -- mask",      VERBOSE_BCI);
     AddEquate("verbose_token",  "-forth.htm#vtoken -- mask",    VERBOSE_TOKEN);
     AddEquate("verbose_src",    "-forth.htm#vsrc -- mask",      VERBOSE_SRC);
@@ -545,6 +544,7 @@ void AddForthKeywords(struct QuitStruct *state) {
     AddUop("b!",     "-forth.htm#bstore a --",              IS_UOP(VMO_BSTORE));
     AddUop("cy",     "-forth.htm#cy -- carry",              IS_UOP(VMO_CY));
     AddUop("b",      "-forth.htm#b -- x",                   IS_UOP(VMO_B));
+    AddUop("0<",     "~core/ZeroLess n -- flag",            IS_UOP(VMO_ZEROLESS));
     AddUop("u!",     "-forth.htm#ustore --",                IS_UOP(VMO_USTORE));
     AddUop("u",      "-forth.htm#u -- u",                   IS_UOP(VMO_U));
     AddUop("+",      "~core/Plus n1 n2 -- n3",              IS_UOP(VMO_PLUS));

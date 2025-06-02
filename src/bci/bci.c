@@ -54,7 +54,7 @@ static void waitUntilVMready(vm_ctx *ctx){
     uint32_t limit = BCI_CYCLE_LIMIT;
     StopVMthread(ctx);
     while (limit--) {
-        if (VMstep(ctx, 0)) return; // bcisync instruction
+        if (VMstep(ctx, 0)) return;     // bcisync instruction
     }
     VMreset(ctx); // hung
 }
@@ -62,14 +62,14 @@ static void waitUntilVMready(vm_ctx *ctx){
 static int16_t simulate(vm_ctx *ctx, uint32_t xt){
     if (xt & 0x80000000) {
         PRINTF("\nExecuting single instruction %04x, ", xt & 0x7FFFFFFF);
-        VMstep(ctx, xt);             // single instruction
+        VMstep(ctx, xt);                // single instruction
     } else {
         PRINTF("\nCalling %04x, ", xt);
         int rdepth = ctx->rp;
-        VMstep(ctx, xt | VMI_CALL);  // trigger call to xt
+        VMstep(ctx, xt | VMI_CALL);     // trigger call to xt
         while (rdepth != ctx->rp) {
-            VMstep(ctx, 0);          // execute instructions
-            if (ctx->ior) break;     // break on error
+            VMstep(ctx, 0);             // execute instructions
+            if (ctx->ior) break;        // break on error
         }
         PRINTF("Done simulating ");
     }
@@ -85,7 +85,7 @@ static int ValidAddress(vm_ctx *ctx, uint32_t addr) {
 }
 
 void BCIhandler(vm_ctx *ctx, const uint8_t *src, uint16_t length) {
-    BCIsendInit(ctx->id);               // empty the response buffer and send 2-byte node number
+    BCIsendInit(ctx->id);               // begin a response message
     cmd = src;  len = length;
     uint32_t ds[EXEC_STACK_SIZE];
     memset(ds, 0, EXEC_STACK_SIZE * sizeof(uint32_t));
