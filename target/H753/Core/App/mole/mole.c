@@ -51,11 +51,10 @@ static void DUMP(const uint8_t *src, uint8_t len) {}
 static uint32_t context_memory[MOLE_ALLOC_MEM_UINT32S];
 static int allocated_uint32s;
 
-static int Allocate(int bytes, void* dest) {
-	*(uint32_t**)dest = &context_memory[allocated_uint32s];
+static void* Allocate(int bytes) {
+	void* r = &context_memory[allocated_uint32s];
 	allocated_uint32s += ((bytes + 3) >> 2);
-	if (allocated_uint32s >= MOLE_ALLOC_MEM_UINT32S) return MOLE_ERROR_OUT_OF_MEMORY;
-	return 0;
+	return r;
 }
 
 // Key management
@@ -334,7 +333,6 @@ void moleNoPorts(void) {
 int moleAddPort(port_ctx *ctx, const uint8_t *boilerplate, int protocol,
                 const char* name, uint16_t rxBlocks, mole_boilrFn boiler,
                 mole_plainFn plain, mole_ciphrFn ciphr, mole_WrKeyFn WrKeyFn) {
-    int r = 0;
     memset(ctx, 0, sizeof(port_ctx));
     ctx->plainFn = plain;                       // plaintext output handler
     TX = ciphr;                                 // ciphertext output handler
@@ -343,15 +341,15 @@ int moleAddPort(port_ctx *ctx, const uint8_t *boilerplate, int protocol,
     ctx->name = name;                           // Zstring name for debugging
     ctx->WrKeyFn = WrKeyFn;
     ctx->rBlocks = rxBlocks;                    // block size (1<<BLOCK_SHIFT) bytes
-    r = Allocate(rxBlocks << BLOCK_SHIFT, &ctx->rxbuf);
-    if (r) return r;
+    ctx->rxbuf = Allocate(rxBlocks << BLOCK_SHIFT);
     if (rxBlocks < 2) return MOLE_ERROR_BUF_TOO_SMALL;
     switch (protocol) {
     default: // 0
-        r = Allocate(sizeof(xChaCha_ctx),   &ctx->rcCtx);  if (r) return r;
-        r = Allocate(sizeof(xChaCha_ctx),   &ctx->tcCtx);  if (r) return r;
-        r = Allocate(sizeof(blake2s_state), &ctx->rhCtx);  if (r) return r;
-        r = Allocate(sizeof(blake2s_state), &ctx->thCtx);  if (r) return r;
+        ctx->rcCtx = Allocate(sizeof(xChaCha_ctx));
+        ctx->tcCtx = Allocate(sizeof(xChaCha_ctx));
+        ctx->rhCtx = Allocate(sizeof(blake2s_state));
+        ctx->thCtx = Allocate(sizeof(blake2s_state));
+        if (allocated_uint32s >= MOLE_ALLOC_MEM_UINT32S) return MOLE_ERROR_OUT_OF_MEMORY;
         BeginHash   = b2s_hmac_init_g;
         Hash        = b2s_hmac_putc_g;
         EndHash     = b2s_hmac_final_g;
