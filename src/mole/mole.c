@@ -190,8 +190,8 @@ static void SendTxHash(port_ctx *ctx, int pad){ // finish authenticated packet
 
 // Send: Tag[1], mIV[], cIV[], RXbufsize[2], HMAC[]
 static int SendIV(port_ctx *ctx, int tag) {     // send random IV with random IV
-    uint8_t mIV[MOLE_IV_LENGTH];                // using these instead of txbuf
-    uint8_t cIV[MOLE_IV_LENGTH];                // to allow for re-transmission
+    uint8_t mIV[MOLE_IV_LENGTH];
+    uint8_t cIV[MOLE_IV_LENGTH];
     int r = 0;
     int c;
     for (int i = 0; i < MOLE_IV_LENGTH ; i++) {

@@ -97,9 +97,10 @@ void* PollCommRX(void* threadid) {
             uSleep(100);    // not so rapid-fire polling
         }
         if (q->TxMsgSend) {
-            EncryptAndSend(q->TxMsg, q->TxMsgLength);
-            q->TxMsgLength = 0;
             q->TxMsgSend = 0;
+            if (q->TxMsgLength == 0) printf("Unexpected empty message in PollCommRX\n");
+            else EncryptAndSend(q->TxMsg, q->TxMsgLength);
+            q->TxMsgLength = 0;
         }
         YieldThread();
     }

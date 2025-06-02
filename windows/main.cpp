@@ -53,7 +53,7 @@ void StopVMthread(vm_ctx* ctx) {
 /*
 VM state accessed in main: CodeMem, TextMem, id, status, statusNew
 */
-#define CYCLES 1000
+constexpr auto CYCLES = 5000;
 
 #ifdef _MSC_VER
 static DWORD WINAPI SimulateCPU(LPVOID threadid) {
@@ -106,9 +106,10 @@ static void* PollCommRX(void* threadid) {
             uSleep(100);    // not so rapid-fire polling
         }
         if (q->TxMsgSend) {
-            EncryptAndSend(q->TxMsg, q->TxMsgLength);
-            q->TxMsgLength = 0;
             q->TxMsgSend = 0;
+            if (q->TxMsgLength == 0) printf("Unexpected empty message in PollCommRX\n");
+            else EncryptAndSend(q->TxMsg, q->TxMsgLength);
+            q->TxMsgLength = 0;
         }
         YieldThread();
     }
