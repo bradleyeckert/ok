@@ -62,8 +62,8 @@ void StopVMthread(vm_ctx *ctx) {
 void* SimulateCPU(void* threadid) {
     int id = (int)(size_t)threadid;
     vm_ctx *ctx = &quit_internal_state.VMlist[id].ctx;
-    ctx->TextMem = &TextMem[id][0];     // flash sector for read-only data
-    ctx->CodeMem = &CodeMem[id][0];     // flash sector for code
+    ctx->TextMem = &TextMem[id][0];  // flash sector for read-only data
+    ctx->CodeMem = &CodeMem[id][0];  // flash sector for code
     memset(TextMem, BLANK_FLASH_BYTE, sizeof(TextMem));
     memset(CodeMem, BLANK_FLASH_BYTE, sizeof(CodeMem));
     VMreset(ctx);
@@ -98,7 +98,9 @@ void* PollCommRX(void* threadid) {
         }
         if (q->TxMsgSend) {
             q->TxMsgSend = 0;
-            if (q->TxMsgLength == 0) printf("Unexpected empty message in PollCommRX\n");
+            if (q->TxMsgLength == 0) { // should never happen
+                printf("Unexpected empty message in PollCommRX\n");
+            }
             else EncryptAndSend(q->TxMsg, q->TxMsgLength);
         }
         YieldThread();
@@ -114,9 +116,13 @@ int main(int argc, char* argv[]) {
     pthread_t tid[CPUCORES];
     pthread_t commtask;
     for (int i = 0; i < CPUCORES; i++) {
-        if (pthread_create(&tid[i], NULL, SimulateCPU, (void *)(size_t)i)) return 1;
+        if (pthread_create(&tid[i], NULL, SimulateCPU, (void *)(size_t)i)) {
+            return 1;
+        }
     }
-    if (pthread_create(&commtask, NULL, PollCommRX, (void *)(size_t)0)) return 1;
+    if (pthread_create(&commtask, NULL, PollCommRX, (void *)(size_t)0)) {
+        return 1;
+    }
     YieldThread();
     linebuf[0] = 0;
     // concatenate all arguments to the line buffer

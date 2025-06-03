@@ -12,7 +12,7 @@
 #define PRINTF(...) do { } while (0)
 #endif
 
-//------------------------------------------------------------------------------
+//----------------------------------------------------------------------------
 // Stream interface between BCI and VM
 
 static const uint8_t *cmd;
@@ -78,6 +78,7 @@ static int16_t simulate(vm_ctx *ctx, uint32_t xt){
 
 #define EXEC_STACK_SIZE 16
 
+// read and write are restricted if not in admin mode
 static int ValidAddress(vm_ctx *ctx, uint32_t addr) {
     return ((ctx->admin == BCI_ADMIN_ACTIVE) ||
            ((addr >= VM_MIN_USERADDRESS) &&
@@ -96,15 +97,15 @@ void BCIhandler(vm_ctx *ctx, const uint8_t *src, uint16_t length) {
     uint8_t *taddr;
     uint8_t n = get8();
     put8(ctx, BCI_BEGIN);               // indicate a BCI response message
-    put8(ctx, n);                       // indicate what kind of response it is
-    ctx->ior = 0;                       // So, that's a 4-byte preamble before the response
+    ctx->ior = 0;
     uint8_t status0 = ctx->status;
     switch (n) {
     case BCIFN_READ:
+        put8(ctx, BCIFN_READ);
         n = get8();
         addr = get32();
         put8(ctx, n);
-        while (n--) {                   // read is restricted if not in admin mode
+        while (n--) {
             if (ValidAddress(ctx, addr)) {
                 put32(ctx, VMreadCell(ctx, addr++)); }
             else {
@@ -114,6 +115,7 @@ void BCIhandler(vm_ctx *ctx, const uint8_t *src, uint16_t length) {
         }
         break;
     case BCIFN_WRITE:
+        put8(ctx, BCIFN_WRITE);
         n = get8();
         addr = get32();
         while (n--) {
@@ -125,90 +127,100 @@ void BCIhandler(vm_ctx *ctx, const uint8_t *src, uint16_t length) {
             }
         }
         break;
-    default: if (ctx->admin == BCI_ADMIN_ACTIVE) switch (n) {
-    case BCIFN_EXECUTE:
-        waitUntilVMready(ctx);          // stop the VM if it is running
-        ctx->cycles = 0;
-        VMwriteCell(ctx, 0, get32());   // packed status at data[0]
-        uint8_t sp0 = VMgetSP(ctx);
-        n = get8();
-        while (n--) {
-            VMpushData(ctx, get32());
-        }
-        ctx->ior = simulate(ctx, get32()); // xt
-        put8(ctx, BCI_BEGIN);           // indicate end of random chars, if any
-        temp = VMgetSP(ctx) - sp0;
-        if (temp < 0) {
-            ctx->ior = BCI_STACK_UNDERFLOW;
-            temp = 0;
-        }
-        if (temp > EXEC_STACK_SIZE) {
-            ctx->ior = BCI_STACK_OVERFLOW;
-            temp = EXEC_STACK_SIZE;
-        }
-        for (int i = 0; i < temp; i++) {//
-            ds[i] = VMpopData(ctx);
-        }
-        put8(ctx, temp);                // stack items returned
-        while (temp--) {
-            put32(ctx, ds[temp]);
-        }
-        put32(ctx, VMreadCell(ctx, 0)); // return packed status
-        ctx->status = status0;          // run if it was previously running
-    case BCIFN_GET_CYCLES:
-        ud = ctx->cycles;
-        put32(ctx, (uint32_t)ud);       // return cycle count
-        put32(ctx, (uint32_t)(ud >> 32));
-        break;
-    case BCIFN_CRC:
-        PRINTF("\nGetting CRCs of code and text spaces ");
-        n = get8();
-        uint32_t cp = get32();
-        uint32_t tp = get32();
-        temp = n;
-        while (temp--) {
-            if (temp & 0x80) break;
-            get32(); // discard extra inputs
-        }
-        put8(ctx, n);
-        put32(ctx, CRC32((uint8_t*)ctx->CodeMem, cp));
-        put32(ctx, CRC32((uint8_t*)ctx->TextMem, tp));
-        break;
-    case BCIFN_WRTEXT:
-        x = TEXTSIZE * sizeof(VMcell_t);
-        taddr = (uint8_t*)ctx->TextMem;
-        goto prog;
-    case BCIFN_WRCODE:
-        x = CODESIZE * sizeof(VMinst_t);
-        taddr = (uint8_t*)ctx->CodeMem;
-prog:   addr = get32();
-        temp = (x - addr);              // remaining
-        if (temp < 0) temp = 0;         // nothing to program
-        if (temp > FLASH_BLOCK_SIZE ) temp = FLASH_BLOCK_SIZE;
-        if (len < temp)   temp = len;
-        FlashUnlock(&taddr[addr]);
-        PRINTF("\nWriting %d bytes to %p ", temp, &taddr[addr]);
-        FlashWrite(&taddr[addr], (const uint8_t*) cmd, temp);
-        FlashLock();
-        break;
-    case BCIFN_SECTOR_ERASE:
-        x = get32();
-        PRINTF("\nErasing sector %d of Flash ", x);
-        FlashErase(x);
-        break;
-    case BCIFN_STROBE:
-        x = get32();
-        PRINTF("\nVM strobe=%d ", x);
-        switch (x) {
-            case BCI_SHUTDOWN_PIN: ctx->status = BCI_STATUS_SHUTDOWN;  break;
-            case BCI_SLEEP_PIN:    ctx->status = BCI_STATUS_STOPPED;   break;
-            case BCI_RESET_PIN:    VMreset(ctx);                       break;
-            default: break;
-        }
-        break;
     default:
-        ctx->ior = BCI_BAD_COMMAND;
-    }}
+    if (ctx->admin != BCI_ADMIN_ACTIVE) {
+        put8(ctx, BCIFN_ACCESS_DENIED);
+    } else {
+        put8(ctx, n);
+        switch (n) {
+        case BCIFN_EXECUTE:
+            waitUntilVMready(ctx);          // stop the VM if it is running
+            ctx->cycles = 0;
+            VMwriteCell(ctx, 0, get32());   // packed status at data[0]
+            uint8_t sp0 = VMgetSP(ctx);
+            n = get8();
+            while (n--) {
+                VMpushData(ctx, get32());
+            }
+            ctx->ior = simulate(ctx, get32()); // xt
+            put8(ctx, BCI_BEGIN);           // indicate end of random chars
+            temp = VMgetSP(ctx) - sp0;
+            if (temp < 0) {
+                ctx->ior = BCI_STACK_UNDERFLOW;
+                temp = 0;
+            }
+            if (temp > EXEC_STACK_SIZE) {
+                ctx->ior = BCI_STACK_OVERFLOW;
+                temp = EXEC_STACK_SIZE;
+            }
+            for (int i = 0; i < temp; i++) {//
+                ds[i] = VMpopData(ctx);
+            }
+            put8(ctx, temp);                // stack items returned
+            while (temp--) {
+                put32(ctx, ds[temp]);
+            }
+            put32(ctx, VMreadCell(ctx, 0)); // return packed status
+            ctx->status = status0;          // run if previously running
+        case BCIFN_GET_CYCLES:
+            ud = ctx->cycles;
+            put32(ctx, (uint32_t)ud);       // return cycle count
+            put32(ctx, (uint32_t)(ud >> 32));
+            break;
+        case BCIFN_CRC:
+            PRINTF("\nGetting CRCs of code and text spaces ");
+            n = get8();
+            uint32_t cp = get32();
+            uint32_t tp = get32();
+            temp = n;
+            while (temp--) {
+                if (temp & 0x80) break;
+                get32(); // discard extra inputs
+            }
+            put8(ctx, n);
+            put32(ctx, CRC32((uint8_t*)ctx->CodeMem, cp));
+            put32(ctx, CRC32((uint8_t*)ctx->TextMem, tp));
+            break;
+        case BCIFN_WRTEXT:
+            x = TEXTSIZE * sizeof(VMcell_t);
+            taddr = (uint8_t*)ctx->TextMem;
+            goto prog;
+        case BCIFN_WRCODE:
+            x = CODESIZE * sizeof(VMinst_t);
+            taddr = (uint8_t*)ctx->CodeMem;
+prog:       addr = get32();
+            temp = (x - addr);              // remaining
+            if (temp < 0) temp = 0;         // nothing to program
+            if (temp > FLASH_BLOCK_SIZE ) temp = FLASH_BLOCK_SIZE;
+            if (len < temp)   temp = len;
+            FlashUnlock(&taddr[addr]);
+            PRINTF("\nWriting %d bytes to %p ", temp, &taddr[addr]);
+            FlashWrite(&taddr[addr], (const uint8_t*) cmd, temp);
+            FlashLock();
+            break;
+        case BCIFN_SECTOR_ERASE:
+            x = get32();
+            PRINTF("\nErasing sector %d of Flash ", x);
+            FlashErase(x);
+            break;
+        case BCIFN_STROBE:
+            x = get32();
+            PRINTF("\nVM strobe=%d ", x);
+            switch (x) {
+                case BCI_SHUTDOWN_PIN:
+                    ctx->status = BCI_STATUS_SHUTDOWN;  break;
+                case BCI_SLEEP_PIN:
+                    ctx->status = BCI_STATUS_STOPPED;   break;
+                case BCI_RESET_PIN:
+                    VMreset(ctx);                       break;
+                default: break;
+            }
+            break;
+        default:
+            ctx->ior = BCI_BAD_COMMAND;
+        } // inner case
+    } // if
+    } // outer case
     putN(ctx, ctx->ior, 2);
     BCIsendFinal(ctx->id);
 }

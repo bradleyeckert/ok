@@ -13,11 +13,11 @@ extern "C" {
 #define DEFAULT_BAUDRATE      115200
 #define DEFAULT_HOSTPORT           2
 #define DEFAULT_TARGETPORT         3
-#define HANG_LIMIT_MS           3000    /* milliseconds to wait for a response */
+#define HANG_LIMIT_MS           3000 /* milliseconds to wait for a response */
 
-#define BLANK_FLASH_BYTE        0xFF    /* byte values after flash erase */
-#define FLASH_BLOCK_SIZE         128    /* bytes in a flash programming block */
-#define BCI_CYCLE_LIMIT     10000000    /* number of cycles to wait before resetting the VM */
+#define BLANK_FLASH_BYTE        0xFF /* byte values after flash erase */
+#define FLASH_BLOCK_SIZE         128 /* bytes in a flash programming block */
+#define BCI_CYCLE_LIMIT     10000000 /* number of cycles before VM is hung */
 
 #define BCI_STACK_OVERFLOW        -3
 #define BCI_STACK_UNDERFLOW       -4
@@ -26,7 +26,7 @@ extern "C" {
 #define BCI_SHUTDOWN_PIN       10000
 #define BCI_RESET_PIN          10123
 #define BCI_SLEEP_PIN          10321
-#define BCI_BEGIN                252    /* beginning-of-message */
+#define BCI_BEGIN                252 /* beginning-of-message */
 #define BCI_ADMIN_ACTIVE        0x55
 
 #define BCIFN_READ                 1
@@ -38,8 +38,7 @@ extern "C" {
 #define BCIFN_WRTEXT               7
 #define BCIFN_SECTOR_ERASE         8
 #define BCIFN_STROBE               9
-#define BCIFN_READREG             11
-#define BCIFN_WRITEREG            12
+#define BCIFN_ACCESS_DENIED       10
 
 #define BCI_STATUS_RUNNING         0
 #define BCI_STATUS_STOPPED         1

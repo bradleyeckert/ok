@@ -3,13 +3,13 @@
 
 #include <stdint.h>
 
-#define VM_CELLBITS               32    /* simulator bits per cell: 16 to 32 */
-#define VM_INSTBITS               16    /* bits per instruction: 16, 17, 20, 21, 22, 25, 26, or 27 bits */
-#define VM_STACKSIZE              32    /* depth of stacks */
-#define CODESIZE              0x2000    /* cells in code space: 16KB */
-#define DATASIZE              0x0800    /* cells in data space: 8KB */
-#define TEXTORIGIN            0x1000    /* base address of internal Flash data in cells */
-#define TEXTSIZE              0x2000    /* size of internal Flash data in cells */
+#define VM_CELLBITS               32 /* simulator bits per cell: 16 to 32 */
+#define VM_INSTBITS               16 /* bits per instruction: 16, 17, 20-22 */
+#define VM_STACKSIZE              32 /* depth of stacks */
+#define CODESIZE              0x2000 /* cells in code space: 16KB */
+#define DATASIZE              0x0800 /* cells in data space: 8KB */
+#define TEXTORIGIN            0x1000 /* base address of internal Flash data */
+#define TEXTSIZE              0x2000 /* size of internal Flash data in cells */
 #define BOILERPLATE_SIZE          16
 #define VM_MIN_USERADDRESS (DATASIZE-256)
 #define VM_MAX_USERADDRESS (DATASIZE-1)
@@ -198,16 +198,16 @@ uint8_t VMgetSP(vm_ctx *ctx);
 #define VMO_APIDROP             14
 #define VMO_API2DROP            15
 
-#define VMI_AX                  (VMI_PFX + (VMO_AX       << (VM_INSTBITS - 7)))
-#define VMI_BY                  (VMI_PFX + (VMO_BY       << (VM_INSTBITS - 7)))
-#define VMI_ZBRAN               (VMI_PFX + (VMO_ZBRAN    << (VM_INSTBITS - 7)))
-#define VMI_BRAN                (VMI_PFX + (VMO_BRAN     << (VM_INSTBITS - 7)))
-#define VMI_PBRAN               (VMI_PFX + (VMO_PBRAN    << (VM_INSTBITS - 7)))
-#define VMI_NEXT                (VMI_PFX + (VMO_NEXT     << (VM_INSTBITS - 7)))
-#define VMI_PY                  (VMI_PFX + (VMO_PY       << (VM_INSTBITS - 7)))
-#define VMI_API                 (VMI_PFX + (VMO_API      << (VM_INSTBITS - 7)))
-#define VMI_DUPAPI              (VMI_PFX + (VMO_DUPAPI   << (VM_INSTBITS - 7)))
-#define VMI_APIDROP             (VMI_PFX + (VMO_APIDROP  << (VM_INSTBITS - 7)))
-#define VMI_API2DROP            (VMI_PFX + (VMO_API2DROP << (VM_INSTBITS - 7)))
+#define VMI_AX                 (VMI_PFX + (VMO_AX       << (VM_INSTBITS - 7)))
+#define VMI_BY                 (VMI_PFX + (VMO_BY       << (VM_INSTBITS - 7)))
+#define VMI_ZBRAN              (VMI_PFX + (VMO_ZBRAN    << (VM_INSTBITS - 7)))
+#define VMI_BRAN               (VMI_PFX + (VMO_BRAN     << (VM_INSTBITS - 7)))
+#define VMI_PBRAN              (VMI_PFX + (VMO_PBRAN    << (VM_INSTBITS - 7)))
+#define VMI_NEXT               (VMI_PFX + (VMO_NEXT     << (VM_INSTBITS - 7)))
+#define VMI_PY                 (VMI_PFX + (VMO_PY       << (VM_INSTBITS - 7)))
+#define VMI_API                (VMI_PFX + (VMO_API      << (VM_INSTBITS - 7)))
+#define VMI_DUPAPI             (VMI_PFX + (VMO_DUPAPI   << (VM_INSTBITS - 7)))
+#define VMI_APIDROP            (VMI_PFX + (VMO_APIDROP  << (VM_INSTBITS - 7)))
+#define VMI_API2DROP           (VMI_PFX + (VMO_API2DROP << (VM_INSTBITS - 7)))
 
 #endif /* __VM_H__ */

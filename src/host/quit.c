@@ -6,7 +6,7 @@
 #include "quit.h"
 
 #ifdef _MSC_VER
-#include <windows.h> // not winbase.h
+#include <windows.h>
 #else
 #include <unistd.h>
 #endif
@@ -19,13 +19,13 @@
 
 static struct QuitStruct *q;
 
-#define TIB       q->tib                // location of text input buffer
-#define MAXTIB    q->maxtib             // buffer size available for tib's zstring
+#define TIB       q->tib            // location of text input buffer
+#define MAXTIB    q->maxtib         // buffer size available for tib's zstring
 #define VERBOSE   q->verbose
-#define ERR       q->error              // did I err?
-#define TOIN      q->toin               // offset into tib
+#define ERR       q->error          // did I err?
+#define TOIN      q->toin           // offset into tib
 #define HP        q->hp
-#define SP        q->sp                 // data stack pointer
+#define SP        q->sp             // data stack pointer
 #define BASE      q->base
 #define STATE     q->state
 #define DPL       q->dpl
@@ -41,7 +41,7 @@ static struct QuitStruct *q;
 #define TOKEN     q->token
 #define HEADER    q->Header
 #define ME        q->me
-#define CORE      q->VMlist[q->core]    // Caution: only access static VM values
+#define CORE      q->VMlist[q->core] // Caution: only access static VM values
 
 void DataPush(uint32_t x) {
     q->ds[++SP] = x;
@@ -69,7 +69,7 @@ static char dictspace[DictionaryBytes];
 static unsigned int textsp = 0;
 
 static void AppendDictionary(uint8_t c) {
-    if (textsp >= (DictionaryBytes - 1)) ERR = DICTIONARY_OVERFLOW;
+    if (textsp >= (DictionaryBytes - 1)) ERR = DICTIONARY_OVER;
     dictspace[textsp++] = c;
 }
 static void AppendDictionaryN(uint32_t x, int width) {
@@ -87,7 +87,7 @@ uint32_t FetchDictionaryN(int addr, int width) {
 }
 
 
-char * Const(char *name) {              // convert ephemeral string to constant
+char * Const(char *name) {          // convert ephemeral string to constant
     int limit = 1024;
     char * r = &dictspace[textsp];
     while (limit--) {
@@ -108,11 +108,11 @@ void message(const char *color, const char *s) {
     Color(COLOR_NONE);
 }
 
-//##############################################################################
+//############################################################################
 //##  Dictionary
 //##  The dictionary uses a static array of data structures loaded at startup.
 //##  Links are int indices into this array of Headers.
-//##############################################################################
+//############################################################################
 
 
 // The search order is a list of wordlists with CONTEXT searched first
@@ -138,7 +138,8 @@ static void Order(void) {
     printf("\n");
 }
 
-static int findinWL(char* key, int wid) {       // find in wordlist, return "found" flag
+// find in wordlist wid, return "found" flag: -1 if found, 0 if not found
+static int findinWL(char* key, int wid) {
     uint16_t i = q->wordlist[wid];
     uint32_t limit = MaxKeywords;
     if (strlen(key) < MaxNameSize) {
@@ -156,7 +157,7 @@ static int findinWL(char* key, int wid) {       // find in wordlist, return "fou
     return 0;
 }
 
-static int FindWord(char* key) {                // find in context, xt is ME
+static int FindWord(char* key) {    // find in context, xt is ME
     for (int i = 0; i < ORDERS; i++) {
         int wid = CONTEXT[i];
         if (findinWL(key, wid)) {
@@ -180,17 +181,18 @@ static int Ctick(char* name) {
         ERR = UNRECOGNIZED;
         return 0;
     }
-    return HEADER[ME].target;           // W field of found word
+    return HEADER[ME].target;       // W field of found word
 }
 
-/* Wordlists are on the host. A copy of header space is made by MakeHeaders for
-use by the target's interpreter. ANS Forth's WORDLIST is not useful because it
-can't be used in Forth definitions. We don't get the luxury of temporary
-wordlists but "wordlists--;" can be used by C to delete the last wordlist.
+/* Wordlists are on the host. A copy of header space is made by MakeHeaders
+for use by the target's interpreter. ANS Forth's WORDLIST is not useful
+because it can't be used in Forth definitions. We don't get the luxury of
+temporary wordlists but "wordlists--;" can be used by C to delete the last
+wordlist.
 */
 
 static int AddWordlist(char *name) {
-    q->wordlist[++WRDLISTS] = 0;       // start with empty wordlist
+    q->wordlist[++WRDLISTS] = 0;   // start with empty wordlist
     WLNAME[WRDLISTS] = name;
     if (WRDLISTS == (MaxWordlists - 1)) ERR = BAD_WID_OVER;
     return WRDLISTS;
@@ -226,7 +228,8 @@ static int OrderPop(void) {
     return r;
 }
 
-static void Only       (void) { ORDERS = 0; OrderPush(q->host); OrderPush(q->host); }
+static void Only       (void) { ORDERS = 0; OrderPush(q->host);
+                                OrderPush(q->host); }
 static void ForthLex   (void) { CONTEXT[0] = CORE.forth; }
 static void HostLex    (void) { CONTEXT[0] = q->host; }
 static void ForthWID   (void) { DataPush(CORE.forth); }
@@ -235,27 +238,27 @@ static void Also       (void) { OrderPush(CONTEXT[0]); }
 static void Previous   (void) { OrderPop(); }
 static void SetVocab   (void) { CONTEXT[0] = HEADER[ME].w; }
 
-//##############################################################################
+//############################################################################
 //##  File I/O and parsing
-//##############################################################################
+//############################################################################
 
 static const uint8_t BOMmarker[4] = {0xEF, 0xBB, 0xBF, 0x00};
 
-static void SwallowBOM(FILE *fp) {      // swallow leading UTF8 BOM marker
-    char BOM[4];                        // to support utf-8 files on Windows
+static void SwallowBOM(FILE *fp) {  // swallow leading UTF8 BOM marker
+    char BOM[4];                    // to support utf-8 files on Windows
     (void)(fgets(BOM, 4, fp) != NULL);
     if (strcmp(BOM, (char*)BOMmarker)) {
-        rewind(fp);                     // keep beginning of file if no BOM
+        rewind(fp);                 // keep beginning of file if no BOM
     }
 }
 
-static int OpenNewFile(char *name) {    // Push a new file onto the file stack
+static int OpenNewFile(char *name){ // Push a new file onto the file stack
     FILEDEPTH++;  FILEID++;
     File.fp = fopenx(name, "r");
     File.LineNumber = 0;
     File.Line[0] = 0;
     File.FID = FILEID;
-    if (File.fp == NULL) {              // cannot open
+    if (File.fp == NULL) {          // cannot open
         FILEDEPTH--;
         return BAD_OPENFILE;
     } else {
@@ -277,31 +280,31 @@ int parseword(char delimiter) {
     int length = 0;
     while (1) {
         char c = TIB[TOIN];
-        if (c == 0) break;              // hit EOL
+        if (c == 0) break;           // hit EOL
         TOIN++;
         if (c == delimiter) break;
         TOKEN[length++] = c;
     }
-    TOKEN[length] = 0;                  // tok is zero-delimited
+    TOKEN[length] = 0;              // tok is zero-delimited
     return length;
 }
 
 static void ParseFilename(void) {
     while (TIB[TOIN] == ' ') TOIN++;
     if (TIB[TOIN] == '"') {
-        parseword('"');                 // allow filename in quotes
+        parseword('"');             // allow filename in quotes
     }
     else {
-        parseword(' ');                 // or a filename with no spaces
+        parseword(' ');             // or a filename with no spaces
     }
 }
 
-static void Include(void) {             // Nest into a source file
+static void Include(void) {         // Nest into a source file
     ParseFilename();
     ERR = OpenNewFile(TOKEN);
 }
 
-static void trimCR(char* s) {           // clean up the buffer returned by fgets
+static void trimCR(char* s) {       // clean up the buffer returned by fgets
     char* p;
     if ((p = strchr(s, '\n')) != NULL) *p = '\0';
     size_t len = strlen(s);
@@ -321,13 +324,13 @@ ask: TOIN = 0;
     }
     if (fgets(TIB, MAXTIB, File.fp) == NULL) {
         result = 0;
-        if (FILEDEPTH) {                // un-nest from last include
+        if (FILEDEPTH) {            // un-nest from last include
             fclose(File.fp);
             FILEDEPTH--;
             goto ask;
         }
     } else {
-        trimCR(TIB);                    // valid input line
+        trimCR(TIB);                // valid input line
     }
     strmove(File.Line, TIB, LineBufferSize);
     if (VERBOSE & VERBOSE_SOURCE)
@@ -340,7 +343,7 @@ char * GetToken (void) {
     return TOKEN;
 }
 
-void Tick (void) {                      // get the w field of the word
+void Tick (void) {                  // get the w field of the word
     DataPush(Ctick(GetToken()));
 }
 
@@ -408,21 +411,23 @@ static void EndTest(void) { // }t
     SP = sp0;
 }
 
-//##############################################################################
+//############################################################################
 //##  Text Interpreter
 //##  Processes a line at a time from either stdin or a file.
-//##############################################################################
+//############################################################################
 
 static void SkipToPar (void) { parseword(')'); }
 static void EchoToPar (void) { SkipToPar();  printf("%s", TOKEN); }
 static void SkipToEOL (void) { TOIN = (uint16_t)strlen(TIB); }
 static void BaseStore (void) { int n = DataPop(); if (n > 1) BASE = n; }
-static char* Source   (void) { char *src = &TIB[TOIN]; SkipToEOL(); return src; }
+static char* Source   (void) { char *src = &TIB[TOIN]; SkipToEOL();
+                               return src; }
 static void EchoToEOL (void) { printf("%s\n", Source()); }
 char * TIBtoEnd       (void) { return Const(Source()); }
 
 #ifdef _MSC_VER
-static void Chdir(void) { ERR = SetCurrentDirectoryA(Source()) ? INVALID_DIRECTORY : 0; }
+static void Chdir(void) { ERR =
+                 SetCurrentDirectoryA(Source()) ? INVALID_DIRECTORY : 0; }
 #else
 static void Chdir(void) { ERR = chdir(Source()) ? INVALID_DIRECTORY : 0; }
 #endif
@@ -430,7 +435,8 @@ static void Chdir(void) { ERR = chdir(Source()) ? INVALID_DIRECTORY : 0; }
 void ShowLine(void) {
     if (File.fp != stdin) {
         Color(COLOR_CYAN);
-        printf("%s, Line %d: ", q->FilePaths[File.FID].filepath, File.LineNumber);
+        printf("%s, Line %d: ",
+               q->FilePaths[File.FID].filepath, File.LineNumber);
         Color(COLOR_NONE);
         printf("%s\n", File.Line);
     }
@@ -570,38 +576,69 @@ static void AddRootKeywords(void) {
         q->dp[i] = 1;                   // data[0] reserved for BCI
     }
     Only(); Definitions();
-//                            v--- ~ = https://forth-standard.org/standard/
-    AddKeyword("bye",        "~tools/BYE --",                       Bye,         noCompile);
-    AddKeyword("empty",      "-quit.htm#empty --",                  Empty,       noCompile);
-    AddKeyword("cd",         "-quit.htm#cdir ccc<EOL> --",          Chdir,       noCompile);
-    AddKeyword("base!",      "-quit.htm#basestore n --",            BaseStore,   noCompile);
-    AddKeyword("vocabulary", "-quit.htm#vocab <name> --",           Vocabulary,  noCompile);
-    AddKeyword("only",       "~search/ONLY --",                     Only,        noCompile);
-    AddKeyword("order",      "~search/ORDER --",                    Order,       noCompile);
-    AddKeyword("definitions","~search/DEFINITIONS --",              Definitions, noCompile);
-    AddKeyword("also",       "~search/ALSO <name> --",              Also,        noCompile);
-    AddKeyword("previous",   "~search/PREVIOUS -- ",                Previous,    noCompile);
-    AddKeyword("include",    "~file/INCLUDE i*x \"name\" -- j*x",   Include,     noCompile);
-    AddKeyword("'",          "~core/Tick <spaces>\"name\" -- xt",   Tick,        noCompile);
-    AddKeyword("[']",        "~core/BracketTick <spaces>\"name\" -- xt", noExecute, BracketTick);
-    AddKeyword("host",       "-quit.htm#host --",                   HostLex,     noCompile);
-    AddKeyword("forth",      "~search/FORTH --",                    ForthLex,    noCompile);
-    AddKeyword("*forth",     "-quit.htm#frth -- wid",               ForthWID,    noCompile);
-    AddKeyword("verbose!",   "-quit.htm#verbsto mask --",           Verbosity,   noCompile);
-    AddKeyword("(",          "~core/p ccc<paren> --",               SkipToPar,   SkipToPar);
-    AddKeyword("\\",         "~core/bs ccc<EOL> --",                SkipToEOL,   SkipToEOL);
-    AddKeyword("\\.",        "-quit.htm#bsdot ccc<EOL> --",         EchoToEOL,   noCompile);
-    AddKeyword(".(",         "~core/Dotp ccc<paren> --",            EchoToPar,   noCompile);
-    AddKeyword("[if]",       "~tools/BracketIF flag --",            BrackIf,     noCompile);
-    AddKeyword("[then]",     "~tools/BracketTHEN --",               Nothing,     noCompile);
-    AddKeyword("[else]",     "~tools/BracketELSE --",               BrackElse,   noCompile);
-    AddKeyword("[undefined]","~tools/BracketUNDEFINED \"name\" -- flag", BrackUndefined, noCompile);
-    AddKeyword("[defined]",  "~tools/BracketDEFINED \"name\" -- flag", BrackDefined, noCompile);
-    AddKeyword("}t",         "-quit.htm#tend --",                   EndTest,     noCompile);
-    AddKeyword("->",         "-quit.htm#tmiddle ... --",            DoTest,      noCompile);
-    AddKeyword("t{",         "-quit.htm#tbegin ... --",             BeginTest,   noCompile);
-    AddKeyword("cells",      "~core/CELLS x1 -- x2",                Nothing,     Nothing);
-    AddKeyword("chars",      "~core/CHARS x1 -- x2",                Nothing,     Nothing);
+//                               v--- ~ = https://forth-standard.org/standard/
+    AddKeyword("bye",           "~tools/BYE --",
+               Bye,             noCompile);
+    AddKeyword("empty",         "-quit.htm#empty --",
+               Empty,           noCompile);
+    AddKeyword("cd",            "-quit.htm#cdir ccc<EOL> --",
+               Chdir,           noCompile);
+    AddKeyword("base!",         "-quit.htm#basestore n --",
+               BaseStore,       noCompile);
+    AddKeyword("vocabulary",    "-quit.htm#vocab <name> --",
+               Vocabulary,      noCompile);
+    AddKeyword("only",          "~search/ONLY --",
+               Only,            noCompile);
+    AddKeyword("order",         "~search/ORDER --",
+               Order,           noCompile);
+    AddKeyword("definitions",   "~search/DEFINITIONS --",
+               Definitions,     noCompile);
+    AddKeyword("also",          "~search/ALSO <name> --",
+               Also,            noCompile);
+    AddKeyword("previous",      "~search/PREVIOUS -- ",
+               Previous,        noCompile);
+    AddKeyword("include",       "~file/INCLUDE i*x \"name\" -- j*x",
+               Include,         noCompile);
+    AddKeyword("'",             "~core/Tick <spaces>\"name\" -- xt",
+               Tick,            noCompile);
+    AddKeyword("[']",           "~core/BracketTick <spaces>\"name\" -- xt",
+               noExecute,       BracketTick);
+    AddKeyword("host",          "-quit.htm#host --",
+               HostLex,         noCompile);
+    AddKeyword("forth",         "~search/FORTH --",
+               ForthLex,        noCompile);
+    AddKeyword("*forth",        "-quit.htm#frth -- wid",
+               ForthWID,        noCompile);
+    AddKeyword("verbose!",      "-quit.htm#verbsto mask --",
+               Verbosity,       noCompile);
+    AddKeyword("(",             "~core/p ccc<paren> --",
+               SkipToPar,       SkipToPar);
+    AddKeyword("\\",            "~core/bs ccc<EOL> --",
+               SkipToEOL,       SkipToEOL);
+    AddKeyword("\\.",           "-quit.htm#bsdot ccc<EOL> --",
+               EchoToEOL,       noCompile);
+    AddKeyword(".(",            "~core/Dotp ccc<paren> --",
+               EchoToPar,       noCompile);
+    AddKeyword("[if]",          "~tools/BracketIF flag --",
+               BrackIf,         noCompile);
+    AddKeyword("[then]",        "~tools/BracketTHEN --",
+               Nothing,         noCompile);
+    AddKeyword("[else]",        "~tools/BracketELSE --",
+               BrackElse,       noCompile);
+    AddKeyword("[undefined]",   "~tools/BracketUNDEFINED \"name\" -- flag",
+               BrackUndefined,  noCompile);
+    AddKeyword("[defined]",     "~tools/BracketDEFINED \"name\" -- flag",
+               BrackDefined,    noCompile);
+    AddKeyword("}t",            "-quit.htm#tend --",
+               EndTest,         noCompile);
+    AddKeyword("->",            "-quit.htm#tmiddle ... --",
+               DoTest,          noCompile);
+    AddKeyword("t{",            "-quit.htm#tbegin ... --",
+               BeginTest,       noCompile);
+    AddKeyword("cells",         "~core/CELLS x1 -- x2",
+               Nothing,         Nothing);
+    AddKeyword("chars",         "~core/CHARS x1 -- x2",
+               Nothing,         Nothing);
 }
 
 static const uint8_t BaseChar[] = {"??%.....&.#.....$"};

@@ -22,12 +22,13 @@ struct QuitStruct *q;
 #define VERBOSE   q->verbose
 #define TOKEN     q->token
 
-//------------------------------------------------------------------------------
+//----------------------------------------------------------------------------
 // help
 
 #ifdef _WIN32
 static char *prefix_forth = "start https://forth-standard.org/standard/";
-static char *prefix_local = "start file:///C:/Users/Brad/Documents/GitHub/ok/html/";
+static char *prefix_local =
+                 "start file:///C:/Users/Brad/Documents/GitHub/ok/html/";
 #else
 #ifdef __linux__
 static char *prefix_forth = "open https://forth-standard.org/standard/";
@@ -71,7 +72,7 @@ cat:        term = &command[strlen(command) + (pic - str)];
     printf("( %s ) ", ++pic);
 }
 
-//------------------------------------------------------------------------------
+//----------------------------------------------------------------------------
 // see
 
 #define LABEL_COLUMN 18
@@ -195,7 +196,7 @@ static char * DisassembleInsn(uint32_t inst) {
                         break;
                     case VMO_PY: ToLabel();
                         appendDA("y =");
-                        appendDA(itos((imm << 10) + 0x40000000, 16, 1, 1, 32));
+                        appendDA(itos((imm << 10) + 0x40000000, 16, 1,1, 32));
                         appendDA("/ 4");
                         break;
                     default: break;
@@ -239,7 +240,7 @@ static void See (void) { // ( <name> -- )
     Dasm();
 }
 
-//------------------------------------------------------------------------------
+//----------------------------------------------------------------------------
 // other
 
 static void ColorizeWord(char* str, char* key, int line) {
@@ -352,11 +353,16 @@ static void DotBoiler(void) {
         case 0:
             printf("Missing boilerplate "); break;
         case 1:
-            printf("%d bits/cell, %d cells of data stack\n", cellbits, dsSize);
-            printf("%d bits/inst, %d cells of return stack\n", instbits, rsSize);
-            printf("Code space (cp) = 0 to %Xh, no access from @ and !\n", cSize - 1);
-            printf("Data space (dp) = 0 to %Xh\n", dSize - 1);
-            printf("Text space (tp) = %X to %Xh\n", tOrigin, tOrigin + tSize - 1);
+            printf("%d bits/cell, %d cells of data stack\n",
+                   cellbits, dsSize);
+            printf("%d bits/inst, %d cells of return stack\n",
+                   instbits, rsSize);
+            printf("Code space (cp) = 0 to %Xh, no access from @ and !\n",
+                   cSize - 1);
+            printf("Data space (dp) = 0 to %Xh\n",
+                   dSize - 1);
+            printf("Text space (tp) = %X to %Xh\n",
+                   tOrigin, tOrigin + tSize - 1);
             break;
         default:
         printf("Unknown boilerplate format ");
@@ -380,17 +386,30 @@ static void ShowMIPS(void) {
 
 void AddSeeKeywords(struct QuitStruct *state) {
     q = state;
-    AddKeyword("mips",   "-see.htm#mips --",                    ShowMIPS,   noCompile);
-    AddKeyword(".ir",    "-see.htm#dotir inst --",              Onesee,     noCompile);
-    AddKeyword("dasm",   "-see.htm#dasm [ a u ] --",            Dasm,       noCompile);
-    AddKeyword("see",    "~tools/SEE <name> --",                See,        noCompile);
-    AddKeyword("locate", "-see.htm#locate [lines] <name> --",   Locate,     noCompile);
-    AddKeyword("where",  "-see.htm#where <name> --",            Where,      noCompile);
-    AddKeyword("words",  "~tools/WORDS [substr] --",            Words,      noCompile);
-    AddKeyword("Words",  "-see.htm#wrds [substr] wid --",       Wrds,       noCompile);
-    AddKeyword("help",   "-see.htm#help <name> --",             help,       noCompile);
-    AddKeyword("help_prefix", "-see.htm#helpprefix --",         Prefixes,   noCompile);
-    AddKeyword("help_forth:", "-see.htm#helpforth \"ccc<eol>\" --", PrefixSetForth, noCompile);
-    AddKeyword("help_local:", "-see.htm#helplocal \"ccc<eol>\" --", PrefixSetLocal, noCompile);
-    AddKeyword(".boiler",  "-see.htm#dotboiler --",             DotBoiler,  noCompile);
+    AddKeyword("mips",          "-see.htm#mips --",
+               ShowMIPS,        noCompile);
+    AddKeyword(".ir",           "-see.htm#dotir inst --",
+               Onesee,          noCompile);
+    AddKeyword("dasm",          "-see.htm#dasm [ a u ] --",
+               Dasm,            noCompile);
+    AddKeyword("see",           "~tools/SEE <name> --",
+               See,             noCompile);
+    AddKeyword("locate",        "-see.htm#locate [lines] <name> --",
+               Locate,          noCompile);
+    AddKeyword("where",         "-see.htm#where <name> --",
+               Where,           noCompile);
+    AddKeyword("words",         "~tools/WORDS [substr] --",
+               Words,           noCompile);
+    AddKeyword("Words",         "-see.htm#wrds [substr] wid --",
+               Wrds,            noCompile);
+    AddKeyword("help",          "-see.htm#help <name> --",
+               help,            noCompile);
+    AddKeyword("help_prefix",   "-see.htm#helpprefix --",
+               Prefixes,        noCompile);
+    AddKeyword("help_forth:",   "-see.htm#helpforth \"ccc<eol>\" --",
+               PrefixSetForth,  noCompile);
+    AddKeyword("help_local:",   "-see.htm#helplocal \"ccc<eol>\" --",
+               PrefixSetLocal,  noCompile);
+    AddKeyword(".boiler",       "-see.htm#dotboiler --",
+               DotBoiler,       noCompile);
 }

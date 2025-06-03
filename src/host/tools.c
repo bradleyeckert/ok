@@ -26,7 +26,8 @@ void uSleep(uint64_t usec)
     HANDLE timer;
     LARGE_INTEGER ft;
 
-    ft.QuadPart = -(10*(signed)usec); // Convert to 100 nanosecond interval, negative value indicates relative time
+// Convert to 100 nanosecond interval, negative value indicates relative time
+    ft.QuadPart = -(10*(signed)usec);
 
     timer = CreateWaitableTimer(NULL, TRUE, NULL);
     if (timer == NULL) return;
@@ -59,7 +60,8 @@ void cdump(const uint8_t *src, uint16_t len) {
 
 static char buf[64];
 
-char* itos(uint64_t x, uint8_t radix, int8_t digits, uint8_t issign, uint8_t cellbits) {
+char* itos(uint64_t x, uint8_t radix, int8_t digits, uint8_t issign,
+           uint8_t cellbits) {
     int sign = 0;
     if (issign) sign = (x >> (cellbits - 1)) & 1;
     if (sign) {

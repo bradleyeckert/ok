@@ -1,6 +1,6 @@
-//===============================================================================
+//============================================================================
 // quit.h
-//===============================================================================
+//============================================================================
 
 #ifndef __QUIT_H__
 #define __QUIT_H__
@@ -29,38 +29,38 @@ extern "C" {
 #define MOLE_PAIRING_FAILURE   -192
 
 struct FileRec {
-    char Line[LineBufferSize];          // the current input line
-    FILE* fp;                           // input file pointer
-    uint32_t LineNumber;                // line number
-    int FID;                            // file ID for LOCATE
+    char Line[LineBufferSize];      // the current input line
+    FILE* fp;                       // input file pointer
+    uint32_t LineNumber;            // line number
+    int FID;                        // file ID for LOCATE
 };
 
 struct FilePath {
-    char filepath[LineBufferSize];      // filename
+    char filepath[LineBufferSize];  // filename
 };
 
 typedef void (*VoidFn)();
 
-struct HeaderStruct {                   // Each dictionary has many of these...
-    char *name;                         // word name, local copy is needed
-    char *help;                         // help anchor name
-    VoidFn ExecFn;                      // C functions for compile/execute
+struct HeaderStruct {               // Each dictionary has many of these...
+    char *name;                     // word name, local copy is needed
+    char *help;                     // help anchor name
+    VoidFn ExecFn;                  // C functions for compile/execute
     VoidFn CompFn;
-    uint32_t color;                     // HTML color
-    uint32_t length;                    // size of definition in code space
-    uint32_t w;                         // optional data
+    uint32_t color;                 // HTML color
+    uint32_t length;                // size of definition in code space
+    uint32_t w;                     // optional data
     uint32_t w2;
-    uint32_t target;                    // target address if used
-    uint16_t references;                // how many times it has been referenced
-    uint32_t where;                     // link into dictionary where tick record is
-    uint16_t link;                      // enough for 64k headers
-    uint32_t *aux;                      // pointer to aux C data
-    uint16_t core;                      // which core compiled for
-    uint8_t notail;                     // inhibit tail recursion
-    uint8_t smudge;                     // hide current definition
-    uint8_t isALU;                      // is an ALU word
-    uint8_t srcFile;                    // source file ID
-    uint16_t srcLine;                   // source line number
+    uint32_t target;                // target address if used
+    uint16_t references;            // how many times it has been referenced
+    uint32_t where;                 // link in dictionary where tick record is
+    uint16_t link;                  // enough for 64k headers
+    uint32_t *aux;                  // pointer to aux C data
+    uint16_t core;                  // which core compiled for
+    uint8_t notail;                 // inhibit tail recursion
+    uint8_t smudge;                 // hide current definition
+    uint8_t isALU;                  // is an ALU word
+    uint8_t srcFile;                // source file ID
+    uint16_t srcLine;               // source line number
 };
 
 /*
@@ -73,56 +73,56 @@ In main.c, SimulateCPU uses vm_ctx to initialize the VMs.
 Access to the const boilerplate is allowed - it never changes.
 */
 
-struct ListStruct {                     // Each VM has one of these...
-    vm_ctx   ctx;                       // simulator + BCI instance
-    uint32_t forth;                     // not sure if this is used, see quit.c
+struct ListStruct {                 // Each VM has one of these...
+    vm_ctx   ctx;                   // simulator + BCI instance
+    uint32_t forth;                 // not sure if this is used, see quit.c
     uint32_t asmb;
 };
 
 typedef void (*BCIhand)(vm_ctx *ctx, const uint8_t *src, uint16_t length);
 typedef void (*BCIinit)(vm_ctx *ctx);
 
-struct QuitStruct {                     // The app has one of these...
+struct QuitStruct {                 // The ok app has one of these...
     VMinst_t code[CPUCORES][CODESIZE];  // host-side images for compiling
     VMcell_t text[CPUCORES][TEXTSIZE];
     uint8_t  boilerplate[CPUCORES][BOILERPLATE_SIZE];
-    char     token[LineBufferSize];     // blank delimited token zstring
-    char     *tib;                      // location of text input buffer
-    uint16_t maxtib;                    // buffer size available for tib's zstring
-    uint16_t core;                      // current VM core
-    uint16_t verbose;                   // size of the hole in the breadcrumb bag
-    int16_t  error;                     // detected error
-    uint16_t toin;                      // offset into tib
-    uint16_t dp[CPUCORES];              // data space pointer
-    uint16_t cp[CPUCORES];              // code space pointer
-    uint16_t tp[CPUCORES];              // text space pointer
-    uint32_t hp;                        // header pointer
-    uint8_t  reloaded[CPUCORES];        // 0 when target is out of sync
-    uint8_t  fileID;                    // file history stack
-    uint8_t  wordlists;                 // wordlists stack
-    uint8_t  base;                      // numeric conversion radix
-    uint8_t  state;                     // 0 = interpret, 1 = compile
-    int8_t   dpl;                       // decimal place, -1 if not a double number
-    int8_t   sp;                        // data stack pointer
-    int8_t   orders;                    // length of search order
+    char     token[LineBufferSize]; // blank delimited token zstring
+    char     *tib;                  // location of text input buffer
+    uint16_t maxtib;                // buffer size available for tib's zstring
+    uint16_t core;                  // current VM core
+    uint16_t verbose;               // size of the hole in the breadcrumb bag
+    int16_t  error;                 // detected error
+    uint16_t toin;                  // offset into tib
+    uint16_t dp[CPUCORES];          // data space pointer
+    uint16_t cp[CPUCORES];          // code space pointer
+    uint16_t tp[CPUCORES];          // text space pointer
+    uint32_t hp;                    // header pointer
+    uint8_t  reloaded[CPUCORES];    // 0 when target is out of sync
+    uint8_t  fileID;                // file history stack
+    uint8_t  wordlists;             // wordlists stack
+    uint8_t  base;                  // numeric conversion radix
+    uint8_t  state;                 // 0 = interpret, 1 = compile
+    int8_t   dpl;                   // decimal place, -1 if not a double number
+    int8_t   sp;                    // data stack pointer
+    int8_t   orders;                // length of search order
     uint8_t  filedepth;
-    uint32_t  wordlist[MaxWordlists];   // wordlist indices into header array
+    uint32_t  wordlist[MaxWordlists]; // wordlist indices into header array
     char *wordlistname[MaxWordlists];
-    uint32_t ds[256];                   // data stack
-    uint64_t cycles;                    // VM cycle count for FN_EXECUTE
-    uint64_t elapsed_us;                // command line took this long
-    uint64_t startup_us;                // startup time
-    uint64_t globalSize;                // global capacity in bytes
-    uint32_t *global;                   // global non-volatile data
-    uint32_t me;                        // found header
-    char*  WidName;                     // found WID name
+    uint32_t ds[256];               // data stack
+    uint64_t cycles;                // VM cycle count for FN_EXECUTE
+    uint64_t elapsed_us;            // command line took this long
+    uint64_t startup_us;            // startup time
+    uint64_t globalSize;            // global capacity in bytes
+    uint32_t *global;               // global non-volatile data
+    uint32_t me;                    // found header
+    char*  WidName;                 // found WID name
     struct HeaderStruct Header[MaxKeywords];
     struct FileRec      FileStack[MaxFiles];
     struct FilePath     FilePaths[MaxFilePaths];
     struct ListStruct   VMlist[CPUCORES];
-    int    context[MaxOrder];           // first is CONTEXT, rest is search order
+    int    context[MaxOrder];       // first is CONTEXT, rest is search order
     uint32_t current;
-    uint32_t host;                      // common to all VMs
+    uint32_t host;                  // common to all VMs
     uint32_t baudrate;
     uint16_t TxMsgLength;
     uint8_t TxMsg[MaxBCIresponseSize];
@@ -165,7 +165,7 @@ void message(const char* color, const char *s);
 #define BAD_STACKUNDER   -4 // Stack underflow
 #define BAD_RSTACKOVER   -5 // Return stack overflow
 #define BAD_RSTACKUNDER  -6 // Return stack underflow
-#define DICTIONARY_OVERFLOW  -8 // Dictionary underflow
+#define DICTIONARY_OVER  -8 // Dictionary underflow
 #define DIV_BY_ZERO     -10 // Division by 0
 #define UNRECOGNIZED    -13 // Unrecognized word
 #define BAD_NOEXECUTE   -14 // Interpreting a compile-only word

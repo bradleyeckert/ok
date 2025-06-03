@@ -47,8 +47,7 @@ Cheat sheet for the sequence of functions hit by the BCI data flow:
 12. BCIreceive is invoked by molePutc to handle the plaintext response
 */
 
-// 32-byte BCI encryption key, 32-byte BCI MAC key, 16-byte admin password,
-// 32-byte file encryption key, 32-byte file MAC key, 16-byte hash
+// 32-byte token, 16-byte admin passcode, 16-byte HMAC
 static const uint8_t default_keys[] = TESTPASS_1;
 uint8_t TargetKey[sizeof(default_keys)];
 
@@ -154,9 +153,9 @@ int EncryptAndSend(uint8_t* m, int length) {
 }
 
 
-// -----------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
-static void BCItransmit(const uint8_t *src, int length) { // message m from mole
+static void BCItransmit(const uint8_t *src, int length) { // msg m from mole
     uint16_t id;
     memcpy(&id, src, sizeof(uint16_t));
     src += sizeof(uint16_t);
@@ -238,7 +237,8 @@ static uint32_t ReceivedCRC[16];
 
 static int ProgramFlash(uint8_t *addr, int blocks, int command) {
     if (VERBOSE & VERBOSE_BCI) {
-        printf("\nProgramming Flash[%p], %d blocks, command %d ", addr, blocks, command);
+        printf("\nProgramming Flash[%p], %d blocks, command %d ",
+               addr, blocks, command);
     }
     uint32_t addr0 = (uint32_t)(size_t)addr;
     while (blocks--) {
@@ -260,7 +260,7 @@ void Reload(void) {
     if (avail < flashNeeds) {
         return;
     }
-    VMsleep();                          // pause the remote VM while programming
+    VMsleep();                          // pause remote VM while programming
     SendInit();
     SendChar(BCIFN_CRC);                // get the remote CRCs
     SendChar(2);
@@ -268,8 +268,10 @@ void Reload(void) {
     SendCell(TP * sizeof(VMcell_t));    // result will be in ReceivedCRC[1]
     SendFinal();
     BCIwait("CRC", 1);
-    uint32_t localCode = CRC32((uint8_t*)&q->code[CORE][0], CP * sizeof(VMinst_t));
-    uint32_t localText = CRC32((uint8_t*)&q->text[CORE][0], TP * sizeof(VMcell_t));
+    uint32_t localCode = CRC32((uint8_t*)&q->code[CORE][0],
+                               CP * sizeof(VMinst_t));
+    uint32_t localText = CRC32((uint8_t*)&q->text[CORE][0],
+                               TP * sizeof(VMcell_t));
     if (VERBOSE & VERBOSE_BCI) {
         printf("\nReceived CRC32 data: ");
         for (int i = 0; i < 2; i++) printf("%08X ", ReceivedCRC[i]);
@@ -279,25 +281,28 @@ void Reload(void) {
     uint8_t *addr;
     int ior = 0;
     if (localCode != ReceivedCRC[0]) {
-        blocks = (CP * sizeof(VMinst_t) + FLASH_BLOCK_SIZE - 1) / FLASH_BLOCK_SIZE;
+        blocks = (CP * sizeof(VMinst_t) + FLASH_BLOCK_SIZE - 1)
+                 / FLASH_BLOCK_SIZE;
         addr = (uint8_t*)&q->code[CORE][0];
         ior = ProgramFlash(addr, blocks, BCIFN_WRCODE);
     }
     if (localText != ReceivedCRC[1]) {
-        blocks = (TP * sizeof(VMcell_t) + FLASH_BLOCK_SIZE - 1) / FLASH_BLOCK_SIZE;
+        blocks = (TP * sizeof(VMcell_t) + FLASH_BLOCK_SIZE - 1)
+                 / FLASH_BLOCK_SIZE;
         addr = (uint8_t*)&q->text[CORE][0];
         ior |= ProgramFlash(addr, blocks, BCIFN_WRTEXT);
     }
     if (ior) return;
     q->reloaded[CORE] = 1;
-    VMresetcmd();                       // reset the target because code changed
+    VMresetcmd();                       // reset the target cuz code changed
 }
 
 static void GetBoiler(void) {           // mole port boilerplate
     busy = 1;
-    moleBoilerReq(&HostPort);           // get plaintext boilerplate, pairing not needed
+    moleBoilerReq(&HostPort);           // get plaintext boilerplate
     BCIwait("GetBoiler", 0);
-    printf("Host received %d-byte boilerplate {%s}\n", receivedBoilerplate[0], &receivedBoilerplate[1]);
+    printf("Host received %d-byte boilerplate {%s}\n",
+           receivedBoilerplate[0], &receivedBoilerplate[1]);
 }
 
 static uint32_t BCIparam(const uint8_t **src, int *length, int bytes) {
@@ -346,7 +351,8 @@ static void BCIreceive(const uint8_t *src, int length) {
                             STATE = x >> 8;
                 case BCIFN_GET_CYCLES:
                             x = BCIparam(&src, &length, 4);
-                            q->cycles = ((uint64_t)BCIparam(&src, &length, 4) << 32) | x;
+                            q->cycles = ((uint64_t)BCIparam
+                                         (&src, &length, 4) << 32) | x;
                             goto getior;
                         } else {
                             extraChar(c);
@@ -367,7 +373,9 @@ getior:             q->error = (src[1] << 8) | src[0];
                     goto getior;
                 case BCIFN_CRC:
                     c = *src++; // # of CRC32 results (not needed)
-                    if (length > (16 * sizeof(uint32_t))) length = 16 * sizeof(uint32_t);
+                    if (length > (16 * sizeof(uint32_t))) {
+                        length = 16 * sizeof(uint32_t);
+                    }
                     memcpy(ReceivedCRC, src, length);
                     busy=0;
                     break;
@@ -443,7 +451,7 @@ static int ConnectPair(void) {
     int canTransmit = moleAvail(&HostPort);
     int canReceive = moleAvail(&TargetPort);
     if ((canTransmit < 1024) || (canReceive < 1024)) {
-        printf("\nWarning: Target is not connected.\nHost can only transmit ");
+        printf("\nWarning: Target is not connected\nHost can only transmit ");
         printf("%d, receive %d bytes\n", canTransmit, canReceive);
         return 1;
     }
@@ -476,27 +484,42 @@ void AddCommKeywords(struct QuitStruct *state) {
     q->baudrate = DEFAULT_BAUDRATE;
     q->port =     DEFAULT_HOSTPORT;
     atexit(ComClose); // in case of exit with ^C
-    AddKeyword("shutdown",  "-comm.htm#shutdn --",      VMshutdown,   noCompile);
-    AddKeyword("reset",     "-comm.htm#reset --",       VMresetcmd,   noCompile);
-    AddKeyword("com-list",  "-comm.htm#list --",        ComList,      noCompile);
-    AddKeyword("com-open",  "-comm.htm#open --",        ComOpen,      noCompile);
-    AddKeyword("com-close", "-comm.htm#close --",       ComClose,     noCompile);
-    AddKeyword("com-emit",  "-comm.htm#emit c --",      ComEmit,      noCompile);
-    AddKeyword("baud!",     "-comm.htm#baud --",        ComBaud,      noCompile);
-    AddKeyword("port!",     "-comm.htm#port --",        ComPort,      noCompile);
-    AddKeyword("local",     "-comm.htm#local --",       ConnectLocal, noCompile);
-    AddKeyword("remote",    "-comm.htm#remote port --", ConnectRemote,noCompile);
-    AddKeyword("reload",    "-comm.htm#reload --",      Reload,       noCompile);
-    AddKeyword("boiler",    "-comm.htm#boiler --",      GetBoiler,    noCompile);
-    AddKeyword("zzz",       "-comm.htm#zzz --",         VMsleep,      noCompile);
+    AddKeyword("shutdown",      "-comm.htm#shutdn --",
+               VMshutdown,      noCompile);
+    AddKeyword("reset",         "-comm.htm#reset --",
+               VMresetcmd,      noCompile);
+    AddKeyword("com-list",      "-comm.htm#list --",
+               ComList,         noCompile);
+    AddKeyword("com-open",      "-comm.htm#open --",
+               ComOpen,         noCompile);
+    AddKeyword("com-close",     "-comm.htm#close --",
+               ComClose,        noCompile);
+    AddKeyword("com-emit",      "-comm.htm#emit c --",
+               ComEmit,         noCompile);
+    AddKeyword("baud!",         "-comm.htm#baud --",
+               ComBaud,         noCompile);
+    AddKeyword("port!",         "-comm.htm#port --",
+               ComPort,         noCompile);
+    AddKeyword("local",         "-comm.htm#local --",
+               ConnectLocal,    noCompile);
+    AddKeyword("remote",        "-comm.htm#remote port --",
+               ConnectRemote,   noCompile);
+    AddKeyword("reload",        "-comm.htm#reload --",
+               Reload,          noCompile);
+    AddKeyword("boiler",        "-comm.htm#boiler --",
+               GetBoiler,       noCompile);
+    AddKeyword("zzz",           "-comm.htm#zzz --",
+               VMsleep,         noCompile);
 
     // set up the mole ports
     memcpy(TargetKey, default_keys, sizeof(TargetKey));
     moleNoPorts();
-    int ior = moleAddPort(&HostPort, HostBoilerSrc, MOLE_PROTOCOL, "HOST", 100,
-                  BoilerHandlerA, BCIreceive, HostCharOutput, UpdateNothing);
-    if (!ior) ior = moleAddPort(&TargetPort, TargetBoilerSrc, MOLE_PROTOCOL, "TARGET", 17,
-                  BoilerHandlerB, BCItransmit, TargetCharOutput, UpdateKeySet);
+    int ior = moleAddPort(&HostPort, HostBoilerSrc, MOLE_PROTOCOL,
+        "HOST", 100, BoilerHandlerA, BCIreceive, HostCharOutput,
+        UpdateNothing);
+    if (!ior) ior = moleAddPort(&TargetPort, TargetBoilerSrc, MOLE_PROTOCOL,
+        "TARGET", 17, BoilerHandlerB, BCItransmit, TargetCharOutput,
+        UpdateKeySet);
     if (ior) {
         printf("\nError %d, ", ior);
         printf("MOLE_ALLOC_MEM_UINT32S too small by %d ", -moleRAMunused()/4);
