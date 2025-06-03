@@ -349,6 +349,7 @@ static void doMwhile(void){ doMif();  ControlSwap(); }
 static void doRepeat(void){ doAgain();  doThen(); }
 static void doFor(void)   { CompUop(VMO_PUSH);  MarkFwd(); }
 static void doNext(void)  { ResolveRev(VMI_NEXT); }
+static void douNext(void) { ConSP--; CompUop(VMO_UNEXT);}
 static void SemicoImm(void) { EndDefinition();  sane(); }
 static void SemiComp(void)  { CompExit();  SemicoImm();}
 static void API_Comp (void) { InstCompile(my()); }
@@ -546,14 +547,11 @@ void AddForthKeywords(struct QuitStruct *state) {
     AddUop("b!",                "-forth.htm#bstore a --",           IS_UOP(VMO_BSTORE));
     AddUop("cy",                "-forth.htm#cy -- carry",           IS_UOP(VMO_CY));
     AddUop("b",                 "-forth.htm#b -- x",                IS_UOP(VMO_B));
-    AddUop("0<",                "~core/ZeroLess n -- flag",         IS_UOP(VMO_ZEROLESS));
-    AddUop("u!",                "-forth.htm#ustore --",             IS_UOP(VMO_USTORE));
-    AddUop("u",                 "-forth.htm#u -- u",                IS_UOP(VMO_U));
+    AddUop("+*",                "-forth.htm#mult ud1 -- ud2",       IS_UOP(VMO_PLUSSTAR));
     AddUop("+",                 "~core/Plus n1 n2 -- n3",           IS_UOP(VMO_PLUS));
     AddUop("2*",                "~core/TwoTimes x1 -- x2",          IS_UOP(VMO_TWOSTAR));
     AddUop("2/",                "~core/TwoDiv x1 -- x2",            IS_UOP(VMO_TWODIV));
     AddUop("2/c",               "-forth.htm#twodivc x1 -- x2",      IS_UOP(VMO_TWODIVC));
-    AddUop("unext",             "-forth.htm#unext --",              IS_UOP(VMO_UNEXT));
     AddUop(">r",                "~core/toR x --",                   IS_UOP(VMO_PUSH));
     AddUop("r@",                "~core/RFetch -- x",                IS_UOP(VMO_R));
     AddUop("r>",                "~core/Rfrom -- x",                 IS_UOP(VMO_POP));
@@ -594,6 +592,7 @@ void AddForthKeywords(struct QuitStruct *state) {
     AddKeyword("repeat",        "~core/REPEAT C: orig dest --",     noExecute,  doRepeat);
     AddKeyword("for",           "-forth.htm#for C: -- dest | n --", noExecute,  doFor);
     AddKeyword("next",          "-forth.htm#next C: dest --",       noExecute,  doNext);
+    AddKeyword("unext",         "-forth.htm#unext C: dest --",      noExecute,  douNext);
     AddMacro("@",       "~core/Fetch a -- x",               (VMO_ASTORE << 5)  | VMO_FETCHA);
     AddMacro("!",       "~core/Store x a --",               (VMO_ASTORE << 5)  | VMO_STOREA);
     AddMacro("nip",     "~core/NIP -- x1 x2 -- x2",         (VMO_SWAP << 5)    | VMO_DROP);
