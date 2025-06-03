@@ -65,9 +65,9 @@ static int16_t simulate(vm_ctx *ctx, uint32_t xt){
         VMstep(ctx, xt);                // single instruction
     } else {
         PRINTF("\nCalling %04x, ", xt);
-        int rdepth = ctx->rp;
+        int rdepth = VMgetRP(ctx);
         VMstep(ctx, xt | VMI_CALL);     // trigger call to xt
-        while (rdepth != ctx->rp) {
+        while (rdepth != VMgetRP(ctx)) {
             VMstep(ctx, 0);             // execute instructions
             if (ctx->ior) break;        // break on error
         }
@@ -130,14 +130,14 @@ void BCIhandler(vm_ctx *ctx, const uint8_t *src, uint16_t length) {
         waitUntilVMready(ctx);          // stop the VM if it is running
         ctx->cycles = 0;
         VMwriteCell(ctx, 0, get32());   // packed status at data[0]
-        uint8_t sp0 = ctx->sp;
+        uint8_t sp0 = VMgetSP(ctx);
         n = get8();
         while (n--) {
             VMpushData(ctx, get32());
         }
         ctx->ior = simulate(ctx, get32()); // xt
         put8(ctx, BCI_BEGIN);           // indicate end of random chars, if any
-        temp = ctx->sp - sp0;
+        temp = VMgetSP(ctx) - sp0;
         if (temp < 0) {
             ctx->ior = BCI_STACK_UNDERFLOW;
             temp = 0;

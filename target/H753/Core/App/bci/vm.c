@@ -93,7 +93,9 @@ int VMstep(vm_ctx *ctx, VMinst_t inst){
     if (inst & (1 << (VM_INSTBITS - 1))) { // MSB
         if (inst & (1 << (VM_INSTBITS - 2))) pc = VMpopReturn(ctx);
         inst &= IMASK2;
-        for (int i = SLOT0_POSITION; i > -5; i -= 5) {
+        int i = SLOT0_POSITION + 5;
+        while (i > 0) {
+            i -= 5;
             uint8_t uop;
             if (i < 0) uop = inst & LAST_SLOT_MASK;
             else uop = (inst >> i) & 0x1F;
@@ -139,16 +141,17 @@ int VMstep(vm_ctx *ctx, VMinst_t inst){
                 case VMO_R:          ctx->t = ctx->r;                     break;
                 case VMO_POP:        ctx->t = VMpopReturn(ctx);           break;
                 case VMO_UNEXT:      ctx->r--;
-                    if (ctx->r == 0) {
-                        VMpopReturn(ctx);
-                        break;
-                    }
-                    else {
-                        i = 15;
-                        continue;
-                    }
-                case VMO_ZEROLESS:   ctx->t = (t & VM_SIGN) ? VM_MASK :0; break;
-                case VMO_U:          ctx->t = 0;                          break;
+                    if (ctx->r == 0) VMpopReturn(ctx);
+                    else i = SLOT0_POSITION + 5;
+                    break;
+                case VMO_PLUSSTAR:   if (ctx->a & 1) {
+                                         ud = (uint64_t)t + (uint64_t)n;
+                                     } else {
+                                         ud = (uint64_t)t;
+                                     }
+                                     ud = (ud << (VM_CELLBITS - 1)) | (ctx->a >> 1);
+                                     ctx->t = (ud >> VM_CELLBITS) & VM_MASK;
+                                     ctx->a = ud & VM_MASK;               break;
                 // memory operations
                 case VMO_BSTORE:     ctx->b = t;                          break;
                 case VMO_A:          ctx->t = ctx->a;                     break;
@@ -249,6 +252,9 @@ static VMcell_t VMapiCall(vm_ctx *ctx, int fn) {
     if (fn < APIfs) return APIfns[fn](ctx);
     return -1;
 }
+
+uint8_t VMgetRP(vm_ctx *ctx) {return ctx->rp;}
+uint8_t VMgetSP(vm_ctx *ctx) {return ctx->sp;}
 
 static const uint8_t boilerplate[BOILERPLATE_SIZE] = {
     1,                          // format 1

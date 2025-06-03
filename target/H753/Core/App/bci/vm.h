@@ -92,6 +92,8 @@ VMcell_t VMreadCell(vm_ctx *ctx, VMcell_t addr);
 void VMwriteCell(vm_ctx *ctx, VMcell_t addr, VMcell_t x);
 void VMpushData(vm_ctx *ctx, VMcell_t x);
 VMcell_t VMpopData(vm_ctx *ctx);
+uint8_t VMgetRP(vm_ctx *ctx);
+uint8_t VMgetSP(vm_ctx *ctx);
 
 #define VM_UOPS       (1 << (VM_INSTBITS - 1)) // uops bit location
 #define VM_RET        (1 << (VM_INSTBITS - 2)) // return bit location
@@ -100,10 +102,10 @@ VMcell_t VMpopData(vm_ctx *ctx);
 #define LAST_SLOT_MASK  ((1 << LAST_SLOT_WIDTH) - 1)
 
 #define UOP_NAMES { \
-    "nop",   "inv",   "over",  "a!",    "+",     "xor",   "and",   ">r", \
+    "nop",   "inv",   "over",  "a!",    "xor",   "+",    "and",   ">r", \
     "unext", "2*",    "dup",   "drop",  "@a",    "@a+",   "r@",    "r>", \
-    "2/c",   "2/",    "b",     "b!",    "!a",    "!a+",   "!b",    "!b+", \
-    "swap",  "?",     "u",     "u!",    "@b",    "@b+",   "a",     "cy"}
+    "2/c",   "2/",    "?",     "?",     "!a",    "!a+",   "!b",    "!b+", \
+    "swap",  "+*",    "b",     "b!",    "@b",    "@b+",   "a",     "cy"}
 
 #define VM_STACKEFFECTS { /* 0=none, 1=dup, 2=drop */ \
     0x00,    0x00,    0x01,    0x02,    0x02,    0x02,    0x02,    0x02, \
@@ -118,8 +120,8 @@ VMcell_t VMpopData(vm_ctx *ctx);
 #define VMO_INV                 0x01
 #define VMO_OVER                0x02
 #define VMO_ASTORE              0x03
-#define VMO_PLUS                0x04
-#define VMO_XOR                 0x05
+#define VMO_XOR                 0x04
+#define VMO_PLUS                0x05
 #define VMO_AND                 0x06
 #define VMO_PUSH                0x07
 #define VMO_UNEXT               0x08
@@ -132,16 +134,16 @@ VMcell_t VMpopData(vm_ctx *ctx);
 #define VMO_POP                 0x0F
 #define VMO_TWODIVC             0x10
 #define VMO_TWODIV              0x11
-#define VMO_B                   0x12
-#define VMO_BSTORE              0x13
+//#define VMO_B                   0x13
+//#define VMO_BSTORE              0x13
 #define VMO_STOREA              0x14
 #define VMO_STOREAPLUS          0x15
 #define VMO_STOREB              0x16
 #define VMO_STOREBPLUS          0x17
 #define VMO_SWAP                0x18
-#define VMO_ZEROLESS            0x19
-#define VMO_U                   0x1A
-#define VMO_USTORE              0x1B
+#define VMO_PLUSSTAR            0x19
+#define VMO_B                   0x1A
+#define VMO_BSTORE              0x1B
 #define VMO_FETCHB              0x1C
 #define VMO_FETCHBPLUS          0x1D
 #define VMO_A                   0x1E
