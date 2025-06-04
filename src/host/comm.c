@@ -64,9 +64,10 @@ static uint8_t * UpdateNothing(uint8_t* keyset) {
     return NULL;
 }
 
-int moleTRNG(void) {
-    return rand() & 0xFF;   // DO NOT USE in a real application
-}                           // Use a TRNG instead
+int moleTRNG(uint8_t *dest, int length) {
+	while (length--) *dest++ = rand() & 0xFF;   // DO NOT USE 'rand' in a real application
+	return 0;                                   // Use a TRNG instead
+}
 
 static port_ctx HostPort;
 static port_ctx TargetPort;

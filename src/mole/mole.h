@@ -49,8 +49,8 @@ extern "C" {
 #define MOLE_ADMIN_ACTIVE           0x55
 
 // Error tags
-#define MOLE_ERROR_INVALID_STATE       1 /* FSM reached an invalid state */
-#define MOLE_ERROR_TRNG_FAILURE        2 /* Bad RNG value */
+#define MOLE_ERROR_INVALID_STATE       1
+#define MOLE_ERROR_TRNG_FAILURE        2
 #define MOLE_ERROR_BAD_HMAC            3
 #define MOLE_ERROR_INVALID_LENGTH      4
 #define MOLE_ERROR_LONG_BOILERPLT      5
@@ -66,6 +66,7 @@ extern "C" {
 #define MOLE_ERROR_NO_ANYLENGTH       15
 #define MOLE_ERROR_BAD_END_RUN        16
 #define MOLE_ERROR_BAD_BIST           17
+#define MOLE_ERROR_UNKNOWN_MSG        18
 
 enum moleStates {
   IDLE = 0,
@@ -144,7 +145,7 @@ typedef struct
 } port_ctx;
 
 // external functions call by mole:
-int moleTRNG(void);         // return random # between 0 and 255, -1 if error
+int moleTRNG(uint8_t *dest, int length); // return 0 if okay
 
 
 // Streaming I/O function types

@@ -194,50 +194,47 @@ static void SendTxHash(port_ctx *ctx, int pad){
     SendEnd(ctx);
 }
 
+// IV for cIV ---v      v--- encrypted random IV
 // Send: Tag[1], mIV[], cIV[], RXbufsize[2], HMAC[]
+#define cIV &IV[MOLE_IV_LENGTH] /* the secret part */
 static int SendIV(port_ctx *ctx, int tag) {
-    uint8_t mIV[MOLE_IV_LENGTH];
-    uint8_t cIV[MOLE_IV_LENGTH];
-    int r = 0;
-    int c;
-    for (int i = 0; i < MOLE_IV_LENGTH ; i++) {
-        c = moleTRNG();  r |= c;  mIV[i] = (uint8_t)c;
-        c = moleTRNG();  r |= c;  cIV[i] = (uint8_t)c;
-        if (r < 0) {
-            return MOLE_ERROR_TRNG_FAILURE;
-        }
+    uint8_t IV[2 * MOLE_IV_LENGTH];
+    if (moleTRNG(IV, 2 * MOLE_IV_LENGTH)) {
+        return MOLE_ERROR_TRNG_FAILURE;
     }
     memcpy(&ctx->hashCounterRX, cIV, 8);
         PRINTf("\n%s sending IV, tag=%d, ", ctx->name, tag);
     SendHeader(ctx, tag);
 #if (MOLE_IV_LENGTH == MOLE_BLOCKSIZE)
-    SendBlock(ctx, mIV);
+    SendBlock(ctx, IV);
 #else
-    SendN(ctx, mIV, MOLE_IV_LENGTH);
+    SendN(ctx, IV, MOLE_IV_LENGTH);
 #endif
         DUMP((uint8_t*)&ctx->hashCounterRX, 8);
         PRINTF("New %s.hashCounterRX",ctx->name);
         DUMP((uint8_t*)&ctx->hashCounterTX, 8);
         PRINTF("Current %s.hashCounterTX",ctx->name);
-        DUMP((uint8_t*)mIV, MOLE_IV_LENGTH);
+        DUMP((uint8_t*)IV, MOLE_IV_LENGTH);
         PRINTF("mIV used by %s to encrypt cIV",ctx->name);
         DUMP((uint8_t*)cIV, MOLE_IV_LENGTH);
         PRINTF("IV (not output)");
-    BeginCipher(CTX->tcCtx, ctx->cryptokey, mIV, 1);
-    BlockCipher(CTX->tcCtx, cIV, mIV, 1);
-        DUMP((uint8_t*)mIV, MOLE_IV_LENGTH);
+    BeginCipher(CTX->tcCtx, ctx->cryptokey, IV, 1);
+    BlockCipher(CTX->tcCtx, cIV, IV, 1);
+        DUMP((uint8_t*)IV, MOLE_IV_LENGTH);
         PRINTF("cIV output as encrypted IV\n");
 #if (MOLE_IV_LENGTH == MOLE_BLOCKSIZE)
-    SendBlock(ctx, mIV);
+    SendBlock(ctx, IV);
 #else
-    SendN(ctx, mIV, MOLE_IV_LENGTH);
+    SendN(ctx, IV, MOLE_IV_LENGTH);
 #endif
     Send2(ctx, ctx->rBlocks);
     SendTxHash(ctx, MOLE_END_UNPADDED);
     BeginCipher(CTX->tcCtx, ctx->cryptokey, cIV, 1);
+    memset(IV, 0, sizeof(IV)); // burn stack
     ctx->tReady = 1;
     return 0;
 }
+#undef cIV
 
 // Arbitrary length message streaming is similar to file output.
 // Do not guarantee delivery, just send and forget.
@@ -616,7 +613,7 @@ noend:  if (ended) {                    // premature end not allowed
                     r = MOLE_ERROR_REKEYED; // say "you've been re-keyed"
                     break;
                 default:
-                    r = 0;
+                    r = MOLE_ERROR_UNKNOWN_MSG;
                 }
             }
             break;
