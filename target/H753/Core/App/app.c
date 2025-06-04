@@ -52,11 +52,6 @@ static uint8_t * UpdateKeySet(uint8_t* keyset) {
 	return my_keys;
 }
 
-int moleTRNG(uint8_t *dest, int length) {
-	while (length--) *dest++ = rand() & 0xFF;   // DO NOT USE 'rand' in a real application
-	return 0;                                   // Use a TRNG instead
-}
-
 // should never happen
 static void BoilerHandler(const uint8_t *src) {}
 
@@ -127,5 +122,14 @@ void ApplicationInit(void) {
 	UARTx_init(&uart3, USART3);
 	NVIC_EnableIRQ(USART3_IRQn); // since you didn't set it in the NVIC in MX
 	TargetInit();
+}
+
+/*
+ * DO NOT USE 'rand' in a real application. Use a TRNG instead.
+ * Also, verify that the TRNG is working.
+ */
+int moleTRNG(uint8_t *dest, int length) {
+	while (length--) *dest++ = rand() & 0xFF;
+	return 0;
 }
 
