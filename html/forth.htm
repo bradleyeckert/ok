@@ -325,7 +325,8 @@ It checks the MSB of n and branches if it is '0'.
 <p>Compile an unconditional forward branch to dest and resolve the forward branch of orig.
 </p>
 
-<p>Structures like <code> begin ... while ... while ... repeat ... else ... then </code>are possible but not recommended due to complexity. 
+<p>Structures like <code> begin ... while ... while ... repeat ... else ... then </code>
+are possible but not recommended due to complexity. 
 
 <hr>
 <h1>API calls</h1>
@@ -335,13 +336,14 @@ It checks the MSB of n and branches if it is '0'.
 </p>
 
 <h2 id="semit">semit ( c -- )</h2>
-<p>Append c to the BCI response buffer, translating to UTF-8 if necessary. If a word that calls semit is executed via BCI, c will show up in the response. Otherwise, <code>ctx->FinalFn(ctx->id);</code> will be needed to asynchronously send a message over mole.
+<p>Append c to the BCI response buffer, translating to UTF-8 if necessary.
+If a word that calls semit is executed via BCI, c will show up in the response.
+Otherwise, <code>ctx->FinalFn(ctx->id);</code> will be needed to asynchronously send a message over mole.
 </p>
 
 <h2 id="mumod">mu/mod ( ud u -- dq r )</h2>
 <p>Similar to um/mod but returns a double quotient. Used by #.
 </p>
-
 
 <hr>
 </body></html>

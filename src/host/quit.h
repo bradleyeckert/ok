@@ -200,12 +200,13 @@ void message(const char* color, const char *s);
 #define BYE            -299
 
 // verbose flags
-#define VERBOSE_COLOR    1  // show the source file line
+#define VERBOSE_COLOR    1  // enable ANSI colors
 #define VERBOSE_SOURCE   2  // show the source file line
 #define VERBOSE_TOKEN    4  // show the source token (blank-delimited string)
 #define VERBOSE_SRC      8  // display the remaining source in the TIB
 #define VERBOSE_BCI     16  // trace BCI input and output
 #define VERBOSE_CYCLES  32  // display cycle count of last executed word
+#define VERBOSE_FATAL   64  // Exit the app if an error occurs
 
 #define COLOR_NONE      "\033[0m"
 #define COLOR_RED       "\033[0;91m"

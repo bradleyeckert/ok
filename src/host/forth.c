@@ -501,6 +501,8 @@ void AddForthKeywords(struct QuitStruct *state) {
               VM_MASK);
     AddEquate("*host",          "-forth.htm#host -- wid",
               q->host);
+    AddEquate("verbose_color",  "-forth.htm#vcolor -- mask",
+              VERBOSE_COLOR);
     AddEquate("verbose_bci",    "-forth.htm#vbci -- mask",
               VERBOSE_BCI);
     AddEquate("verbose_token",  "-forth.htm#vtoken -- mask",
@@ -511,6 +513,8 @@ void AddForthKeywords(struct QuitStruct *state) {
               VERBOSE_SOURCE);
     AddEquate("verbose_cycles", "-forth.htm#vcycles -- mask",
               VERBOSE_CYCLES);
+    AddEquate("verbose_fatal",  "-forth.htm#vfatal -- mask",
+              VERBOSE_FATAL);
     AddKeyword("memtop",        "-forth.htm#memtop -- a",
                MemTop,          ComTop);
     AddKeyword("\\h",           "-forth.htm#help --",

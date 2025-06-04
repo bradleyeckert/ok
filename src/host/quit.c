@@ -697,6 +697,7 @@ int QuitLoop(char * line, int maxlength, struct QuitStruct *state) {
                     default: Color(COLOR_RED);
                         printf("%s ", ErrorMessage (ERR, TOKEN));
                         Color(COLOR_NONE);
+                        if (VERBOSE & VERBOSE_FATAL) return ERR;
                     }
                     while (FILEDEPTH) {
                         ShowLine();

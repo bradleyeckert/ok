@@ -36,6 +36,29 @@
 
 <h2 id="verbsto">verbose! ( mask -- )</h2>
 <p>Sets the options for run-time tracing (0 = none).
+<code>verbose!</code> accepts a combination of flags, so the following constants are a power of 2.
+</p>
+
+<h3 id="vcolor ">verbose_color ( -- mask )</h3>
+<p>Use ANSI color escape sequences. Set to 0 if your terminal does not support color.
+</p>
+<h3 id="vbci   ">verbose_bci ( -- mask )</h3>
+<p>Display the BCI traffic.
+</p>
+<h3 id="vtoken ">verbose_token ( -- mask )</h3>
+<p>Display the blank-delimited tokens.
+</p>
+<h3 id="vsrc   ">verbose_src ( -- mask )</h3>
+<p>Display the input remaining after each token.
+</p>
+<h3 id="vsource">verbose_source ( -- mask )</h3>
+<p>Display the entire input line.
+</p>
+<h3 id="vcycles">verbose_cycles ( -- mask )</h3>
+<p>Display the cycle count.
+</p>
+<h3 id="vfatal ">verbose_fatal ( -- mask )</h3>
+<p>If an error occurs, exit the application with the error code.
 </p>
 
 <h2 id="bsdot">\. ( ccc&lt;eol&gt; -- )</h2>
