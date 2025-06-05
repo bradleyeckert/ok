@@ -51,6 +51,8 @@ extern "C" {
 
 /* USER CODE END EM */
 
+void HAL_HRTIM_MspPostInit(HRTIM_HandleTypeDef *hhrtim);
+
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
@@ -59,6 +61,16 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define SYNC_Pin GPIO_PIN_6
+#define SYNC_GPIO_Port GPIOG
+#define BUCK_Pin GPIO_PIN_6
+#define BUCK_GPIO_Port GPIOC
+#define CN8_2_Pin GPIO_PIN_8
+#define CN8_2_GPIO_Port GPIOC
+#define CN12_23_Pin GPIO_PIN_8
+#define CN12_23_GPIO_Port GPIOA
+#define STINK_Pin GPIO_PIN_10
+#define STINK_GPIO_Port GPIOC
 #define LD2_Pin GPIO_PIN_1
 #define LD2_GPIO_Port GPIOE
 
