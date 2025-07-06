@@ -5,6 +5,10 @@
 #include "bci.h"
 #include "bciHW.h"
 
+#ifdef GUItype
+#include "../../windows/withLCD/TFTsim.h"
+#endif
+
 #define THIRD ctx->DataStack[ctx->sp]
 
 VMcell_t API_Emit (vm_ctx *ctx){
@@ -107,4 +111,22 @@ void FlashErase(uint32_t sector) { }
 
 void FlashWrite(uint8_t *dest, const uint8_t *src, uint16_t bytes) {
     memcpy(dest, src, bytes);
+}
+
+// The LCD uses a serial or parallel interface.
+// The API call uses a simulated LCD that takes the same commands and data.
+// Data is 16-bit, command is 8-bit. 
+// Data[18:16] = ~RDn, CSn, DC.  When RD is enabled, returned data is expected.
+
+uint32_t API_LCDout(vm_ctx *ctx) {
+#ifdef GUItype
+    uint32_t x = ctx->t;
+    if (x & 0x20000) TFTLCDend();
+    else {
+        if (x & 0x10000) TFTLCDdata(WHOLE16, x & 0xFFFF);
+        else TFTLCDcommand(x & 0xFF);
+    }
+    if (x & 0x40000) return 1; // fake read
+    return 0;
+#endif
 }

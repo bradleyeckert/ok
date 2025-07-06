@@ -246,7 +246,7 @@ typedef VMcell_t (*APIfn) (vm_ctx *ctx);
 
 static const APIfn APIfns[] = {
     NVMbeginRead, NVMbeginWrite, NVMread, NVMwrite, NVMendRW,
-    API_Emit, API_umstar, API_mudivmod
+    API_Emit, API_umstar, API_mudivmod, API_LCDout
 };
 
 #define APIfs (sizeof(APIfns)/sizeof(APIfns[0]))

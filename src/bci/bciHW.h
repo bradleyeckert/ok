@@ -19,6 +19,7 @@ VMcell_t NVMendRW      (vm_ctx *ctx);
 VMcell_t API_Emit      (vm_ctx *ctx);
 VMcell_t API_umstar    (vm_ctx *ctx);
 VMcell_t API_mudivmod  (vm_ctx *ctx);
+VMcell_t API_LCDout    (vm_ctx* ctx);
 
 uint32_t CRC32(uint8_t *addr, uint32_t len);
 

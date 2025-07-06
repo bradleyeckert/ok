@@ -27,3 +27,9 @@ into these frames causes a delay. USBHS uses 8 usec frames, nice if you can affo
 
 It's hard to find information online about the amount of delay to expect.
 It depends on the system, the USB bridge chip, etc.
+
+## CH347T
+
+The WCH CH347T is a USBHS UART bridge that supports up to 9 MBPS, in a TSSOP-20 package.
+The other port can be used for JTAG or I2C.
+That would make it a great interface for FPGAs. It needs far fewer components than a FT232H.
