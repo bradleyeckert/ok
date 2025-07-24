@@ -11,7 +11,7 @@ int TFTLCDsetup(uint8_t* BMP, int type, int width, int height);
 // Send data to the controller.
 void TFTLCDdata(uint8_t format, uint32_t n);
 void TFTLCDcommand(uint8_t n);
-void TFTLCDend(void);
+uint32_t TFTLCDraw(uint32_t n);
 
 #define PACKED16 0					// Pixel format over data bus
 #define WHOLE16  1

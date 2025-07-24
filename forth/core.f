@@ -1,6 +1,4 @@
-\ tests
-
-\. testing uops
+\ core words
 
 empty
 
@@ -104,64 +102,3 @@ variable hld                                    \h  -- a \ pointer for numeric o
 : d2/       2/ swap 2/c swap ;                  \h ~double/DTwoDiv d1 -- d2
 : +!        a! @a + !a ;                        \h ~core/PlusStore n a --
 : noop      ;                                   \ --
-: off       a! 0 !a ;                           \ a --
-: on        a! -1 !a ;                          \ a --
-: star      42 emit ;
-: stars     goodN for star next ;
-: euros     0 <# # # [char] . hold              \ cents --
-                  #s [char] € hold #> type ;    \ demonstrate wide char (20AC)
-
-tp equ table  100 , 1000 , 10000 ,
-," こんにちは世界" : hi  literal @+ type ;
-: yo        ," ok!" @+ type ;
-
-variable counter
-
-: mystuff   1 counter +! ;
-
-4 cells buffer: tempAB
-
-:noname     console
-            begin
-                bcisync
-                a b tempAB a! !a+ y@ !a+ x@ !a+ !a+    \ save B, Y, X, and A registers
-                mystuff
-                tempAB a! @a+ b! @a+ y! @a+ x! @a a!   \ restore registers
-            again
-; resolves coldboot
-
-reload \ synchronize code and text images to target
-
-console \ initialize console output
-
-\. testing Forth
-
-t{ 5 negate -> -5 }t
-t{ 5 3 - -> 2 }t
-t{ 1 2 3 rot -> 2 3 1 }t
-t{ 0 0= -> -1 }t
-t{ 1 0= -> -0 }t
-t{ table @ -> 100 }t
-t{ table 1 + @ -> 1000 }t
-t{ table 2 + @ -> 10000 }t
-
-\ verbose_bci verbose!
-5 port!
-
-\. defining some words that only execute on the STM32
-hex
-
-40004800 peripheral USART3_BASE
-
-000 register USART_CR1 \ USART Control register 1
-
-decimal
-: com3cr  USART3_BASE USART_CR1 @b+ ;
-
-reload \ synchronize again before leaving
-
-\.
-\. Interesting things to do:
-\. Disassemble all: dasm
-\. Benchmark: mips
-\. Sanity check: counter @ u.

@@ -32,9 +32,11 @@ void UARTx_IRQHandler(UART_t *uart) {
     if (uart->dev->ISR & USART_ISR_TXE_TXFNF) {
     	if (uart->t_head == uart->t_tail) {		// disable TX interrupt if done
     		uart->dev->CR1 &= ~USART_CR1_TXEIE;
-    		uart->t_run = 0;
     	} else {
     		uart->dev->TDR = uart->t_buffer[uart->t_tail++];
+#ifndef WRITING_TDR_CLEARS_TXFNF
+    		uart->dev->ISR &= ~USART_ISR_TXE_TXFNF;
+#endif
     	}
     }
 }
@@ -43,14 +45,15 @@ int UARTx_headroom(UART_t *uart) {
 	return uart->t_tail - uart->t_head;
 }
 
+/* Add c to a soft FIFO and rely on the ISR to send it from the FIFO.
+ * The TXEIE flag indicates whether the FIFO is in play.
+ */
 void UARTx_putc(UART_t *uart, uint8_t c) {
  	while (UARTx_headroom(uart) == 1) {} 		// buffer is full
-	if (uart->t_run == 0) {
-		uart->t_run = 1;
-		uart->dev->TDR = c;
-		uart->dev->CR1 |= USART_CR1_TXEIE;
-	} else {
-		uart->t_buffer[uart->t_head++] = c;
+	uart->t_buffer[uart->t_head++] = c;
+	if ((uart->dev->CR1 & USART_CR1_TXEIE) == 0) {
+		uart->dev->ISR |= USART_ISR_TXE_TXFNF;
+	 	uart->dev->CR1 |= USART_CR1_TXEIE;
 	}
 }
 

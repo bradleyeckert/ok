@@ -113,20 +113,32 @@ void FlashWrite(uint8_t *dest, const uint8_t *src, uint16_t bytes) {
     memcpy(dest, src, bytes);
 }
 
-// The LCD uses a serial or parallel interface.
-// The API call uses a simulated LCD that takes the same commands and data.
-// Data is 16-bit, command is 8-bit. 
-// Data[18:16] = ~RDn, CSn, DC.  When RD is enabled, returned data is expected.
+// Interpreter for unpacking bitmap glyphs
 
-uint32_t API_LCDout(vm_ctx *ctx) {
 #ifdef GUItype
-    uint32_t x = ctx->t;
-    if (x & 0x20000) TFTLCDend();
-    else {
-        if (x & 0x10000) TFTLCDdata(WHOLE16, x & 0xFFFF);
-        else TFTLCDcommand(x & 0xFF);
-    }
-    if (x & 0x40000) return 1; // fake read
-    return 0;
-#endif
+
+uint32_t API_LCDraw(vm_ctx* ctx) {
+    return TFTLCDraw(ctx->t); // use the LCD simulator
 }
+
+uint32_t LCD_FGcolor;   // packed foreground color
+uint32_t LCD_BGcolor;   // packed background color
+
+VMcell_t API_LCDFG(vm_ctx* ctx) { return LCD_FGcolor; }
+VMcell_t API_LCDBG(vm_ctx* ctx) { return LCD_BGcolor; }
+VMcell_t API_LCDFGset(vm_ctx* ctx) { LCD_FGcolor = ctx->t;  return 0; }
+VMcell_t API_LCDBGset(vm_ctx* ctx) { LCD_BGcolor = ctx->t;  return 0; }
+
+/*
+API_LCDpacked interprets a 32-bit packed field to send foreground and
+background colors to the LCD. The data is typically a monochrome bitmap.
+*/
+
+#else
+VMcell_t API_LCDraw   (vm_ctx* ctx) { return -1; }
+VMcell_t API_LCDpacked(vm_ctx* ctx) { return -1; }
+VMcell_t API_LCDFG    (vm_ctx* ctx) { return -1; }
+VMcell_t API_LCDBG    (vm_ctx* ctx) { return -1; }
+VMcell_t API_LCDFGset (vm_ctx* ctx) { return -1; }
+VMcell_t API_LCDBGset (vm_ctx* ctx) { return -1; }
+#endif

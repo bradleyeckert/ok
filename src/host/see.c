@@ -154,6 +154,7 @@ static char * DisassembleInsn(uint32_t inst) {
                     if (name) {
                         ToLabel();
                         appendDA(name);
+                        if (opcode == VMO_JUMP) appendDA(";");
                     } break;
                 case VMO_LIT:
                     ToLabel();

@@ -6,11 +6,8 @@ extern "C" {
 #endif
 #include <stdint.h>
     
-// A receiver for chars sent when a button is pressed or released.
-static void GUIbuttonHandler(char c);
-
-//external function to handle touch events.
-void GUItouchHandler(uint8_t offset, uint8_t length, uint32_t* p);
+// external function to handle touch events.
+extern void GUItouchHandler(uint8_t offset, uint8_t length, uint32_t* p);
 
 // Launch and run the gui window.
 void GUIrun(void);

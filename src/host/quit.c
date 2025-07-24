@@ -662,6 +662,7 @@ int QuitLoop(char * line, int maxlength, struct QuitStruct *state) {
         STATE = 0;                      // interpreter state
         q->startup_us = GetMicroseconds();
         while (ERR == 0) {
+            TraceBufClear();
             TOIN = 0;
             int TIBlen = (int)strlen(TIB);
             if (TIBlen > MAXTIB) ERR = BAD_INPUT_LINE;

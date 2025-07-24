@@ -20,6 +20,21 @@ The USB delay shouldn't be too bad.
 The intended FLASH_BLOCK_SIZE of 1024, if it works, would have a transmission time of 3.5 ms at 3MBPS.
 Still not bad, and compatible with a CH343.
 
+### Actual USB UARTs
+
+The default mode is 115200,N,8,1. Results with various USB UARTs:
+
+- VCP on the NUCLEO-H753ZI board: OKAY.
+- TTL-232RG-VSW3V3-WE: OKAY.
+- CH343: BAD!
+
+Transmitted data from the CH343 did not make it to the USART3 receiver intact (dropped character or bad bit).
+The problem could be fixed with `verbose_bci verbose!` which slows down communication by dumping it to the terminal.
+Changing to 115200,N,8,2 (more stop bits) did not fix it.
+Switching to a different CH343 did not fix it.
+
+A quick UART ping test from the keyboard of a terminal is ^T^J.
+
 ## Key management
 
 `ok` should be able to use a proxy, or be a proxy, to manage keys. Each target has a firmware key and an access key.

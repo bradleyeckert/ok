@@ -84,12 +84,12 @@ void* SimulateCPU(void* threadid) {
 static int CommDone = 0;
 
 void* PollCommRX(void* threadid) {
-    uint8_t buffer[64];
+    uint8_t buffer[256];
     struct QuitStruct *q = &quit_internal_state;
     g_begun++;
     while (CommDone == 0) { // 'bye' sets done
         if (q->portisopen) {
-            uint8_t bytes = RS232_PollComport(q->port, buffer, 64);
+            uint16_t bytes = RS232_PollComport(q->port, buffer, 256);
             uint8_t *s = buffer;
             while (bytes--) {
                 TargetCharOutput(*s++);

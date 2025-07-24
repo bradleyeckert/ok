@@ -18,7 +18,7 @@ taking care that they don't collide with numeric output.
 <p>Returns size of the scratchpad.
 </p>
 
-<h2 id="host">host ( -- wid )</h2>
+<h2 id="host">*host ( -- wid )</h2>
 <p>wid of the host wordlist.
 </p>
 
@@ -343,6 +343,35 @@ Otherwise, <code>ctx->FinalFn(ctx->id);</code> will be needed to asynchronously 
 
 <h2 id="mumod">mu/mod ( ud u -- dq r )</h2>
 <p>Similar to um/mod but returns a double quotient. Used by #.
+</p>
+
+<hr>
+<h1>Constants for verbose!</h1>
+<hr>
+
+<h2 id="vcolor">verbose_color ( -- mask )</h2>
+<p>Enables ANSI color escape codes.
+</p>
+<h2 id="vcomm">verbose_comm ( -- mask )</h2>
+<p>Trace the communication sequence.
+</p>
+<h2 id="vbci">verbose_bci ( -- mask )</h2>
+<p>Dump the BCI traffic.
+</p>
+<h2 id="vtoken">verbose_token ( -- mask )</h2>
+<p>Echo individual blank-delimited tokens.
+</p>
+<h2 id="vsrc">verbose_src ( -- mask )</h2>
+<p>Echo text remaining in the input line.
+</p>
+<h2 id="vsource">verbose_source ( -- mask )</h2>
+<p>Echo line input text.
+</p>
+<h2 id="vcycles">verbose_cycles ( -- mask )</h2>
+<p>Display cycles in the command line
+</p>
+<h2 id="vfatal">verbose_fatal ( -- mask )</h2>
+<p>Close the console app when an error is encountered.
 </p>
 
 <hr>

@@ -5,6 +5,7 @@
  *      Author: User
  */
 
+#include <stdint.h>
 #include "UARTs/okuart.h"
 
 UART_t uart3;

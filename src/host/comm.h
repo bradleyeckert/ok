@@ -16,6 +16,7 @@ void SendCell(uint32_t x);      // Append a 32-bit word to the message
 void SendFinal(void);           // Send the message to the BCI
 
 int BCIwait(const char *s, int pairable);// Wait for BCI to return a message
+void TraceBufClear(void);
 void AddCommKeywords(struct QuitStruct *state);
 void BCIsendToHost(const uint8_t *src, int length);
 int EncryptAndSend(uint8_t* m, int length);

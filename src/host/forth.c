@@ -503,6 +503,8 @@ void AddForthKeywords(struct QuitStruct *state) {
               q->host);
     AddEquate("verbose_color",  "-forth.htm#vcolor -- mask",
               VERBOSE_COLOR);
+    AddEquate("verbose_comm",   "-forth.htm#vcomm -- mask",
+              VERBOSE_COMM);
     AddEquate("verbose_bci",    "-forth.htm#vbci -- mask",
               VERBOSE_BCI);
     AddEquate("verbose_token",  "-forth.htm#vtoken -- mask",

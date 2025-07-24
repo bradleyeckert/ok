@@ -10,6 +10,7 @@ void FlashUnlock(uint8_t *addr);
 void FlashLock(void);
 void FlashErase(uint32_t sector);
 void FlashWrite(uint8_t *dest, const uint8_t *src, uint16_t bytes);
+uint32_t CRC32(uint8_t* addr, uint32_t len);
 
 VMcell_t NVMbeginRead  (vm_ctx *ctx);
 VMcell_t NVMbeginWrite (vm_ctx *ctx);
@@ -19,8 +20,12 @@ VMcell_t NVMendRW      (vm_ctx *ctx);
 VMcell_t API_Emit      (vm_ctx *ctx);
 VMcell_t API_umstar    (vm_ctx *ctx);
 VMcell_t API_mudivmod  (vm_ctx *ctx);
-VMcell_t API_LCDout    (vm_ctx* ctx);
 
-uint32_t CRC32(uint8_t *addr, uint32_t len);
+VMcell_t API_LCDraw    (vm_ctx* ctx);
+VMcell_t API_LCDpacked (vm_ctx* ctx);
+VMcell_t API_LCDFG	   (vm_ctx* ctx);
+VMcell_t API_LCDBG     (vm_ctx* ctx);
+VMcell_t API_LCDFGset  (vm_ctx* ctx);
+VMcell_t API_LCDBGset  (vm_ctx* ctx);
 
 #endif /* __BCIHW_H__ */

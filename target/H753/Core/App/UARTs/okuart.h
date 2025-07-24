@@ -15,6 +15,7 @@
 #ifdef STM32H753xx
 #include "stm32h753xx.h"
 #define READING_RDR_CLEARS_RXNE // this chip clears RXNE for you
+#define WRITING_TDR_CLEARS_TXFNF
 #else
 #error "okuart.h needs to #include the right stm32*xx.h file"
 #endif
@@ -22,7 +23,7 @@
 typedef struct {
   USART_TypeDef *dev;
   uint8_t 		r_buffer[256],  t_buffer[256];
-  uint8_t 		r_head, r_tail, t_head, t_tail, t_run, r_overflow;
+  uint8_t 		r_head, r_tail, t_head, t_tail, r_overflow;
 } UART_t;
 
 // example: UART_t myuart; UARTx_init(myuart, USART3);
@@ -37,7 +38,7 @@ void UARTx_putc(UART_t *uart, uint8_t c);
 // output an array of bytes
 void UARTx_puts(UART_t *uart, const uint8_t *src, int length);
 
-// headroom in transmit buffer, available for use by USARTx_puts
+// headroom (free bytes remaining) in transmit buffer
 int UARTx_headroom(UART_t *uart);
 
 // number of bytes in the receive buffer

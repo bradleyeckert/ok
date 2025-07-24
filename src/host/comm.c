@@ -69,6 +69,55 @@ int moleTRNG(uint8_t *dest, int length) {
 	return 0;                                   // Use a TRNG instead
 }
 
+/*
+Define a FIFO that saves low-level traffic for debugging.
+TraceBufClear clears the FIFO.
+TracePush appends to the FIFO, dropping the oldest to prevent overflow.
+TracePop gets oldest from the FIFO.
+*/
+
+#define TraceBufferSize 1024 /* must be power of 2 */
+
+static uint16_t TraceBuffer[TraceBufferSize];
+static uint16_t TraceHead;
+static uint16_t TraceTail;
+
+void TraceBufClear(void) {
+    TraceHead = 0;
+    TraceTail = 0;
+}
+static int Traces(void) {
+    return (TraceHead - TraceTail) & (TraceBufferSize - 1);
+}
+
+static uint16_t TracePop(void) {
+    if (Traces() == 0) return 0;
+    uint16_t r = TraceBuffer[TraceTail & (TraceBufferSize - 1)];
+    TraceTail = (TraceTail + 1) & (TraceBufferSize - 1);
+    return r;
+}
+static void TracePush(uint16_t u) {
+    if (Traces() == (TraceBufferSize - 1)) TracePop();
+    TraceBuffer[TraceHead] = u;
+    TraceHead = (TraceHead + 1) & (TraceBufferSize - 1);
+}
+
+static void TraceDump(void) {
+    printf("Trace history:\n");
+    while (Traces()) {
+        uint16_t u = TracePop();
+        if (u & 0x200) { printf("<"); }
+        if (u & 0x400) { printf(">>"); }
+        if (u & 0x100) { printf(">"); }
+        printf("%02X", u & 0xFF);
+    }
+    printf("\n");
+}
+
+/*
+Character I/O:
+*/
+
 static port_ctx HostPort;
 static port_ctx TargetPort;
 
@@ -76,6 +125,7 @@ static void HostCharOutput(uint8_t c) {
     if (VERBOSE & VERBOSE_BCI) {
         printf(">%02X", c);
     }
+    TracePush(0x400 + c);
     int r = molePutc(&TargetPort, c);
     if ((r) && (r != 6)) printf("\n*** TargetPort returned %d, ", r);
 }
@@ -84,6 +134,7 @@ void TargetCharOutput(uint8_t c) {
     if (VERBOSE & VERBOSE_BCI) {
         printf("<%02X", c);
     }
+    TracePush(0x200 + c);
     int r = molePutc(&HostPort, c);
     if ((r) && (r != 6)) printf("\n*** HostPort returned %d, ", r);
 }
@@ -107,10 +158,12 @@ int BCIwait(const char *s, int pairable) {
         if (t0 > end) {
             if (pairable) {
                 printf("Timeout in %s, re-pairing\n", s);
+                TraceDump();
                 molePair(&HostPort);
             }
             else {
                 printf("Timeout in %s\n", s);
+                TraceDump();
             }
             return 1;
         }
@@ -125,6 +178,9 @@ uint8_t *HostKey;
 
 static int PairToTarget(void) {
     q->connected = 0;
+    if (VERBOSE & VERBOSE_COMM) {
+        printf("GetBoiler: reading plaintext boilerplate from target\n");
+    }
     busy = 1;
     moleBoilerReq(&HostPort);
     if (BCIwait("GetBoiler", 0)) goto bad;
@@ -211,14 +267,23 @@ static int VMstrobe(int pin) {
 }
 
 static void VMresetcmd(void) {
+    if (VERBOSE & VERBOSE_COMM) {
+        printf("Sending RESET strobe\n");
+    }
     VMstrobe(BCI_RESET_PIN);
 }
 
 static void VMshutdown(void) {
+    if (VERBOSE & VERBOSE_COMM) {
+        printf("Sending SHUTDOWN strobe (kill simulator thread)\n");
+    }
     VMstrobe(BCI_SHUTDOWN_PIN);
 }
 
 static void VMsleep(void) {
+    if (VERBOSE & VERBOSE_COMM) {
+        printf("Sending SLEEP strobe (freeze VM)\n");
+    }
     VMstrobe(BCI_SLEEP_PIN);
 }
 
@@ -237,7 +302,7 @@ static uint32_t ReceivedCRC[16];
 #define flashNeeds (FLASH_BLOCK_SIZE + 5)
 
 static int ProgramFlash(uint8_t *addr, int blocks, int command) {
-    if (VERBOSE & VERBOSE_BCI) {
+    if (VERBOSE & VERBOSE_COMM) {
         printf("\nProgramming Flash[%p], %d blocks, command %d ",
                addr, blocks, command);
     }
@@ -256,12 +321,21 @@ static int ProgramFlash(uint8_t *addr, int blocks, int command) {
 }
 
 void Reload(void) {
+    if (VERBOSE & VERBOSE_COMM) {
+        printf("Reload:\n");
+    }
     q->reloaded[CORE] = 0;
+    if (VERBOSE & VERBOSE_COMM) {
+        printf("Connecting through MOLE\n");
+    }
     int avail = moleAvail(&HostPort);
     if (avail < flashNeeds) {
         return;
     }
     VMsleep();                          // pause remote VM while programming
+    if (VERBOSE & VERBOSE_COMM) {
+        printf("Getting CRCs of target's CODE and TEXT spaces\n");
+    }
     SendInit();
     SendChar(BCIFN_CRC);                // get the remote CRCs
     SendChar(2);
@@ -300,7 +374,7 @@ void Reload(void) {
 
 static void GetBoiler(void) {           // mole port boilerplate
     busy = 1;
-    moleBoilerReq(&HostPort);           // get plaintext boilerplate
+    moleBoilerReq(&HostPort);
     BCIwait("GetBoiler", 0);
     printf("Host received %d-byte boilerplate {%s}\n",
            receivedBoilerplate[0], &receivedBoilerplate[1]);
@@ -398,11 +472,15 @@ static void uartCharOutput(uint8_t c) {
     if (VERBOSE & VERBOSE_BCI) {
         printf(">%02X", c);
     }
+    TracePush(0x100 + c);
     int r = RS232_SendByte(q->port, c);
-    if (r) printf("\n*** RS232_SendByte returned %d, ", r);
+    if (r) {
+        printf("\n*** RS232_SendByte returned %d, ", r);
+        exit(86); // cable unplugged without closing app
+    }
 }
 
-static char cmode[] = {'8','N','1',0};
+static const char cmode[] = "8N1"; // {'8','N','1',0};
 static void ComBaud(void) { q->baudrate = DataPop(); }
 static void ComPort(void) { q->port = DataPop(); }
 
@@ -466,6 +544,7 @@ static void ConnectLocal(void) {
 
 static void ConnectRemote(void) {
     ComOpen();
+    TracePush(0x300);
     if (q->portisopen == 0) {
         printf("Error: Could not open serial port\n");
         return;

@@ -233,3 +233,18 @@ void TFTLCDdata(uint8_t format, uint32_t n) {
 }
 
 void TFTLCDend(void) { }
+
+// The LCD uses a serial or parallel interface.
+// The API call uses a simulated LCD that takes the same commands and data.
+// Data is 16-bit, command is 8-bit. 
+// Data[18:16] = ~RDn, CSn, DC.  When RD is enabled, returned data is expected.
+
+uint32_t TFTLCDraw(uint32_t x) {
+	if (x & 0x20000) TFTLCDend();
+	else {
+		if (x & 0x10000) TFTLCDdata(WHOLE16, x & 0xFFFF);
+		else TFTLCDcommand(x & 0xFF);
+	}
+	if (x & 0x40000) return 1; // fake read
+	return 0;
+}

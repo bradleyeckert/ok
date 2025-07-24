@@ -205,8 +205,9 @@ void message(const char* color, const char *s);
 #define VERBOSE_TOKEN    4  // show the source token (blank-delimited string)
 #define VERBOSE_SRC      8  // display the remaining source in the TIB
 #define VERBOSE_BCI     16  // trace BCI input and output
-#define VERBOSE_CYCLES  32  // display cycle count of last executed word
-#define VERBOSE_FATAL   64  // Exit the app if an error occurs
+#define VERBOSE_COMM    32  // trace COMMs
+#define VERBOSE_CYCLES  64  // display cycle count of last executed word
+#define VERBOSE_FATAL  128  // Exit the app if an error occurs
 
 #define COLOR_NONE      "\033[0m"
 #define COLOR_RED       "\033[0;91m"
