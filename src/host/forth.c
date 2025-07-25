@@ -138,7 +138,7 @@ static void CompLit(uint32_t x) {       // unsigned cellbits-1 bits
     }
 }
 
-void ForthCompile(uint32_t xt){
+static void ForthCompile(uint32_t xt){
     CompCall(xt);
 }
 
@@ -302,7 +302,7 @@ static void ExecUop(uint32_t uop) { InstExecute(IS_UOP(uop)); }
 static void Macro_Comp(void) { Macro_Fn(CompUop); }
 static void Macro_Exec(void) { Macro_Fn(ExecUop); }
 
-void AddMacro(char* name, char* help, uint32_t value) {
+static void AddMacro(char* name, char* help, uint32_t value) {
     if (AddHead(name, help)) {
         SetFns(value, Macro_Exec, Macro_Comp);
     }
@@ -410,7 +410,7 @@ static void BaseY(void) {
 
 static int UFT8length;
 
-uint32_t getUTF8(char* p) {
+static uint32_t getUTF8(char* p) {
     uint32_t c = *p++;             UFT8length = 1;
     if ((c & 0x80) == 0x00) return c;                       // 1-char UTF-8
     uint32_t d = *p++ & 0x3F;      UFT8length++;
@@ -474,7 +474,7 @@ static void CompStr    (void) { CommaStr(); Literal(); }
 static void byte2cell  (void) { DataPush(DataPop() >> C_BYTESHIFT); }
 
 
-void AddAPIcall(char* name, char* help, uint32_t value) {
+static void AddAPIcall(char* name, char* help, uint32_t value) {
     if (AddHead(name, help)) {
         SetFns(value, Prim_Exec, API_Comp);
     }
@@ -653,14 +653,30 @@ void AddForthKeywords(struct QuitStruct *state) {
     AddOp("x@",                 "-forth.htm#xfetch x --",
           INST_TAG + VMI_XFETCH);
 
+    AddAPIcall("nvm@[",         "-forth.htm#nrdbegin addr -- ior",
+            INST_TAG + VMI_API      + 0);
+    AddAPIcall("nvm![",         "-forth.htm#nwrbegin addr -- ior",
+            INST_TAG + VMI_API      + 1);
+    AddAPIcall("nvm@",          "-forth.htm#nrd bytes -- u",
+            INST_TAG + VMI_API      + 2);
+    AddAPIcall("nvm!",          "-forth.htm#nwr u bytes --",
+            INST_TAG + VMI_API2DROP + 3);
+    AddAPIcall("]nvm",          "-forth.htm#nend --",
+            INST_TAG + VMI_API      + 4);
     AddAPIcall("semit",         "-forth.htm#semit c --",
-               INST_TAG + VMI_APIDROP + 5);
+            INST_TAG + VMI_APIDROP  + 5);
     AddAPIcall("um*",           "~core/UMTimes u1 u2 -- d1",
-               INST_TAG + VMI_API     + 6);
+            INST_TAG + VMI_API      + 6);
     AddAPIcall("um/mod",        "~core/UMDivMOD ud u -- q r",
-               INST_TAG + VMI_APIDROP + 7);
+            INST_TAG + VMI_APIDROP  + 7);
     AddAPIcall("mu/mod",        "-forth.htm#mumod ud u -- dq r",
-               INST_TAG + VMI_API     + 7);
+            INST_TAG + VMI_API      + 7);
+    AddAPIcall("LCDraw",        "-forth.htm#LCDraw n -- u",
+            INST_TAG + VMI_API      + 8);
+    AddAPIcall("LCDFG!",        "-forth.htm#LCDfgcolor color --",
+            INST_TAG + VMI_APIDROP  + 9);
+    AddAPIcall("LCDBG!",        "-forth.htm#LCDbgcolor color --",
+            INST_TAG + VMI_APIDROP + 10);
 
     // compile-only control words, can't be postponed
     AddKeyword("later",         "-forth.htm#later <name> --",

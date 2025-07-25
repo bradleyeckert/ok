@@ -151,7 +151,7 @@ const uint8_t TargetBoilerSrc[] = {"\x15mole0<TargetPortUUID>"};
 static int busy;
 
 int BCIwait(const char *s, int pairable) {
-    uint64_t end = GetMicroseconds() + (1000 * HANG_LIMIT_MS);
+    uint64_t end = GetMicroseconds() + (1000LL * HANG_LIMIT_MS);
     while (busy) {
         YieldThread();
         uint64_t t0 = GetMicroseconds();
@@ -190,7 +190,7 @@ static int PairToTarget(void) {
     }
     moleNewKeys(&HostPort, HostKey);
     molePair(&HostPort);
-    uint64_t end = GetMicroseconds() + (1000 * HANG_LIMIT_MS);
+    uint64_t end = GetMicroseconds() + (1000LL * HANG_LIMIT_MS);
     while ((moleAvail(&HostPort) == 0)) {
         YieldThread();
         uint64_t t0 = GetMicroseconds();
@@ -228,7 +228,7 @@ static void BCItransmit(const uint8_t *src, int length) { // msg m from mole
 void get8debug(uint8_t c) {} // no debug output
 
 static void BoilerHandlerA(const uint8_t *src) {
-    memcpy(receivedBoilerplate, src, src[0] + 1);
+    memcpy(receivedBoilerplate, src, (src[0] + 1));
     busy = 0;
 }
 void SendChar(uint8_t c) {

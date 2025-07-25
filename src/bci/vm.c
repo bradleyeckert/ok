@@ -245,9 +245,9 @@ static int ops0001(vm_ctx *ctx, int inst) { // instruction zoo 0110001...
 typedef VMcell_t (*APIfn) (vm_ctx *ctx);
 
 static const APIfn APIfns[] = {
-    NVMbeginRead, NVMbeginWrite, NVMread, NVMwrite, NVMendRW,   // 0 to 4
-    API_Emit, API_umstar, API_mudivmod, API_LCDraw, API_LCDFG,  // 5 to 9
-    API_LCDBG
+    API_NVMbeginRead, API_NVMbeginWrite, API_NVMread, API_NVMwrite, // 0
+    API_NVMendRW, API_Emit, API_umstar, API_mudivmod,               // 4
+    API_LCDraw, API_LCDFG, API_LCDBG                                // 8
 };
 
 #define APIfs (sizeof(APIfns)/sizeof(APIfns[0]))

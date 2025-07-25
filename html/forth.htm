@@ -345,6 +345,42 @@ Otherwise, <code>ctx->FinalFn(ctx->id);</code> will be needed to asynchronously 
 <p>Similar to um/mod but returns a double quotient. Used by #.
 </p>
 
+<h2 id="nrdbegin">nvm@[ ( faddr -- )</h2>
+<p>Begin a read from NVM (such as SPI Flash) at address faddr.
+</p>
+
+<h2 id="nwrbegin">nvm![ ( faddr -- )</h2>
+<p>Begin a write to NVM at address faddr.
+</p>
+
+<h2 id="nrd">nvm@ ( n -- u )</h2>
+<p>Read the next n bytes from NVM in big-endian byte order, returning u.
+</p>
+
+<h2 id="nwr">nvm! ( u n -- )</h2>
+<p>Write n bytes of u to NVM in big-endian byte order.
+</p>
+
+<h2 id="nend">]nvm ( -- )</h2>
+<p>Write n bytes of u to NVM in big-endian byte order.
+</p>
+
+<h2 id="LCDraw">LCDraw ( n -- u )</h2>
+<p>Write raw data to the LCD controller. The LCD uses a serial or parallel interface.
+Data is 16-bit, command is 8-bit. 
+n[18:16] = ~RDn, CSn, DC.
+When RD is enabled ('1'), returned data is expected.
+Otherwise, u = 0.
+</p>
+
+<h2 id="LCDfgcolor">LCDfgcolor! ( color -- )</h2>
+<p>Set foreground color for text rendering.
+</p>
+
+<h2 id="LCDbgcolor">LCDbgcolor! ( color -- )</h2>
+<p>Set background color for text rendering.
+</p>
+
 <hr>
 <h1>Constants for verbose!</h1>
 <hr>
