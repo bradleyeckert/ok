@@ -1,10 +1,14 @@
 #ifndef __BCIHW_H__
 #define __BCIHW_H__
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 
 #include "bci.h"
 
 VMcell_t BCIVMioRead (vm_ctx *ctx, VMcell_t addr);
 void BCIVMioWrite (vm_ctx *ctx, VMcell_t addr, VMcell_t data);
+uint32_t TFTLCDraw(uint32_t n, uint8_t mode);
 
 // Internal Flash
 void FlashUnlock(uint8_t *addr);
@@ -31,8 +35,15 @@ VMcell_t API_umstar         (vm_ctx *ctx);
 VMcell_t API_mudivmod       (vm_ctx *ctx);
 
 VMcell_t API_LCDraw         (vm_ctx* ctx);
-VMcell_t API_LCDpacked      (vm_ctx* ctx);
 VMcell_t API_LCDFG	        (vm_ctx* ctx);
 VMcell_t API_LCDBG          (vm_ctx* ctx);
+#define TFTsimDC  0x20
+#define TFTsimCSn 0x40
+#define TFTsimRD  0x80
+
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* __BCIHW_H__ */

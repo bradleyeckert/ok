@@ -176,7 +176,7 @@ void GUItouchHandler(uint8_t offset, uint8_t length, uint32_t *p) {
     vm_ctx* ctx = &quit_internal_state.VMlist[0].ctx;
     if (offset + length > 6) {
         printf("GUItouchHandler: offset %d + length %d exceeds 6\n", offset, length);
-        return;
+        return; // should never happen
 	}
 	memcpy(&ctx->DataMem[1], p, length * sizeof(uint32_t));
 #ifdef TRACE

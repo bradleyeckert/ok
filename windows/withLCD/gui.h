@@ -18,9 +18,6 @@ void GUILCDload(char* s);
 // LED status input is by calling a function:
 void GUIbye(void);
 
-// LCDwrite uses a RS (cmd/data) select on bit 8 and data on bits 7:0 in:
-void GUILCDwrite(uint16_t n);
-
 #ifdef __cplusplus
 }
 #endif

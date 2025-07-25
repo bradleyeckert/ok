@@ -671,8 +671,8 @@ void AddForthKeywords(struct QuitStruct *state) {
             INST_TAG + VMI_APIDROP  + 7);
     AddAPIcall("mu/mod",        "-forth.htm#mumod ud u -- dq r",
             INST_TAG + VMI_API      + 7);
-    AddAPIcall("LCDraw",        "-forth.htm#LCDraw n -- u",
-            INST_TAG + VMI_API      + 8);
+    AddAPIcall("LCDraw",        "-forth.htm#LCDraw n bits -- u",
+            INST_TAG + VMI_APIDROP  + 8);
     AddAPIcall("LCDFG!",        "-forth.htm#LCDfgcolor color --",
             INST_TAG + VMI_APIDROP  + 9);
     AddAPIcall("LCDBG!",        "-forth.htm#LCDbgcolor color --",

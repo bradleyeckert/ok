@@ -218,23 +218,11 @@ void FlashWrite(uint8_t *dest, const uint8_t *src, uint16_t bytes) {
 #ifdef GUItype
 
 uint32_t API_LCDraw(vm_ctx* ctx) {
-    return TFTLCDraw(ctx->t); // use the LCD simulator
+    return TFTLCDraw(ctx->n, ctx->t); // use the LCD simulator
 }
 
-uint32_t LCD_FGcolor;   // packed foreground color
-uint32_t LCD_BGcolor;   // packed background color
-
-VMcell_t API_LCDFG(vm_ctx* ctx) { LCD_FGcolor = ctx->t;  return 0; }
-VMcell_t API_LCDBG(vm_ctx* ctx) { LCD_BGcolor = ctx->t;  return 0; }
-
-/*
-API_LCDpacked interprets a 16-bit packed field to send foreground and
-background colors to the LCD. The data is typically a monochrome bitmap.
-*/
-
 #else
-VMcell_t API_LCDraw   (vm_ctx* ctx) { return -1; }
-VMcell_t API_LCDpacked(vm_ctx* ctx) { return -1; }
-VMcell_t API_LCDFG    (vm_ctx* ctx) { return -1; }
-VMcell_t API_LCDBG    (vm_ctx* ctx) { return -1; }
+VMcell_t API_LCDraw  (vm_ctx* ctx) { return -1; }
+VMcell_t API_LCDFG   (vm_ctx* ctx) { return -1; }
+VMcell_t API_LCDBG   (vm_ctx* ctx) { return -1; }
 #endif

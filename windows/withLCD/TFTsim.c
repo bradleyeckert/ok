@@ -154,7 +154,7 @@ static void plotColor(void) {
 // TFTLCDdata, which sends 8-bit to 18-bit data with the RS pin at '1'.
 // TFTLCDend, which deactivates the CS pin.
 
-void TFTLCDcommand(uint8_t n) {
+static void TFTLCDcommand(uint8_t n) {
 	cfgstate = 0;
 	switch (n) {
 	case 0x2A: cfgstate = 1; break;		// Column Address Set
@@ -168,7 +168,7 @@ void TFTLCDcommand(uint8_t n) {
 	}
 }
 
-void TFTLCDdata(uint8_t format, uint32_t n) {
+static void TFTLCDdata(uint8_t format, uint32_t n) {
 	switch (cfgstate++) {
 	case 1: colBegin  = n << 8;  break;
 	case 2: colBegin |= n & 0xFF;  break;
@@ -188,6 +188,11 @@ void TFTLCDdata(uint8_t format, uint32_t n) {
 		break;
 	case 9:
 		switch (format) {
+		case WHOLE12:					// RRRR_GGGG_BBBB
+			red = (n >> 4) & 0xF0;
+			green = n & 0xF0;
+			blue = (n << 4) & 0xF0;
+			plotColor();  break;
 		case PACKED16:					// RRRRRGGG
 			red = n & 0xF8;
 			green = (n & 7) << 5;  break;
@@ -232,19 +237,28 @@ void TFTLCDdata(uint8_t format, uint32_t n) {
 	}
 }
 
-void TFTLCDend(void) { }
+static void TFTLCDend(void) { }
 
 // The LCD uses a serial or parallel interface.
 // The API call uses a simulated LCD that takes the same commands and data.
-// Data is 16-bit, command is 8-bit. 
-// Data[18:16] = ~RDn, CSn, DC.  When RD is enabled, returned data is expected.
 
-uint32_t TFTLCDraw(uint32_t x) {
-	if (x & 0x20000) TFTLCDend();
+// mode[4:0] = bits of data in x
+// mode[5] = D/C: 1=data, 0=control
+// mode[6] = CSn: 0 selects the controller, 1 = inactive
+// mode[7] = ~RDn: 1=read
+
+uint32_t TFTLCDraw(uint32_t x, uint8_t mode) {
+	if (mode & TFTsimCSn) TFTLCDend();
 	else {
-		if (x & 0x10000) TFTLCDdata(WHOLE16, x & 0xFFFF);
-		else TFTLCDcommand(x & 0xFF);
+		if (mode & TFTsimDC) {
+            switch (mode & 0x1F) {
+            case 12: TFTLCDdata(WHOLE12, x); break;
+            case 18: TFTLCDdata(WHOLE18, x); break;
+            default: TFTLCDdata(WHOLE16, x); break;
+            }
+        }
+		else TFTLCDcommand(x);
 	}
-	if (x & 0x40000) return 1; // fake read
+	if (mode & TFTsimRD) return 1; // fake read
 	return 0;
 }

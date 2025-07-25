@@ -134,6 +134,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\src\bci\bci.c" />
     <ClCompile Include="..\..\src\bci\bciHW.c" />
+    <ClCompile Include="..\..\src\bci\bciLCD.c" />
     <ClCompile Include="..\..\src\bci\vm.c" />
     <ClCompile Include="..\..\src\host\comm.c" />
     <ClCompile Include="..\..\src\host\forth.c" />
