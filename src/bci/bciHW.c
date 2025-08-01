@@ -7,6 +7,7 @@
 
 #ifdef GUItype
 #include "../../windows/withLCD/TFTsim.h"
+#include "../LCD/gLCD.h"
 #endif
 
 #define THIRD ctx->DataStack[ctx->sp]
@@ -111,7 +112,12 @@ uint8_t NVMsimMem[VM_FLASHSIZE];
 uint32_t NVMaddress;
 int NVMmode = 0;
 
+void NVMendRW(void) {
+    NVMmode = 0;
+}
+
 int NVMbeginRead (uint32_t faddr){
+//	printf("NVMbeginRead[%d](%d)\n", faddr, NVMmode);
     if (NVMloaded == 0) {
         NVMloaded = 1;
         FILE *fp = fopen(VM_FLASHFILENAME, "rb");
@@ -121,7 +127,7 @@ int NVMbeginRead (uint32_t faddr){
         }
     }
     NVMaddress = faddr;
-    NVMmode = 0;
+    NVMendRW();
     if (faddr >= VM_FLASHSIZE) return BCI_IOR_INVALID_ADDRESS;
     NVMmode = 1;
     return 0;
@@ -136,13 +142,15 @@ int NVMbeginWrite (uint32_t faddr){
 }
 
 uint32_t NVMread (int bytes){
-    if (NVMmode != 1) printf("NVM error: Not in READ mode\n");
+//    printf("NVMread[%d]\n", bytes);
+    if (NVMmode != 1) printf("NVM error %d: Not in READ mode\n", NVMmode);
     uint32_t r = 0;
     while(bytes--) {
         r = (r << 8) + NVMsimMem[NVMaddress++];
     }
     return r;
 }
+
 void NVMwrite (uint32_t n, int bytes){
     if (NVMmode != 2) printf("NVM error: Not in WRITE mode\n");
     while(bytes--) {
@@ -151,9 +159,6 @@ void NVMwrite (uint32_t n, int bytes){
         }
         NVMsimMem[NVMaddress++] = n >> (bytes << 3);
     }
-}
-void NVMendRW (void){
-    NVMmode = 0;
 }
 
 #else
@@ -221,8 +226,28 @@ uint32_t API_LCDraw(vm_ctx* ctx) {
     return TFTLCDraw(ctx->n, ctx->t); // use the LCD simulator
 }
 
+VMcell_t API_LCDparm(vm_ctx* ctx) {
+	return LCDgetParm(ctx->t);
+}
+
+VMcell_t API_LCDparmSet(vm_ctx* ctx) {
+    LCDsetParm(ctx->t, ctx->n);
+    return 0;
+}
+
+VMcell_t API_LCDchar(vm_ctx* ctx) {
+    LCDchar(ctx->t);
+    return 0;
+}
+
+VMcell_t API_LCDcharWidth(vm_ctx* ctx) { 
+    return LCDcharWidth(ctx->t);
+}
+
 #else
-VMcell_t API_LCDraw  (vm_ctx* ctx) { return -1; }
-VMcell_t API_LCDFG   (vm_ctx* ctx) { return -1; }
-VMcell_t API_LCDBG   (vm_ctx* ctx) { return -1; }
+VMcell_t API_LCDraw    (vm_ctx* ctx) { return -1; }
+VMcell_t API_LCDparm   (vm_ctx* ctx) { return -1; }
+VMcell_t API_LCDparmSet(vm_ctx* ctx) { return -1; }
+VMcell_t API_LCDchar   (vm_ctx* ctx) { return -1; }
+VMcell_t API_LCDcharWidth(vm_ctx* ctx) { return -1; }
 #endif

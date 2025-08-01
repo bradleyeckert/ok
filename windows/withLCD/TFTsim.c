@@ -58,6 +58,9 @@ static void BoilerWr(uint32_t x) {
 // RETURN = 0 if everything went okay, otherwise an error.
 
 int TFTLCDsetup(uint8_t* BMP, int type, int width, int height) {
+#ifdef VERBOSE
+	printf("TFTLCDsetup type=%d, dims=(%d,%d)\n", type, width, height);
+#endif
 	rotation = type & 3;
 	typeSelect = type >> 2;
 	if (typeSelect) return 1;
@@ -113,7 +116,7 @@ static void plotColor(void) {
 	int w = LCDwidth;
 	int h = LCDheight;
 	int t;
-	if (!MX)
+	if (MX)
 		x = w - x - 1;
 	if (MY)
 		y = h - y - 1;
@@ -175,7 +178,7 @@ static void TFTLCDdata(uint8_t format, uint32_t n) {
 	case 3: colEnd  = n << 8;  break;
 	case 4: colEnd |= n & 0xFF;  cfgstate = 0;  
 #ifdef VERBOSE
-		printf("Column limits = %d to %d\n", colBegin, colEnd);
+		printf("Col X limits = %d to %d\n", colBegin, colEnd);
 #endif
 		break;
 	case 5: rowBegin  = n << 8;  break;
@@ -183,7 +186,7 @@ static void TFTLCDdata(uint8_t format, uint32_t n) {
 	case 7: rowEnd  = n << 8;  break;
 	case 8: rowEnd |= n & 0xFF;  cfgstate = 0;  
 #ifdef VERBOSE
-		printf("Row limits = %d to %d\n", rowBegin, rowEnd);
+		printf("Row Y limits = %d to %d\n", rowBegin, rowEnd);
 #endif
 		break;
 	case 9:
@@ -244,20 +247,21 @@ static void TFTLCDend(void) { }
 
 // mode[4:0] = bits of data in x
 // mode[5] = D/C: 1=data, 0=control
-// mode[6] = CSn: 0 selects the controller, 1 = inactive
+// mode[6] = CSn: 0 selects the controller, 1 = inactive, after SPI
 // mode[7] = ~RDn: 1=read
 
 uint32_t TFTLCDraw(uint32_t x, uint8_t mode) {
-	if (mode & TFTsimCSn) TFTLCDend();
+//	printf("TFTLCDraw: x=%03X, mode=%02X\n", x, mode);
+	if (mode & TFTsimDC) {
+        switch (mode & 0x1F) {
+		case 11: TFTLCDdata(WHOLE12, x); break;
+        case 15: TFTLCDdata(WHOLE16, x); break;
+		case 17: TFTLCDdata(WHOLE18, x); break;
+		default: TFTLCDdata(SERIAL8, x); break;
+		}
+    }
 	else {
-		if (mode & TFTsimDC) {
-            switch (mode & 0x1F) {
-            case 12: TFTLCDdata(WHOLE12, x); break;
-            case 18: TFTLCDdata(WHOLE18, x); break;
-            default: TFTLCDdata(WHOLE16, x); break;
-            }
-        }
-		else TFTLCDcommand(x);
+		TFTLCDcommand(x);
 	}
 	if (mode & TFTsimRD) return 1; // fake read
 	return 0;

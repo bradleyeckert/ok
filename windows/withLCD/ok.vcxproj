@@ -134,13 +134,13 @@
   <ItemGroup>
     <ClCompile Include="..\..\src\bci\bci.c" />
     <ClCompile Include="..\..\src\bci\bciHW.c" />
-    <ClCompile Include="..\..\src\bci\bciLCD.c" />
     <ClCompile Include="..\..\src\bci\vm.c" />
     <ClCompile Include="..\..\src\host\comm.c" />
     <ClCompile Include="..\..\src\host\forth.c" />
     <ClCompile Include="..\..\src\host\quit.c" />
     <ClCompile Include="..\..\src\host\see.c" />
     <ClCompile Include="..\..\src\host\tools.c" />
+    <ClCompile Include="..\..\src\LCD\gLCD.c" />
     <ClCompile Include="..\..\src\mole\blake2s.c" />
     <ClCompile Include="..\..\src\mole\mole.c" />
     <ClCompile Include="..\..\src\mole\xchacha.c" />

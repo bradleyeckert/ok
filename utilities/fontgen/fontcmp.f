@@ -345,6 +345,13 @@ variable FontID                         \ the current font for testing
    r> close-file throw
 ;
 
+: LOAD  ( <filename> -- )               \ load from binary file
+   parse-word r/o open-file throw >r
+   here dup to FontHome
+   $1000000 r@ read-file throw  allot
+   r> close-file throw
+;
+
 0 value fp
 
 : SAVEC  ( <filename> -- )              \ save to text file
@@ -422,13 +429,14 @@ create hexdigs ," .123456789ABCDE#"
       r> drop  dup xor exit
    then  3 +                            \ skip the font revision number
    FontID @ 6 * +
+cr ." font at " dup FontHome - . dup 3 + @f ." maxchar = " .
    dup 3 + @f r@ < if                   \ check against range
       r> drop  dup xor exit             \ overrange xchar
    then
    @f FontHome +                        \ 'tables for this FontID
    dup  r@ 6 rshift 2* +  w@f  dup if   ( 'fine offset )
 cr ." 'fine=" over FontHome - .  ." offset=" dup .
-      + count  r> $3F and               ( 'glyphs max index )
+      +  dup FontHome - .  count  r> $3F and               ( 'glyphs max index )
 cr ." 'glyphs=" third FontHome - .  ." max=" over .  ." index=" dup .
       tuck > 0= if  drop dup xor exit then  \ beyond the end
       3 * + @f  exit

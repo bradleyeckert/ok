@@ -673,10 +673,14 @@ void AddForthKeywords(struct QuitStruct *state) {
             INST_TAG + VMI_API      + 7);
     AddAPIcall("LCDraw",        "-forth.htm#LCDraw n bits -- u",
             INST_TAG + VMI_APIDROP  + 8);
-    AddAPIcall("LCDFG!",        "-forth.htm#LCDfgcolor color --",
-            INST_TAG + VMI_APIDROP  + 9);
-    AddAPIcall("LCDBG!",        "-forth.htm#LCDbgcolor color --",
-            INST_TAG + VMI_APIDROP + 10);
+    AddAPIcall("LCDparm!",      "-forth.htm#LCDpsto x index --",
+            INST_TAG + VMI_API2DROP + 9);
+    AddAPIcall("LCDparm",       "-forth.htm#LCDp index -- x",
+            INST_TAG + VMI_API      + 10);
+    AddAPIcall("LCDemit",       "-forth.htm#LCDemit xchar --",
+            INST_TAG + VMI_APIDROP  + 11);
+    AddAPIcall("charwidth",     "-forth.htm#charwidth xchar -- width",
+            INST_TAG + VMI_API      + 12);
 
     // compile-only control words, can't be postponed
     AddKeyword("later",         "-forth.htm#later <name> --",

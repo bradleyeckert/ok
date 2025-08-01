@@ -63,7 +63,7 @@
     <ClCompile Include="TFTsim.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\bci\bciLCD.c">
+    <ClCompile Include="..\..\src\LCD\gLCD.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

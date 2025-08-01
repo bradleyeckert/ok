@@ -28,7 +28,7 @@ uint32_t TFTLCDraw(uint32_t n, uint8_t mode);
 // ~RDn: 1=read
 
 #define TFTsimDC  0x20
-#define TFTsimCSn 0x40
+#define TFTsimCSn 0x40	// state to leave CSn in after SPI transfer
 #define TFTsimRD  0x80
 
 #endif

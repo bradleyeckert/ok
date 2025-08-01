@@ -116,7 +116,9 @@ uint8_t VMgetSP(vm_ctx *ctx);
     0x00,    0x00,    0x01,    0x02,    0x01,    0x01,    0x01,    0x01}
 
 #define API_NAMES { \
-    "NVM@[", "NMV![", "NVM@", "NVM!", "]NVM", "semit", "um*", "mu/mod"}
+    "NVM@[", "NMV![", "NVM@", "NVM!", "]NVM", "semit", "um*", "mu/mod", \
+    "LCDraw", "LCDparm!", "LCDparm", "LCDemit"  \
+}
 
 #define VMO_NOP                 0x00
 #define VMO_INV                 0x01
@@ -136,8 +138,8 @@ uint8_t VMgetSP(vm_ctx *ctx);
 #define VMO_POP                 0x0F
 #define VMO_TWODIVC             0x10
 #define VMO_TWODIV              0x11
-//#define VMO_B                   0x13
-//#define VMO_BSTORE              0x13
+//#define VMO_unused              0x12
+//#define VMO_unused              0x13
 #define VMO_STOREA              0x14
 #define VMO_STOREAPLUS          0x15
 #define VMO_STOREB              0x16

@@ -31,11 +31,15 @@ later coldboot
 
 : con-emit  semit ;
 : con-cr    13 semit 10 semit ;
+: lcd-emit  LCDemit ;
+: lcd-cr    10 LCDemit ;
 
 here ' con-emit , ' con-cr , equ con-outputs
+here ' lcd-emit , ' lcd-cr , equ lcd-outputs
 variable outputs
 
 : console   con-outputs outputs ! ;             \ -- | direct output to console
+: lcd       lcd-outputs outputs ! ;             \ -- | direct output to LCD
 : out-exec  outputs @ + @ >r ;
 : emit      0 out-exec ;                        \h ~core/EMIT c --
 : cr        1 out-exec ;                        \h ~core/CR --
@@ -49,7 +53,7 @@ variable outputs
 : dabs      -if dnegate then ;                  \h ~double/DABS d -- ud
 : 0=        if 0 exit then -1 ;                 \h ~core/ZeroEqual x -- flag
 : s>d       dup [ ;                             \h ~core/StoD n -- d
-: 0<        -if drop -1 exit then drop 0 ;      \h ~core/ZeroLess x -- flag
+: 0<        -if dup xor inv exit then dup xor ; \h ~core/ZeroLess x -- flag
 : @+        a! @a+ a swap ;                     \h  a -- a+1 n
 : 1+        1 + ;                               \h ~core/OnePlus n1 -- n2
 : 1-        -1 + ;                              \h ~core/OneMinus n1 -- n2
@@ -115,9 +119,9 @@ tp equ table  100 , 1000 , 10000 ,
 ," こんにちは世界" : hi  literal @+ type ;
 : yo        ," ok!" @+ type ;
 
-variable counter
+variable tally
 
-: mystuff   1 counter +! ;
+: mystuff   1 tally +! ;
 
 4 cells buffer: tempAB
 

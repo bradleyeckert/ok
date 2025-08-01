@@ -35,12 +35,10 @@ VMcell_t API_umstar         (vm_ctx *ctx);
 VMcell_t API_mudivmod       (vm_ctx *ctx);
 
 VMcell_t API_LCDraw         (vm_ctx* ctx);
-VMcell_t API_LCDFG	        (vm_ctx* ctx);
-VMcell_t API_LCDBG          (vm_ctx* ctx);
-#define TFTsimDC  0x20
-#define TFTsimCSn 0x40
-#define TFTsimRD  0x80
-
+VMcell_t API_LCDparm        (vm_ctx* ctx);
+VMcell_t API_LCDparmSet     (vm_ctx* ctx);
+VMcell_t API_LCDchar        (vm_ctx* ctx);
+VMcell_t API_LCDcharWidth   (vm_ctx* ctx);
 
 #ifdef __cplusplus
 }

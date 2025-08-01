@@ -365,20 +365,40 @@ Otherwise, <code>ctx->FinalFn(ctx->id);</code> will be needed to asynchronously 
 <p>Write n bytes of u to NVM in big-endian byte order.
 </p>
 
-<h2 id="LCDraw">LCDraw ( n -- u )</h2>
+<h2 id="LCDraw">LCDraw ( n mode -- u )</h2>
 <p>Write raw data to the LCD controller. The LCD uses a serial or parallel interface.
-Data is 16-bit, command is 8-bit. 
-n[18:16] = ~RDn, CSn, DC.
+<b>mode</b>[4:0] is the number of SPI beats less 1, 0 if SPI is not used.
+<b>mode</b>[7:5] = ~RDn, CSn, DC.
 When RD is enabled ('1'), returned data is expected.
 Otherwise, u = 0.
 </p>
 
-<h2 id="LCDfgcolor">LCDfgcolor! ( color -- )</h2>
-<p>Set foreground color for text rendering.
+<h2 id="LCDpsto">LCDparm! ( n u -- )</h2>
+<p>Store n to parameter u.
+</p>
+<p>0: Set foreground color for text rendering, 24-bit BGR.</p>
+<p>1: Set background color for text rendering, 24-bit BGR.</p>
+<p>2: Set cursor X position.</p>
+<p>3: Set cursor Y position.</p>
+<p>4: Set kerning (space between chars). Negative for right-to-left writing.</p>
+<p>5: Set font ID, 0 for primary.</p>
+
+<h2 id="LCDp">LCDparm ( u -- n )</h2>
+<p>Get parameter u.
+</p>
+<p>0: Get foreground color for text rendering, 24-bit BGR.</p>
+<p>1: Get background color for text rendering, 24-bit BGR.</p>
+<p>2: Get cursor X position.</p>
+<p>3: Get cursor Y position.</p>
+<p>4: Get kerning (space between chars).</p>
+<p>5: Get font ID.</p>
+
+<h2 id="LCDemit">LCDemit ( xchar -- )</h2>
+<p>Display xchar on LCD screen, wrapping at screen edges.
 </p>
 
-<h2 id="LCDbgcolor">LCDbgcolor! ( color -- )</h2>
-<p>Set background color for text rendering.
+<h2 id="charwidth">charwidth ( xchar -- width )</h2>
+<p>The number of pixels that xchar will use if rendered by LCDemit.
 </p>
 
 <hr>

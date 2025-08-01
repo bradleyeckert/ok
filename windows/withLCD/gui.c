@@ -156,13 +156,10 @@ static void MyReshape(int width, int height) {
     glutReshapeWindow(WSIZEX, WSIZEY);
 }
 
-uint16_t teststream[] = {
-    0x12A, 0, 10,  0, 19, // Column Address Set
-    0x12B, 0, 20,  0, 39, // Row Address Set
-    0x12C, // Memory Write (16-bit data follows)
-    0xFFFF };
-
-int done = 0;
+void GUIbye(void) {
+    glutLeaveMainLoop(); // exit the main loop
+    glutDestroyWindow(glutGetWindow()); // destroy the window
+}
 
 void GUIrun(void)
 {
@@ -181,13 +178,7 @@ void GUIrun(void)
     glutReshapeFunc(MyReshape);
     GUILCDload("splash.bmp");
     TFTLCDsetup(LCDimage, 0, TFTX, TFTY);
-    while (!done) { // wait for the window to close
-        glutMainLoopEvent();
-    }
+//  glutWMCloseFunc(GUIbye);
+    glutMainLoop();
 }
 
-void GUIbye(void) {
-    done = 1; // set the flag to exit the main loop
-    glutLeaveMainLoop(); // exit the main loop
-    glutDestroyWindow(glutGetWindow()); // destroy the window
-}
