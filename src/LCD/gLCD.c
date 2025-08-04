@@ -7,6 +7,12 @@ Decompress font glyphs to the LCD module
 #include <string.h>
 #include "gLCD.h"
 
+uint32_t fontHome;
+void LCDinit(void) {
+    NVMbeginRead(4);                    // -> font blob
+    fontHome = NVMread(4);              // read font home address
+}
+
 static void LCDbeginMem(void) {
     TFTLCDraw(0x2C, 7);
 }
@@ -161,8 +167,12 @@ static void decompress(void) {
 	LCDendMem();                        // end memory write
 }
 
+static void FontRdBegin(int addr) {
+    NVMbeginRead(addr + fontHome);
+}
+
 static int fontaddr(unsigned int xchar) {
-    NVMbeginRead(0);                    // -> font blob
+    FontRdBegin(0);             // -> font blob
     uint8_t c = NVMread(1);
     if (fontID > c) return 0;           // font does not exist
     NVMread(3 + 6 * fontID);            // skip 3-byte rev # and font links
@@ -170,14 +180,14 @@ static int fontaddr(unsigned int xchar) {
     uint32_t maxchar = NVMread(3);
     if (xchar > maxchar) return 0;      // overrange xchar
     int fine = (xchar >> 6) * 2 + font;
-    NVMbeginRead(fine);                 // -> fine table
+    FontRdBegin(fine);                  // -> fine table
     font += NVMread(2);
-    NVMbeginRead(font);                 // -> maxidx
+    FontRdBegin(font);                  // -> maxidx
     uint8_t maxidx = NVMread(1);
     font += 1;
     uint8_t idx = xchar & 0x3F;
     if (idx >= maxidx) return 0;        // beyond the end of the table
-    NVMbeginRead(3 * idx + font);       // -> coarse table
+    FontRdBegin(3 * idx + font);        // -> coarse table
 	return NVMread(3);                  // address of glyph
 }
 
@@ -189,6 +199,7 @@ static int linepitch(void) {            // line pitch in pixels
 static int xspace(void) {               // pixels in a space
     int x = abs(kerning) + linepitch() / 4;
 	if (kerning < 0) x = -x;            // negative kerning
+    return x;
 }
 
 static void cr(void) {
@@ -201,7 +212,7 @@ static void cr(void) {
 }
 
 static int glyphSetup(int addr) {       // return right edge X
-    NVMbeginRead(addr);
+    FontRdBegin(addr);
     charleft = NVMread(1);
     chartop = NVMread(1);
     charwidth = NVMread(1);

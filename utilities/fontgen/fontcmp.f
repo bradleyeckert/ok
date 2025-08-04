@@ -239,7 +239,7 @@ create scores                           \ TRIAL populates the length fields.
    loop  ." ok"
 ;
 
-: /MSG  ( -- )                          \ reset the message list
+: /USED  ( -- )                          \ reset the message list
    usedchars |usedchars| cells erase    \ clear all tags
 ;
 
@@ -281,6 +281,7 @@ create scores                           \ TRIAL populates the length fields.
 \ Fine table 0: Length N followed by N offsets. 24-bit offsets to bitmaps.
 
 0 value FontHome                        \ origin of font data structure
+0 value NVMhome
 
 : n,  ( n -- )                          \ compile 24-bit number in big-endian format
    $10000 /mod c, w,f
@@ -305,7 +306,15 @@ create scores                           \ TRIAL populates the length fields.
 ;
 : fhere  ( -- n ) here FontHome - ;     \ relative HERE
 
+: padding  ( -- )
+   NVMhome 0= if exit then              \ can't pad if no NVMhome
+   begin  NVMhome here xor $FFF and     \ pad to next 4K sector
+   while  -1 c,
+   repeat
+;
+
 : /FONTS  ( revision n -- )             \ set the number of fonts being compiled
+   padding
    here to FontHome  dup c,  swap n,    \ create an empty table of fonts
    6 * 0 ?do 0 c, loop
 ;
@@ -341,7 +350,8 @@ variable FontID                         \ the current font for testing
 
 : SAVE  ( <filename> -- )               \ save to binary file
    parse-word w/o create-file throw >r
-   FontHome fhere r@ write-file throw
+   NVMhome if NVMhome else FontHome then
+   here over - r@ write-file throw
    r> close-file throw
 ;
 
@@ -537,7 +547,7 @@ VARIABLE UTFSTATE
 DECIMAL
 
 variable temp
-: MSGfile  ( <filename> -- )    \ tag used xchars in 16-bit range
+: usedfile  ( <filename> -- )    \ tag used xchars in 16-bit range
    parse-word r/o open-file throw to InFile
    begin
       temp 1 InFile read-file throw
@@ -553,11 +563,59 @@ variable temp
    InFile close-file throw
 ;
 
+
+256 constant FirstPageSize
+
+: be,  ( n -- )                         \ compile 32-bit number in big-endian format
+   $1000000 /mod c, n,
+;
+: be!  ( n a -- )                       \ store 32-bit number
+   over 16 rshift over w!f  2 +  w!f
+;
+
+\ place "n MESSAGES" at the top of the file to set NVMhome and allocate space.
+\ second table entry is populated after font generation by FONTS/.
+
+0 value MSGhome
+
+: messages  ( n -- )
+    here to NVMhome
+    here FirstPageSize erase
+    FirstPageSize be,                   \ first table entry: offset to messages table
+    FirstPageSize 1 cells - allot       \ space for page and message list
+    here to MSGhome
+    3 * allot                           \ space for message list
+;
+
+: fonts/  ( -- )
+    FontHome NVMhome -
+    NVMhome 1 cells +  be!              \ resolve link to fonts
+;
+
+: message: ( idx -- )                   \ populate the message link
+    here NVMhome -  swap  3 * MSGhome + n!
+;
+
+: end-message  ( -- )                   \ after last language in message
+    0 w,f
+;
+
+: ,"  ( string" -- )                    \ compile wide string
+    here >r  0 w,f  0
+    postpone s"  0 ?do                  ( count 'src | 'count  . . )
+        count +char if
+            swap 1+ swap
+            UTFCHAR @  dup [usedchars]  1 swap !  w,f
+        then
+    loop drop
+    r> w!f
+;
+
 \ Typical usage:
 \ FW_REGULAR to f_weight
 
 \ 1 /FONTS
-\ /msg HasNumeric
+\ /USED HasNumeric
 \ H4 MakeFont
 \ 0 maketable
 \ cr fhere . .( bytes of data in font 0)

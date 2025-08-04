@@ -10,19 +10,27 @@ include fontcmp.f
 counter
 
 0 constant revision
+/USED
+
+: ﻿ ; \ ignore BOM file marker for utf-8 encoded files
+include makemsgs.f
+
+\ create fonts after messages
 
 revision 2 /FONTS
 
 cr .( ASCII in H4 size )
-/msg HasASCII           \ minimum set of glyphs
-MSGfile glyphs.txt      \ include glyphs for this text
+HasASCII                  \ minimum set of glyphs
+usedfile glyphs.txt       \ include glyphs for this font
 H4 MakeFont
 0 maketable
 
 cr .( Numbers in H2 size)
-/msg HasNumeric
+/USED HasNumeric
 H2 MakeFont
 1 maketable
+
+FONTS/
 
 cr fhere . .( bytes of data total)
 save myfont.bin

@@ -23,6 +23,13 @@ compiled into the host VM, not on an MCU target.
 
 #define HOST_ONLY
 
+void BCIHWinit(void) {
+    // Initialize the hardware, if needed
+#ifdef GUItype
+    LCDinit();
+#endif
+}
+
 // Output to the mole output buffer with BCIsendChar.
 VMcell_t API_Emit (vm_ctx *ctx){
     uint32_t codepoint = ctx->t;

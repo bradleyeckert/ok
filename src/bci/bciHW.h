@@ -9,6 +9,7 @@ extern "C" {
 VMcell_t BCIVMioRead (vm_ctx *ctx, VMcell_t addr);
 void BCIVMioWrite (vm_ctx *ctx, VMcell_t addr, VMcell_t data);
 uint32_t TFTLCDraw(uint32_t n, uint8_t mode);
+void BCIHWinit(void);
 
 // Internal Flash
 void FlashUnlock(uint8_t *addr);

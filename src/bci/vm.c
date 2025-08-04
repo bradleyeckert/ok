@@ -291,5 +291,6 @@ void VMreset(vm_ctx *ctx) {
     } else {
         PRINTF("\nReset, VM is stopped\n");
     }
+	BCIHWinit();                // initialize simulated hardware
 }
 

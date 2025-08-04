@@ -12,6 +12,7 @@ void LCDsetParm(int index, uint32_t x);
 uint32_t LCDgetParm(int index);
 void LCDchar(unsigned int xchar);
 int LCDcharWidth(unsigned int xchar);
+void LCDinit(void);
 
 /*
 * Underlying functions:

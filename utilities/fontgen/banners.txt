@@ -1,0 +1,82 @@
+\ UTF8 Mirari banner messages
+HOST
+TARGET
+PROGRAM CDATA
+
+\ Maximum banner size is 12 chars x 3 lines
+
+HERE \ The array is not plugged in
+\ The first line can only be 11 chars since it's at the top of screen.
+," CONNECT|ARRAY|AND COVER"     \ EN
+," Cần kết nối|mảng cảm ứng"    \ VN
+," Enchufar|El Plato|Y Cubrir"  \ ES
+," Enchugar|Placa|E Capa"       \ PT
+," Planche|Brancher|Et Couver"  \ FR
+," Tafel|Einstecken|Und abdecken" \ DE
+," Pasangkan|Plat|Dan Penutup"  \ ML
+," ПЛАВКА В|ЛИСТЕ|И КРЫШКА"     \ RU
+," プラズマー シート|セツゾク スル"       \ JP
+\ ," 连接桨" \ PlugArray         \ CN
+0 c, EQU Msg_PlugInArray
+
+HERE \ The array minutes are expired
+\ Change array | touch has | no effect
+," ARRAY|EXPIRED|CHANGE ARRAY"
+," Cần đổi mảng|cảm ứng đã|hết hiệu lực"
+," Reemplace|El Plato"
+," Substitua|Placa"
+," Remplacer|Brancher"
+," Tafel|Ersetzen"
+," Gantikan|Plat"
+," ЗАМЕНИТЬ|ЛИСТЕ"
+," プラズマー シート|カエル"
+\ ," 桨期满|请更换" \ ArrayExpired | Replace
+0 c, EQU Msg_ArrayExpired
+
+HERE \ The array is contaminated
+\ Sanitation | induction platelet | pollutant
+," SURFACE|CONTAMINATED|CLEAN ARRAY"
+," Cần vệ sinh|mảng cảm ứng|bị ô nhiểm"
+," Contaminado"
+," Contaminado"
+," Contaminé"
+," Verunreinigt"
+," Tercemar"
+," КИСЛАЯ|ЧИСТАЯ ЛИСТЕ"
+," ケガレタ|ソ-ジ シテ"
+\ ," 污染,请清洗" \ Contaminated, CleanArray
+0 c, EQU Msg_ArrayContamined
+
+HERE \ The rental time is expired
+," RENTAL TIME|EXPIRED"
+," Thời hạn mướn|máy đã hết|hiệu lực"
+," Alquiler|Expirado"
+," Aluguer|Expirado"
+," Location|Expirée"
+," Vermietung|Abgelaufen"
+," Sewa Tamat"
+," ВРЕМЯ|АРЕНДЫ"
+," レンタル ジカン|スギマシタ"
+\ ," 租借已过期"
+0 c, EQU Msg_RentExpired
+
+HERE \ check cable
+," CHECK CABLE|AND|RETRY"
+," Kiểm tra cáp|và thử lại"
+," Comprobar|el cable y|vuelva"
+," Verifique|cabo e tente|novamente"
+," Vérifier|le câble et|réessayer"
+," Kabel|überprüfen|erneut"
+," Semak kabel|dan|cuba lagi"
+," ПРОВЕРЬТЕ|КАБЕЛЬ И|ПОПРОБУЙТЕ|СНОВА"
+," チェック|ケーブル"
+\ ," 检查电缆"
+0 c, EQU Msg_CheckCable
+
+HERE
+," UPGRADE|ARRAY"
+0 c, EQU Msg_UpgradeArray
+
+UDATA HOST
+
+
