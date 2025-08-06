@@ -40,6 +40,7 @@ VMcell_t API_LCDparm        (vm_ctx* ctx);
 VMcell_t API_LCDparmSet     (vm_ctx* ctx);
 VMcell_t API_LCDchar        (vm_ctx* ctx);
 VMcell_t API_LCDcharWidth   (vm_ctx* ctx);
+VMcell_t API_LCDfill        (vm_ctx* ctx);
 
 #ifdef __cplusplus
 }

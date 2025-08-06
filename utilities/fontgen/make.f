@@ -32,8 +32,8 @@ H2 MakeFont
 
 FONTS/
 
-cr fhere . .( bytes of data total)
-save myfont.bin
+cr fhere . .( bytes of font data)
+save spiflash.bin
 savec myfont.h
 
 cr .( Finished generating the fonts in )

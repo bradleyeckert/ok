@@ -264,8 +264,8 @@ create scores                           \ TRIAL populates the length fields.
 : #tables  ( -- n )                     \ number of fine tables needed
    HighestChar 6 rshift 1+
 ;
-: finechars  ( xchar -- size )          \ number of chars in fine table
-   64 begin 1- dup while                ( xchar size )
+: finechars  ( xchar -- size )          \ number of chars in fine table, 1 to 64
+   64 begin  dup  while  1-             ( xchar size )
       2dup + [usedchars] @ if 1+ nip exit then
    repeat nip
 ;
@@ -360,6 +360,7 @@ variable FontID                         \ the current font for testing
    here dup to FontHome
    $1000000 r@ read-file throw  allot
    r> close-file throw
+   FontHome dup  9 + @f + to FontHome
 ;
 
 0 value fp
@@ -439,7 +440,7 @@ create hexdigs ," .123456789ABCDE#"
       r> drop  dup xor exit
    then  3 +                            \ skip the font revision number
    FontID @ 6 * +
-cr ." font at " dup FontHome - . dup 3 + @f ." maxchar = " .
+\ cr ." font at " dup FontHome - . dup 3 + @f ." maxchar = " .
    dup 3 + @f r@ < if                   \ check against range
       r> drop  dup xor exit             \ overrange xchar
    then
@@ -582,14 +583,15 @@ variable temp
     here to NVMhome
     here FirstPageSize erase
     FirstPageSize be,                   \ first table entry: offset to messages table
-    FirstPageSize 1 cells - allot       \ space for page and message list
+    dup be,                             \ size of table
+    FirstPageSize 2 cells - allot       \ space for page and message list
     here to MSGhome
     3 * allot                           \ space for message list
 ;
 
 : fonts/  ( -- )
     FontHome NVMhome -
-    NVMhome 1 cells +  be!              \ resolve link to fonts
+    NVMhome 2 cells +  be!              \ resolve link to fonts
 ;
 
 : message: ( idx -- )                   \ populate the message link

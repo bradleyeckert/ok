@@ -63,8 +63,9 @@ variable outputs
 
 variable hld                                    \h  -- a \ pointer for numeric output
 32 equ bl                                       \h ~core/BL -- char
-64 buffer: pad
-64 pad + equ numbuf
+256 equ |pad|
+|pad| buffer: pad
+|pad| pad + equ numbuf
 0 equ base                                      \h ~core/BASE -- a
 
 : space     bl emit ;                           \h ~core/SPACE --
@@ -88,6 +89,7 @@ variable hld                                    \h  -- a \ pointer for numeric o
 
 : negate    invert 1 + ;                        \h ~core/NEGATE n1 -- n2
 : abs       -if negate then ;                   \h ~core/ABS n -- u
+: *         um* drop ;                          \h ~core/Times n1 n2 -- n3
 : m*        2dup xor >r abs swap abs um*        \h ~core/MTimes n1 n2 -- d
             r> 0< if dnegate then ;
 
@@ -118,6 +120,26 @@ variable hld                                    \h  -- a \ pointer for numeric o
 tp equ table  100 , 1000 , 10000 ,
 ," こんにちは世界" : hi  literal @+ type ;
 : yo        ," ok!" @+ type ;
+
+\ Multi-lingual messages are copied from NVM to PAD for processing
+
+variable language
+
+: 'message  ( index -- NVMaddr )        \ get flash address of message
+    0 nvm@[ drop   3 *
+    4 nvm@ +  nvm@[ drop
+    3 nvm@
+;
+
+\ : SAYS  ( ca0 -- ca1 )
+\    DUP LANG
+\    BEGIN  DUP WHILE  1- >R     ( ca0 ca )
+\       COUNTC +                          \ skip to next string
+\       DUP C@C 0= IF                     \ oops, hit the terminator
+\          R> DROP DROP EXIT              \ revert to 1st language
+\       THEN
+\    R> REPEAT  DROP NIP
+\ ;
 
 variable tally
 

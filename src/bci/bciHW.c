@@ -251,6 +251,11 @@ VMcell_t API_LCDcharWidth(vm_ctx* ctx) {
     return LCDcharWidth(ctx->t);
 }
 
+VMcell_t API_LCDfill(vm_ctx* ctx) {
+    LCDfill(ctx->n, ctx->t);
+	return 0;
+}
+
 #else
 VMcell_t API_LCDraw    (vm_ctx* ctx) { return -1; }
 VMcell_t API_LCDparm   (vm_ctx* ctx) { return -1; }

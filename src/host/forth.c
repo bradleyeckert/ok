@@ -681,6 +681,8 @@ void AddForthKeywords(struct QuitStruct *state) {
             INST_TAG + VMI_APIDROP  + 11);
     AddAPIcall("charwidth",     "-forth.htm#charwidth xchar -- width",
             INST_TAG + VMI_API      + 12);
+    AddAPIcall("LCDfill",       "-forth.htm#LCDfill width height --",
+            INST_TAG + VMI_API2DROP + 13);
 
     // compile-only control words, can't be postponed
     AddKeyword("later",         "-forth.htm#later <name> --",

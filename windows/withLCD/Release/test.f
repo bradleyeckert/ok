@@ -63,8 +63,9 @@ variable outputs
 
 variable hld                                    \h  -- a \ pointer for numeric output
 32 equ bl                                       \h ~core/BL -- char
-64 buffer: pad
-64 pad + equ numbuf
+256 equ |pad|
+|pad| buffer: pad
+|pad| pad + equ numbuf
 0 equ base                                      \h ~core/BASE -- a
 
 : space     bl emit ;                           \h ~core/SPACE --
@@ -88,6 +89,7 @@ variable hld                                    \h  -- a \ pointer for numeric o
 
 : negate    invert 1 + ;                        \h ~core/NEGATE n1 -- n2
 : abs       -if negate then ;                   \h ~core/ABS n -- u
+: *         um* drop ;                          \h ~core/Times n1 n2 -- n3
 : m*        2dup xor >r abs swap abs um*        \h ~core/MTimes n1 n2 -- d
             r> 0< if dnegate then ;
 
@@ -107,6 +109,8 @@ variable hld                                    \h  -- a \ pointer for numeric o
 
 : d2/       2/ swap 2/c swap ;                  \h ~double/DTwoDiv d1 -- d2
 : +!        a! @a + !a ;                        \h ~core/PlusStore n a --
+: !+        swap a! !a+ a ;                     \ a n -- a'
+: @+        a! @a+ a swap ;                     \ a -- a' n
 : noop      ;                                   \ --
 : off       a! 0 !a ;                           \ a --
 : on        a! -1 !a ;                          \ a --
@@ -118,6 +122,43 @@ variable hld                                    \h  -- a \ pointer for numeric o
 tp equ table  100 , 1000 , 10000 ,
 ," こんにちは世界" : hi  literal @+ type ;
 : yo        ," ok!" @+ type ;
+
+\ Multi-lingual messages are copied from NVM to PAD for later processing
+
+variable language
+
+: 'message  ( index -- NVMaddr )            \ get flash address of message, <0 if bogus
+    dup >r  0 nvm@[ drop  4 nvm@  4 nvm@    ( index message0 max )
+    r> -  -if 2drop inv exit then           ( index message0 test )
+    drop swap 3 * +  nvm@[ drop             \ valid index
+    3 nvm@                                  \ address of message
+;
+
+: msg>pad  ( index -- length )              \ copy message to pad
+    'message -if dup xor exit then          \ not a valid message
+    nvm@[ drop  language @                  ( language )
+    begin  2 nvm@                           ( language length )
+        dup 0=  if  drop dup xor exit  then \ not a valid language
+        pad over for                        ( language length 'dest )
+            2 nvm@ !+
+        next drop
+        over 0= if  swap drop exit  then    \ language found
+        drop 1-
+    again
+;
+
+: .message  ( index -- )                    \ simple message output
+    msg>pad pad swap type
+;
+
+: at  ( x y -- )
+    3 LCDparm!
+    2 LCDparm!
+;
+: page  ( -- )
+    0 0 at
+    240 320 LCDfill
+;
 
 variable tally
 

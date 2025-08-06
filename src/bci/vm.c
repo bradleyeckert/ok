@@ -248,7 +248,7 @@ static const APIfn APIfns[] = {
     API_NVMbeginRead, API_NVMbeginWrite, API_NVMread, API_NVMwrite, // 0
     API_NVMendRW, API_Emit, API_umstar, API_mudivmod,               // 4
     API_LCDraw, API_LCDparmSet, API_LCDparm, API_LCDchar,           // 8
-    API_LCDcharWidth
+    API_LCDcharWidth, API_LCDfill
 };
 
 #define APIfs (sizeof(APIfns)/sizeof(APIfns[0]))

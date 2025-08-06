@@ -9,7 +9,7 @@ Decompress font glyphs to the LCD module
 
 uint32_t fontHome;
 void LCDinit(void) {
-    NVMbeginRead(4);                    // -> font blob
+    NVMbeginRead(8);                    // -> font blob
     fontHome = NVMread(4);              // read font home address
 }
 
@@ -248,4 +248,14 @@ int LCDcharWidth(unsigned int xchar) {
     else {
         return xspace();
     }
+}
+
+void LCDfill(uint16_t width, uint16_t height) {
+    LCDsetcols(charX, charX + width - 1);
+    LCDsetrows(charY, charY + height - 1);
+    LCDbeginMem();
+    for (int i = 0; i < width * height; i++) {
+		sendShade(0); // fill with background color
+    }
+    LCDendMem();
 }
