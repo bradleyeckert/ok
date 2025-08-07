@@ -151,13 +151,61 @@ variable language
     msg>pad pad swap type
 ;
 
+\ LCD cursor and screen control
+
+3 equ PageRounding
+2 equ ButtonRounding
+6 equ ButtonKerf
+LCDwidth ButtonKerf 2* - 3 / ButtonWidth
+
 : at  ( x y -- )
     3 LCDparm!
     2 LCDparm!
 ;
-: page  ( -- )
+
+: at@  ( -- x y )
+    2 LCDparm
+    3 LCDparm
+;
+
+: colors  ( foreground background -- )
+    1 LCDparm!
+    0 LCDparm!
+;
+
+: roundEmit  ( movex movey offset -- )
+    hld @                               \ 1 to 4
+    1- 2* 2* 16 +  +                    ( mx my char )
+    >r swap at@ r> LCDemit
+    >r + swap r> +  at
+;
+
+: roundedRect  ( width height roundness -- )
+    >r over over LCDfill                \ clear rectangle
+    r@ if                               \ add fillets?
+        r@ hld !
+        r@ 6 * tuck -  >r - r>          ( W-r H-r )
+        over 0   3 roundEmit            \ upper left fillet
+        0 swap   1 roundEmit            \ upper right fillet
+        negate 0 0 roundEmit            \ lower right fillet
+        2 dup dup  roundEmit            \ lower left fillet
+    then
+    r> drop
+;
+
+: cls  ( -- )
     0 0 at
-    240 320 LCDfill
+    LCDwidth LCDheight LCDfill
+;
+
+: page  ( -- )
+    0 -1 colors
+    0 0 at  LCDwidth LCDheight PageRounding roundedRect
+;
+
+: qq  ( roundness -- )
+    >r  0 0 at
+    240 320  r> roundedRect
 ;
 
 variable tally

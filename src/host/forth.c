@@ -495,6 +495,13 @@ static void AddOp(char* name, char* help, uint32_t value) {
 
 void AddForthKeywords(struct QuitStruct *state) {
     q = state;
+#ifdef GUItype
+#include "../LCD/gLCD.h"
+    AddEquate("LCDwidth",       "-forth.htm#LCDwidth -- n",
+            WinWidth);
+    AddEquate("LCDheight",      "-forth.htm#LCDheight -- n",
+            WinHeight);
+#endif
     AddEquate("MAX-N",          "~usage#table:env -- n",
               (VM_MASK >> 1));
     AddEquate("MAX-U",          "~usage#table:env -- u",
@@ -723,12 +730,14 @@ void AddForthKeywords(struct QuitStruct *state) {
              (VMO_ASTORE << 5) | VMO_FETCHA);
     AddMacro("!",               "~core/Store x a --",
              (VMO_ASTORE << 5) | VMO_STOREA);
-    AddMacro("nip",             "~core/NIP -- x1 x2 -- x2",
+    AddMacro("nip",             "~core/NIP x1 x2 -- x2",
              (VMO_SWAP << 5) | VMO_DROP);
-    AddMacro("2dup",            "~core/TwoDUP -- x1 x2 -- x1 x2 x1 x2",
+    AddMacro("tuck",            "~core/TUCK x1 x2 -- x2 x1 x2",
+             (VMO_SWAP << 5) | VMO_OVER);
+    AddMacro("2dup",            "~core/TwoDUP x1 x2 -- x1 x2 x1 x2",
              (VMO_OVER << 5) | VMO_OVER);
-    AddMacro("2drop",           "~core/NIP -- x1 x2 --",
+    AddMacro("2drop",           "~core/NIP x1 x2 --",
              (VMO_DROP << 5) | VMO_DROP);
-    AddMacro("3drop",           "-forth.htm#threedrop -- x1 x2 --",
+    AddMacro("3drop",           "-forth.htm#threedrop x1 x2 --",
              (VMO_DROP << 10) | (VMO_DROP << 5) | VMO_DROP);
 }
