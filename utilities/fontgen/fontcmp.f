@@ -44,11 +44,57 @@ variable right
 variable top
 variable bottom
 
+\ generate fillet glyphs
+
+variable filletRadius
+variable filletSize
+requires fpmath
+
+: dist  ( dist flip -- x2 )
+    if  filletSize @ 1- swap -  then
+    dup *
+;
+
+: tocolor  ( fshade -- color )
+    255e0 f* f>s
+    dup 8 lshift
+    dup 8 lshift  + +
+;
+
+: qpixel  ( fdist -- color )
+    fdup f0< if                         \ < 0 = white
+        fdrop 0
+    else
+        fdup 1e0 f< if  tocolor
+        else  fdrop $FFFFFF  then             \ above 1 = black
+    then
+;
+
+: filColor  ( rotation x y -- color )
+    rot dup >r  1 and dist swap
+    r> 2 and dist  + s>f   fsqrt
+    filletRadius @ s>f f-  fnegate qpixel
+;
+
+: fillet  ( rotation filletRadius filletSize -- )       \ paint a quadrant
+    filletSize !  filletRadius !                        ( rotation )
+    filletSize @ 0 DO   filletSize @ 0 DO
+        dup   i j filColor   i j PEL!
+    LOOP LOOP DROP
+;
+
+: millet  ( n -- )
+    15 and 4 /mod 1+ 6 *  dup fillet
+;
+
+\ paint glyph
+
 create unichar   $22 c, $21 c, 0 ,
 
 : wemit  ( n -- )                       \ render unicode char (0 to 65535)
-   unichar w!
    white  |X| |Y| 0 0 Rect              \ clear character field
+   dup 16 32 within if millet exit then
+   unichar w!
    0 0 unichar 1 .wtext                 \ render one character into bitmap
 ;
 
@@ -68,6 +114,7 @@ create unichar   $22 c, $21 c, 0 ,
 ;
 : fwidth   ( -- n )
    right @ 1+ left @ - 0 max ;
+
 : fheight  ( -- n )
    bottom @ 1+ top @ - 0 max ;
 
@@ -77,6 +124,7 @@ create unichar   $22 c, $21 c, 0 ,
       pixels i fwidth * +  fwidth cmove         \ to
    loop
 ;
+
 
 \ ==============================================================================
 \ Bitmap compression
@@ -449,10 +497,11 @@ create hexdigs ," .123456789ABCDE#"
 cr ." 'fine=" over FontHome - .  ." offset=" dup .
       +  dup FontHome - .  count  r> $3F and               ( 'glyphs max index )
 cr ." 'glyphs=" third FontHome - .  ." max=" over .  ." index=" dup .
-      tuck > 0= if  drop dup xor exit then  \ beyond the end
-      3 * + @f  exit
+      tuck > 0= if  ." after_end" .s drop dup xor exit  then  \ beyond the end
+      3 * +  dup .  @f  exit
    then  r> drop nip                    \ fine table does not exist
 ;
+
 : try  ( xc -- )                        \ dump a char from the font database
    faddr ?dup if
       cr ." addr=" dup .
@@ -462,6 +511,7 @@ cr ." 'glyphs=" third FontHome - .  ." max=" over .  ." index=" dup .
       decompress
    then
 ;
+
 : codepoints  ( -- )                    \ list of glyphs in the font
    |usedchars| 0 do
       i faddr if i . then

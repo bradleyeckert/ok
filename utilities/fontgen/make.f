@@ -22,6 +22,7 @@ revision 2 /FONTS
 cr .( ASCII in H4 size )
 HasASCII                  \ minimum set of glyphs
 usedfile glyphs.txt       \ include glyphs for this font
+16 31 range               \ include fillets
 H4 MakeFont
 0 maketable
 
