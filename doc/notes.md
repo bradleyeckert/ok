@@ -26,7 +26,9 @@ The default mode is 115200,N,8,1. Results with various USB UARTs:
 
 - VCP on the NUCLEO-H753ZI board: OKAY.
 - TTL-232RG-VSW3V3-WE: OKAY.
-- CH343: BAD!
+- CH343: **BAD!**
+- CH340: OKAY.
+- CH347 (SERIAL-A): OKAY.
 
 Transmitted data from the CH343 did not make it to the USART3 receiver intact (dropped character or bad bit).
 The problem could be fixed with `verbose_bci verbose!` which slows down communication by dumping it to the terminal.

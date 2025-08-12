@@ -642,6 +642,8 @@ variable temp
 : fonts/  ( -- )
     FontHome NVMhome -
     NVMhome 2 cells +  be!              \ resolve link to fonts
+    here NVMhome -                      \ bytes in blob
+    NVMhome 3 cells +  be!              \ resolve blob size
 ;
 
 : message: ( idx -- )                   \ populate the message link

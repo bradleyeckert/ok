@@ -156,7 +156,7 @@ variable language
 3 equ PageRounding
 2 equ ButtonRounding
 6 equ ButtonKerf
-LCDwidth ButtonKerf 2* - 3 / ButtonWidth
+LCDwidth ButtonKerf 2* - $55555556 um* nip equ ButtonWidth
 
 : at  ( x y -- )
     3 LCDparm!
