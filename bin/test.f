@@ -2,9 +2,7 @@
 
 \. testing uops
 
-empty
-
-\ The VM may be running, so it may stomp on cy. cy not tested.
+empty \ also stops the VM
 
 t{ 1 nop -> 1 }t
 t{ 1 dup -> 1 1 }t
@@ -26,6 +24,8 @@ t{ 0 a! @a -> 10 }t
 \ Forth definitions
 
 later coldboot
+
+6 buffer: tpbuf                                 \ button/touchpad data at 1
 
 \ Text output needs some indirection
 
@@ -110,7 +110,8 @@ variable hld                                    \h  -- a \ pointer for numeric o
 : d2/       2/ swap 2/c swap ;                  \h ~double/DTwoDiv d1 -- d2
 : +!        a! @a + !a ;                        \h ~core/PlusStore n a --
 : !+        swap a! !a+ a ;                     \ a n -- a'
-: @+        a! @a+ a swap ;                     \ a -- a' n
+: !@        a! @a over !a ;                     \ n addr -- n n'
+: lshift    goodN for 2* next ;                 \h ~core/LSHIFT n1 -- n2
 : noop      ;                                   \ --
 : off       a! 0 !a ;                           \ a --
 : on        a! -1 !a ;                          \ a --
@@ -127,11 +128,20 @@ tp equ table  100 , 1000 , 10000 ,
 
 variable language
 
+: fontblob  ( -- faddr )                    \ fontblob begins with:
+    0 nvm@[ drop  2 nvm@
+    dup if  16 lshift exit  then
+    4096  swap drop
+;
+
 : 'message  ( index -- NVMaddr )            \ get flash address of message, <0 if bogus
-    dup >r  0 nvm@[ drop  4 nvm@  4 nvm@    ( index message0 max )
-    r> -  -if 2drop inv exit then           ( index message0 test )
-    drop swap 3 * +  nvm@[ drop             \ valid index
+    fontblob 8 + swap
+    dup >r
+    over nvm@[ drop  4 nvm@  4 nvm@         ( msgs index message0 max )
+    r> -  -if drop drop drop inv exit then  ( index message0 test )
+    drop swap 3 * + +  nvm@[ drop           \ valid index0
     3 nvm@                                  \ address of message
+    fontblob +                              \ convert to absolute NVM address
 ;
 
 : msg>pad  ( index -- length )              \ copy message to pad
@@ -153,10 +163,12 @@ variable language
 
 \ LCD cursor and screen control
 
-3 equ PageRounding
+host definitions
+2 equ PageRounding
 2 equ ButtonRounding
 6 equ ButtonKerf
-LCDwidth ButtonKerf 2* - $55555556 um* nip equ ButtonWidth
+6 LCDparm ButtonKerf 2* - 3 / equ ButtonWidth
+forth definitions
 
 : at  ( x y -- )
     3 LCDparm!
@@ -166,6 +178,11 @@ LCDwidth ButtonKerf 2* - $55555556 um* nip equ ButtonWidth
 : at@  ( -- x y )
     2 LCDparm
     3 LCDparm
+;
+
+: LCDdims  ( -- x y )
+    6 LCDparm
+    7 LCDparm
 ;
 
 : colors  ( foreground background -- )
@@ -195,26 +212,34 @@ LCDwidth ButtonKerf 2* - $55555556 um* nip equ ButtonWidth
 
 : cls  ( -- )
     0 0 at
-    LCDwidth LCDheight LCDfill
+    LCDdims LCDfill
 ;
 
 : page  ( -- )
     0 -1 colors
-    0 0 at  LCDwidth LCDheight PageRounding roundedRect
-;
-
-: qq  ( roundness -- )
-    >r  0 0 at
-    240 320  r> roundedRect
+    0 0 at  LCDdims PageRounding roundedRect
+    4 4 at
 ;
 
 variable tally
+variable prevbuttons
 
-: mystuff   1 tally +! ;
+: test_buttons  ( -- )
+    buttons 1 and
+    prevbuttons !@ xor if
+        100 100 at buttons 1 and lcd u.
+    then
+;
+
+: mystuff   ( -- )
+    1 tally +!
+    test_buttons
+;
 
 4 cells buffer: tempAB
 
-:noname     console
+:noname     lcd page
+            1 .message
             begin
                 bcisync
                 a b tempAB a! !a+ y@ !a+ x@ !a+ !a+    \ save B, Y, X, and A registers
@@ -252,6 +277,7 @@ decimal
 : com3cr  USART3_BASE USART_CR1 @b+ ;
 
 reload \ synchronize again before leaving
+1 saveblob vmblob.bin
 
 \.
 \. Interesting things to do:

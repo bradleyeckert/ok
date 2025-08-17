@@ -1,4 +1,6 @@
 
+0 constant revision
+
 include fontcmp.f
 
 \ H6: 16-pel text field, 10-pel letters
@@ -9,7 +11,6 @@ include fontcmp.f
 
 counter
 
-0 constant revision
 /USED
 
 : ﻿ ; \ ignore BOM file marker for utf-8 encoded files
@@ -17,7 +18,7 @@ include makemsgs.f
 
 \ create fonts after messages
 
-revision 2 /FONTS
+2 /FONTS
 
 cr .( ASCII in H4 size )
 HasASCII                  \ minimum set of glyphs
@@ -34,7 +35,7 @@ H2 MakeFont
 FONTS/
 
 cr fhere . .( bytes of font data)
-save spiflash.bin
+save fontblob.bin
 savec myfont.h
 
 cr .( Finished generating the fonts in )

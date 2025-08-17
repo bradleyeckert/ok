@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include "TFTsim.h"
+#include "gui.h"
 #include <windows.h>
 
 #define MORESAFE
@@ -161,6 +162,8 @@ void GUIbye(void) {
     glutDestroyWindow(glutGetWindow()); // destroy the window
 }
 
+int GUIlaunched = 0;
+
 void GUIrun(void)
 {
     char* myargv[1] = {NULL};
@@ -176,9 +179,9 @@ void GUIrun(void)
     glutIdleFunc(displayMe);
     glutMouseFunc(MyMouseFunc);
     glutReshapeFunc(MyReshape);
-    GUILCDload("splash.bmp");
+	GUILCDload("splash.bmp");           // 24-bit BMP splash screen
     TFTLCDsetup(LCDimage, 0, TFTX, TFTY);
-//  glutWMCloseFunc(GUIbye);
-    glutMainLoop();
+	GUIlaunched = 1;                    // tell main.cpp that the GUI is ready
+    glutMainLoop();                     // glut's forever loop
 }
 

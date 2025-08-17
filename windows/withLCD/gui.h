@@ -18,6 +18,8 @@ void GUILCDload(char* s);
 // LED status input is by calling a function:
 void GUIbye(void);
 
+extern int GUIlaunched;
+
 #ifdef __cplusplus
 }
 #endif

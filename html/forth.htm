@@ -79,6 +79,10 @@ Example usage is:
 '-' for file (with project html folder prefix).
 </p>
 
+<h2 id="saveblob">saveblob ( revision &lt;filename&gt; -- )</h2>
+<p>Save the NVM blob to initialize the VM memories.
+</p>
+
 <hr>
 <h1>μops</h1>
 <hr>
@@ -392,6 +396,8 @@ Otherwise, u = 0.
 <p>3: Get cursor Y position.</p>
 <p>4: Get kerning (space between chars).</p>
 <p>5: Get font ID.</p>
+<p>6: Get LCD width.</p>
+<p>7: Get LCD height.</p>
 
 <h2 id="LCDemit">LCDemit ( xchar -- )</h2>
 <p>Display xchar on LCD screen, wrapping at screen edges.

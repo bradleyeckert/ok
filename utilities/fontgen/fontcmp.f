@@ -354,17 +354,9 @@ create scores                           \ TRIAL populates the length fields.
 ;
 : fhere  ( -- n ) here FontHome - ;     \ relative HERE
 
-: padding  ( -- )
-   NVMhome 0= if exit then              \ can't pad if no NVMhome
-   begin  NVMhome here xor $FFF and     \ pad to next 4K sector
-   while  -1 c,
-   repeat
-;
-
-: /FONTS  ( revision n -- )             \ set the number of fonts being compiled
-   padding
-   here to FontHome  dup c,  swap n,    \ create an empty table of fonts
-   6 * 0 ?do 0 c, loop
+: /FONTS  ( n -- )                      \ set the number of fonts being compiled
+   here to FontHome  dup c,             \ create an empty table of fonts
+   6 * 0 ?do  0 c,  loop
 ;
 : ,fine  ( idx -- zero? )
    6 lshift  dup finechars  dup if      ( xchar size )
@@ -384,7 +376,7 @@ variable FontID                         \ the current font for testing
 
 : MakeTable  ( fontID -- )              \ populate glyph tables for this font
    dup FontID !
-   fhere  swap 6 *  FontHome 4 + +      \ font[fontID] -> here (the coarse table)
+   fhere  swap 6 *  FontHome 1 + +      \ font[fontID] -> here (the coarse table)
    dup >r n!                            \ resolve the font pointer
    HighestChar r> 3 + n!                \ resolve highest char in the font
    here 'coarse !
@@ -408,7 +400,7 @@ variable FontID                         \ the current font for testing
    here dup to FontHome
    $1000000 r@ read-file throw  allot
    r> close-file throw
-   FontHome dup  9 + @f + to FontHome
+   FontHome dup  9 + @f + to FontHome \ not tested
 ;
 
 0 value fp
@@ -486,7 +478,7 @@ create hexdigs ," .123456789ABCDE#"
    >r
    FontHome  count FontID @ > 0= if     \ no such font
       r> drop  dup xor exit
-   then  3 +                            \ skip the font revision number
+   then
    FontID @ 6 * +
 \ cr ." font at " dup FontHome - . dup 3 + @f ." maxchar = " .
    dup 3 + @f r@ < if                   \ check against range
@@ -614,9 +606,6 @@ variable temp
    InFile close-file throw
 ;
 
-
-256 constant FirstPageSize
-
 : be,  ( n -- )                         \ compile 32-bit number in big-endian format
    $1000000 /mod c, n,
 ;
@@ -631,19 +620,21 @@ variable temp
 
 : messages  ( n -- )
     here to NVMhome
-    here FirstPageSize erase
-    FirstPageSize be,                   \ first table entry: offset to messages table
-    dup be,                             \ size of table
-    FirstPageSize 2 cells - allot       \ space for page and message list
+    revision be,                        \ 0: revision
+    0 be,                               \ 1: size
+    here >r 0 be,                       \ 2: offset to messages table
+    dup be,                             \ 3: size of table
+    0 be,                               \ 4: address of font structure
     here to MSGhome
+    here r@ - r> be!
     3 * allot                           \ space for message list
 ;
 
 : fonts/  ( -- )
     FontHome NVMhome -
-    NVMhome 2 cells +  be!              \ resolve link to fonts
+    NVMhome 4 cells +  be!              \ resolve link to fonts
     here NVMhome -                      \ bytes in blob
-    NVMhome 3 cells +  be!              \ resolve blob size
+    NVMhome 1 cells +  be!              \ resolve blob size
 ;
 
 : message: ( idx -- )                   \ populate the message link

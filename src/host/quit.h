@@ -143,6 +143,7 @@ uint32_t FetchDictionaryN(int addr, int width);
 void DataDot(uint32_t x);
 void PrintDataStack(void);
 int parseword(char delimiter);
+void ParseFilename(void);
 void Tick (void);
 int  AddHead (char* name, char* help);
 void SetFns (uint32_t value, void (*exec)(), void (*comp)());

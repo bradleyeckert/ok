@@ -9,8 +9,12 @@ Decompress font glyphs to the LCD module
 
 uint32_t fontHome;
 void LCDinit(void) {
-    NVMbeginRead(8);                    // -> font blob
-    fontHome = NVMread(4);              // read font home address
+    NVMbeginRead(0);                    // -> font blob's first 64K sector
+	uint16_t sector = NVMread(2);       // read sector size
+    uint32_t addr0 = sector << 16;
+    if (sector == 0) addr0 = 0x1000;
+    NVMbeginRead(addr0 + 16);           // -> font
+    fontHome = NVMread(4) + addr0;      // read font home address
 }
 
 static void LCDbeginMem(void) {
@@ -63,6 +67,10 @@ uint32_t LCDgetParm(int index) {
     case 4: result = kerning;
         break;
     case 5: result = fontID;
+        break;
+    case 6: result = WinWidth;
+        break;
+    case 7: result = WinHeight;
         break;
     default:
         break;
@@ -172,10 +180,10 @@ static void FontRdBegin(int addr) {
 }
 
 static int fontaddr(unsigned int xchar) {
-    FontRdBegin(0);             // -> font blob
+    FontRdBegin(0);                     // -> font blob
     uint8_t c = NVMread(1);
     if (fontID > c) return 0;           // font does not exist
-    NVMread(3 + 6 * fontID);            // skip 3-byte rev # and font links
+    NVMread(6 * fontID);                // skip font links
     uint32_t font = NVMread(3);
     uint32_t maxchar = NVMread(3);
     if (xchar > maxchar) return 0;      // overrange xchar

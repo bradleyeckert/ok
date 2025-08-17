@@ -9,7 +9,7 @@ extern "C" {
 VMcell_t BCIVMioRead (vm_ctx *ctx, VMcell_t addr);
 void BCIVMioWrite (vm_ctx *ctx, VMcell_t addr, VMcell_t data);
 uint32_t TFTLCDraw(uint32_t n, uint8_t mode);
-void BCIHWinit(void);
+void BCIHWinit(vm_ctx* ctx);
 
 // Internal Flash
 void FlashUnlock(uint8_t *addr);
@@ -41,6 +41,9 @@ VMcell_t API_LCDparmSet     (vm_ctx* ctx);
 VMcell_t API_LCDchar        (vm_ctx* ctx);
 VMcell_t API_LCDcharWidth   (vm_ctx* ctx);
 VMcell_t API_LCDfill        (vm_ctx* ctx);
+
+VMcell_t API_Milliseconds   (vm_ctx* ctx);
+VMcell_t API_Buttons        (vm_ctx* ctx);
 
 #ifdef __cplusplus
 }

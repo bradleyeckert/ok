@@ -5,6 +5,7 @@
 #include "quit.h"
 #include "forth.h"
 #include "comm.h"
+#include "tools.h"
 #include "../bci/bci.h"
 
 static struct QuitStruct *q;
@@ -185,6 +186,34 @@ static void tpStore    (void) {
         return;
     }
     TP = p;
+}
+
+/*
+* Save memory contents as a blob file.
+*/
+
+FILE* blob;
+
+static void ToBlob(int size, uint32_t x) {
+    while (size--) {
+        uint8_t c = x >> (size * 8);
+        fwrite(&c, 1, 1, blob);
+    }
+}
+
+static void saveblob(void) {                // ( revision -- )
+    uint32_t codebytes = CP * sizeof(VMinst_t);
+    uint32_t textbytes = TP * sizeof(VMcell_t);
+    codebytes = (codebytes + 3) & ~3;
+    ParseFilename();
+    blob = fopenx(TOKEN, "wb");
+    ToBlob(4, DataPop());                   // revision #
+    ToBlob(4, codebytes + textbytes + 16);  // overall size
+    ToBlob(4, codebytes);                   // code bytes
+    ToBlob(4, textbytes);                   // text bytes
+    fwrite(q->code[CORE], 1, codebytes, blob);
+    fwrite(q->text[CORE], 1, textbytes, blob);
+    fclose(blob);
 }
 
 static void NoName(void) {
@@ -472,7 +501,9 @@ static void Literal    (void) { CompLit (DataPop()); }
 static void AddHelp    (void) { HEADER[HP].help = TIBtoEnd(); }
 static void CompStr    (void) { CommaStr(); Literal(); }
 static void byte2cell  (void) { DataPush(DataPop() >> C_BYTESHIFT); }
-
+static void HostMinus  (void) { int32_t x = DataPop();  DataPush(DataPop() - x); }
+static void HostDivide (void) { int32_t x = DataPop();  DataPush((int32_t)DataPop() / x); }
+static void HostMults  (void) { int32_t x = DataPop();  DataPush((int32_t)DataPop() * x); }
 
 static void AddAPIcall(char* name, char* help, uint32_t value) {
     if (AddHead(name, help)) {
@@ -502,6 +533,16 @@ void AddForthKeywords(struct QuitStruct *state) {
     AddEquate("LCDheight",      "-forth.htm#LCDheight -- n",
             WinHeight);
 #endif
+    AddKeyword("saveblob",      "-forth.htm#saveblob n1 n2 -- n3",
+            saveblob, noCompile);
+    // basic operators
+    AddKeyword("-",             "~core/Minus n1 n2 -- n3",
+            HostMinus, noCompile);
+    AddKeyword("/",             "~core/Times n1 n2 -- n3",
+            HostDivide, noCompile);
+    AddKeyword("*",             "~core/Div n1 n2 -- n3",
+            HostMults, noCompile);
+    // constants
     AddEquate("MAX-N",          "~usage#table:env -- n",
               (VM_MASK >> 1));
     AddEquate("MAX-U",          "~usage#table:env -- u",
@@ -690,6 +731,10 @@ void AddForthKeywords(struct QuitStruct *state) {
             INST_TAG + VMI_API      + 12);
     AddAPIcall("LCDfill",       "-forth.htm#LCDfill width height --",
             INST_TAG + VMI_API2DROP + 13);
+    AddAPIcall("counter",       "-forth.htm#counter -- ms",
+            INST_TAG + VMI_DUPAPI   + 14);
+    AddAPIcall("buttons",       "-forth.htm#buttons -- buttons",
+            INST_TAG + VMI_DUPAPI   + 15);
 
     // compile-only control words, can't be postponed
     AddKeyword("later",         "-forth.htm#later <name> --",

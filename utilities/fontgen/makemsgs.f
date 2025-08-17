@@ -1,5 +1,5 @@
 ﻿
-16 messages
+5 messages
 
 0 message: ," ©2025 GV" end-message     \ copyright
 

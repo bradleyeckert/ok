@@ -11,13 +11,12 @@
 #include <windows.h>
 #include <string.h>
 
-#define TRACE
-
 using namespace std;
 
 #include "../../src/host/quit.h"
 #include "../../src/host/tools.h"
 #include "../../src/bci/bci.h"
+#include "../../src/bci/bciHW.h"
 #include "../../src/host/comm.h"
 #include "../../src/RS-232/rs232.h"
 
@@ -83,6 +82,7 @@ static void* SimulateCPU(void* threadid) {
     memset(TextMem, BLANK_FLASH_BYTE, sizeof(TextMem));
     memset(CodeMem, BLANK_FLASH_BYTE, sizeof(CodeMem));
     VMreset(ctx);
+    BCIHWinit(ctx);             // initialize simulated hardware
     ctx->id = id;
     g_begun++;
     while (ctx->status != BCI_STATUS_SHUTDOWN) {
@@ -159,6 +159,10 @@ static void* LaunchGUI(void* threadid) {
 /// GUI callbacks
 
 #ifdef GUItype
+extern "C" {
+    extern uint32_t g_VMbuttons; // global variable for button states
+}
+
 /*
 The GUI thread calls this function to handle touch events.
 The GT911 touch controller provides up to 5 touch points.
@@ -178,25 +182,13 @@ void GUItouchHandler(uint8_t offset, uint8_t length, uint32_t *p) {
         printf("GUItouchHandler: offset %d + length %d exceeds 6\n", offset, length);
         return; // should never happen
 	}
-	memcpy(&ctx->DataMem[1], p, length * sizeof(uint32_t));
-#ifdef TRACE
     if (offset == 0) {
         // handle button and switch states
-        uint32_t buttons = *p++;
-        for (int i = 0; i < 1; i++) {
-            if (buttons & (1 << i)) {
-                printf("Button %d pressed\n", i);
-            } else {
-                printf("Button %d released\n", i);
-            }
-        }
-	}
-    for (int i = 0; i < length; i++) {
-        int x = *p++;
-		if (x == 0) continue; // no touch point
-		printf("Touch point %d: x=%d, y=%d\n", i, x & 0xFFFF, x >> 16);
-	}
-#endif
+        g_VMbuttons = *p++;
+		length--;
+    }
+    if (length < 1) return; // no touch points
+    memcpy(&ctx->DataMem[1], p, length * sizeof(uint32_t));
 }
 #endif
 
@@ -207,29 +199,32 @@ static char linebuf[LineBufferSize];
 int main(int argc, char* argv[]) {
     g_begun = 0;
 #ifdef _MSC_VER
+    HANDLE commtask = CreateThread(NULL, 0, PollCommRX, NULL, 0, NULL);
+    if (commtask == NULL) return 2;
+#ifdef GUItype
+    HANDLE GUItask = CreateThread(NULL, 0, LaunchGUI, NULL, 0, NULL);
+    if (GUItask == NULL) return 3;
+    while (GUIlaunched == 0) {           // wait for GUI window to open
+        YieldThread();
+    }
+#endif // GUItype
     HANDLE tid[CPUCORES] = { NULL };
     for (int i = 0; i < CPUCORES; i++) {
         LPDWORD index = (LPDWORD)(size_t)i;
         tid[i] = CreateThread(NULL, 0, SimulateCPU, NULL, 0, index);
         if (tid[i] == NULL) return 1;
     }
-    HANDLE commtask = CreateThread(NULL, 0, PollCommRX, NULL, 0, NULL);
-    if (commtask == NULL) return 2;
-#ifdef GUItype
-    HANDLE GUItask = CreateThread(NULL, 0, LaunchGUI, NULL, 0, NULL);
-    if (GUItask == NULL) return 3;
-#endif
 #else
+    if (pthread_create(&commtask, NULL, PollCommRX, (void*)(size_t)0)) return 2;
+#ifdef GUItype
+    if (pthread_create(&GUItask, NULL, LaunchGUI, (void*)(size_t)0)) return 3;
+#endif
     pthread_t tid[CPUCORES];
     pthread_t commtask, GUItask;
     for (int i = 0; i < CPUCORES; i++) {
         if (pthread_create(&tid[i], NULL, SimulateCPU, (void*)(size_t)i)) return 1;
     }
-    if (pthread_create(&commtask, NULL, PollCommRX, (void*)(size_t)0)) return 2;
-#ifdef GUItype
-    if (pthread_create(&GUItask, NULL, LaunchGUI, (void*)(size_t)0)) return 3;
-#endif
-#endif
+#endif // GUItype
     YieldThread();
     linebuf[0] = 0;
     // concatenate all arguments to the line buffer
@@ -247,7 +242,7 @@ int main(int argc, char* argv[]) {
     CommDone = 1;                        // tell RS232 thread to quit
 #ifdef GUItype
     GUIbye();                            // tell GUI thread to quit
-#endif
+#endif // GUItype
 #ifdef _MSC_VER
     for (int i = 0; i < CPUCORES; i++) { // wait for the threads to quit
         WaitForSingleObject(tid[i], INFINITE);
@@ -255,7 +250,7 @@ int main(int argc, char* argv[]) {
     WaitForSingleObject(commtask, INFINITE);
 #ifdef GUItype
     WaitForSingleObject(GUItask, INFINITE);
-#endif
+#endif // GUItype
 #else
     for (int i = 0; i < CPUCORES; i++) { // wait for the threads to quit
         JoinThread(tid[i], NULL);
@@ -264,6 +259,6 @@ int main(int argc, char* argv[]) {
 #ifdef GUItype
     JoinThread(GUItask, NULL);
 #endif
-#endif
+#endif // _MSC_VER
     return ior;
 }

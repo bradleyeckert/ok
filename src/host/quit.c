@@ -289,7 +289,7 @@ int parseword(char delimiter) {
     return length;
 }
 
-static void ParseFilename(void) {
+void ParseFilename(void) {
     while (TIB[TOIN] == ' ') TOIN++;
     if (TIB[TOIN] == '"') {
         parseword('"');             // allow filename in quotes
@@ -540,6 +540,8 @@ void noCompile(void) { ERR = BAD_NOCOMPILE; }
 void noExecute(void) { ERR = BAD_NOEXECUTE; }
 static void Nothing(void) { }
 static void Bye(void) {ERR = BYE;}
+static void Halt(void) { CORE.ctx.status = BCI_STATUS_STOPPED; }
+static void Run(void) { CORE.ctx.status = BCI_STATUS_RUNNING; }
 
 static int hp0, wordlist0;
 static void Empty(void) {
@@ -556,6 +558,7 @@ static void Empty(void) {
     FILEID = 0;
     textsp = 0;
     Only(); ForthLex(); Definitions();
+    Halt();
 }
 
 static void Vocabulary(void) {
@@ -581,6 +584,10 @@ static void AddRootKeywords(void) {
                Bye,             noCompile);
     AddKeyword("empty",         "-quit.htm#empty --",
                Empty,           noCompile);
+    AddKeyword("halt",          "-quit.htm#halt --",
+               Halt,            noCompile);
+    AddKeyword("run",           "-quit.htm#run --",
+               Run,             noCompile);
     AddKeyword("cd",            "-quit.htm#cdir ccc<EOL> --",
                Chdir,           noCompile);
     AddKeyword("base!",         "-quit.htm#basestore n --",

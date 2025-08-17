@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <stdio.h>
 #include "bci.h"
 #include "bciHW.h"
 
@@ -22,13 +21,6 @@ compiled into the host VM, not on an MCU target.
 */
 
 #define HOST_ONLY
-
-void BCIHWinit(void) {
-    // Initialize the hardware, if needed
-#ifdef GUItype
-    LCDinit();
-#endif
-}
 
 // Output to the mole output buffer with BCIsendChar.
 VMcell_t API_Emit (vm_ctx *ctx){
@@ -113,6 +105,7 @@ is on a 4K boundary. Byte writes insert new "page write" commands as needed.
 */
 
 #ifdef HOST_ONLY // simulate a W25Q32JVSSIQ
+#include <stdio.h>
 
 uint8_t NVMloaded = 0;
 uint8_t NVMsimMem[VM_FLASHSIZE];
@@ -167,6 +160,30 @@ void NVMwrite (uint32_t n, int bytes){
         NVMsimMem[NVMaddress++] = n >> (bytes << 3);
     }
 }
+
+static void slurpNVM(uint8_t* dest, uint32_t bytes) {
+    while (bytes--) {
+        *dest++ = (uint8_t)NVMread(1);  // read one byte at a time
+    }
+}
+
+// Initialize the hardware, usually by reading the NVM.
+void BCIHWinit(vm_ctx* ctx) {
+    NVMbeginRead(20);                   // blob 1 = VM initialization
+    uint16_t sector = NVMread(2);       // read sector size
+    uint32_t addr0 = sector << 16;
+    if (sector == 0) addr0 = 0x1000;
+    NVMbeginRead(addr0 + 8);            // -> csize, tsize, data...
+    uint32_t codebytes = NVMread(4);
+    uint32_t textbytes = NVMread(4);
+    slurpNVM((uint8_t*)ctx->CodeMem, codebytes); // read code memory
+    slurpNVM((uint8_t*)ctx->TextMem, textbytes); // read text memory
+    NVMendRW();                         // deselect chip
+#ifdef GUItype
+    LCDinit();                          // initialize font rendering from NVM
+#endif
+}
+
 
 #else
 
@@ -256,10 +273,27 @@ VMcell_t API_LCDfill(vm_ctx* ctx) {
 	return 0;
 }
 
-#else
+#else // No GUI, no LCD
 VMcell_t API_LCDraw    (vm_ctx* ctx) { return -1; }
 VMcell_t API_LCDparm   (vm_ctx* ctx) { return -1; }
 VMcell_t API_LCDparmSet(vm_ctx* ctx) { return -1; }
 VMcell_t API_LCDchar   (vm_ctx* ctx) { return -1; }
 VMcell_t API_LCDcharWidth(vm_ctx* ctx) { return -1; }
-#endif
+#endif // GUItype
+
+// Timer interface
+
+#ifdef HOST_ONLY
+#include "../host/tools.h"
+
+VMcell_t API_Milliseconds(vm_ctx* ctx) {
+    return (VMcell_t)GetMicroseconds() / 1000;
+}
+
+uint32_t g_VMbuttons;
+VMcell_t API_Buttons(vm_ctx* ctx) {
+	return g_VMbuttons; // return the button state
+}
+
+#endif // HOST_ONLY
+

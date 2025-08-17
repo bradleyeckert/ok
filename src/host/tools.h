@@ -10,6 +10,7 @@ extern "C" {
 #endif
 
 #include <stdint.h>
+#include <stdio.h>
 
 uint64_t GetMicroseconds(void);
 void strmove(char* dest, char* src, unsigned int maxlen);

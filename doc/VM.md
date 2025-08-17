@@ -42,9 +42,9 @@ The instruction size is 16 to 31 bits, \#defined in the VM as VM\_INSTBITS. 16 t
 | lit  | 010  | 13-bit literal (push onto data stack) |
 | imm  | 011  | 4-bit opcode, 9-bit immediate data |
 
-| *Name* | *15* | *14* | *13:10* | *9:5* | *4:0* |
-| :----- | ---- | ------ |------ |------ |------ |
-| micro  | 1    | ;    | µop 0   | µop 1 | µop 2 |
+| *Name* | *15* | *14* | *13:9* | *8:4* | *3:0* |
+| :----- | ---- | ---- |------- |------ |------ |
+| micro  | 1    | ;    | µop 0  | µop 1 | µop 2 |
 
 **20-bit:**
 
@@ -55,9 +55,9 @@ The instruction size is 16 to 31 bits, \#defined in the VM as VM\_INSTBITS. 16 t
 | lit  | 010  | 17-bit literal (push onto data stack) |
 | imm  | 011  | 4-bit opcode, 13-bit immediate data |
 
-| *Name* | *19* | *18* | *17:15* | *14:10* | *9:5* | *4:0* |
-| :----- | ---- | ------ | ------ | ------ | ----- | ----- |
-| micro  | 1    | ;    | µop 0   | µop 1   | µop 2 | µop 3 |
+| *Name* | *19* | *18* | *17:13* | *12:8* | *7:3* | *2:0* |
+| :----- | ---- | ---- | ------- | ------ | ----- | ----- |
+| micro  | 1    | ;    | µop 0   | µop 1  | µop 2 | µop 3 |
 
 In a micro instruction, when the **`;`** bit is set, PC is popped off the return stack when µop 0 executes. With 16-bit or 20-bit instructions, µop 0 is truncated to either 4 or 3 bits so there is no possible conflicting use of the return stack. Control flow change proceeds at the system clock while the µops execute at a multiple of the system clock.
 
