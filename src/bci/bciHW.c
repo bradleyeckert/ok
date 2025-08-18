@@ -84,7 +84,7 @@ VMcell_t API_mudivmod (vm_ctx *ctx) {
     return (VMcell_t)(q >> VM_CELLBITS) & VM_MASK;
 }
 
-// Some targets have hardware support for this
+#ifdef HOST_ONLY
 uint32_t CRC32(uint8_t *addr, uint32_t len) {
     uint32_t crc = 0xFFFFFFFF;
     while (len--) {
@@ -97,6 +97,13 @@ uint32_t CRC32(uint8_t *addr, uint32_t len) {
     }
     return ~crc;
 }
+#else // STM32 CRC hardware
+extern CRC_HandleTypeDef hcrc; // in main.c
+uint32_t CRC32(uint8_t *addr, uint32_t len) {
+    uint32_t crc = HAL_CRC_Calculate(&hcrc, (uint32_t *)addr, len);
+    return ~crc;
+}
+#endif
 
 /***************************************************************************
 Non-volatile memory
