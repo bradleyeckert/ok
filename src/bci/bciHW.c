@@ -4,9 +4,20 @@
 #include "bci.h"
 #include "bciHW.h"
 
-#ifdef GUItype
-#include "../../windows/withLCD/TFTsim.h"
+#ifndef HOST_ONLY
+#include "main.h" // STM32-specific includes
+#endif
+
 #include "../LCD/gLCD.h"
+#ifdef GUItype // using simulated LCD
+#include "../../windows/withLCD/TFTsim.h"
+#else
+
+uint32_t TFTLCDraw(uint32_t x, uint8_t mode) {
+    // This is a stub for the host VM, which does not have an LCD.
+    // The host VM does not use the LCD, so this function does nothing.
+    return 0;
+}
 #endif
 
 #define THIRD ctx->DataStack[ctx->sp]
@@ -19,8 +30,6 @@ All versions of this file should include the generic C simulated hardware as
 well as MCU-specific equivalent functions. HOST_ONLY indicates that it is
 compiled into the host VM, not on an MCU target.
 */
-
-#define HOST_ONLY
 
 // Output to the mole output buffer with BCIsendChar.
 VMcell_t API_Emit (vm_ctx *ctx){
@@ -179,9 +188,7 @@ void BCIHWinit(vm_ctx* ctx) {
     slurpNVM((uint8_t*)ctx->CodeMem, codebytes); // read code memory
     slurpNVM((uint8_t*)ctx->TextMem, textbytes); // read text memory
     NVMendRW();                         // deselect chip
-#ifdef GUItype
     LCDinit();                          // initialize font rendering from NVM
-#endif
 }
 
 
@@ -244,8 +251,6 @@ void FlashWrite(uint8_t *dest, const uint8_t *src, uint16_t bytes) {
 
 // Interpreter for unpacking bitmap glyphs
 
-#ifdef GUItype
-
 uint32_t API_LCDraw(vm_ctx* ctx) {
     return TFTLCDraw(ctx->n, ctx->t); // use the LCD simulator
 }
@@ -273,14 +278,6 @@ VMcell_t API_LCDfill(vm_ctx* ctx) {
 	return 0;
 }
 
-#else // No GUI, no LCD
-VMcell_t API_LCDraw    (vm_ctx* ctx) { return -1; }
-VMcell_t API_LCDparm   (vm_ctx* ctx) { return -1; }
-VMcell_t API_LCDparmSet(vm_ctx* ctx) { return -1; }
-VMcell_t API_LCDchar   (vm_ctx* ctx) { return -1; }
-VMcell_t API_LCDcharWidth(vm_ctx* ctx) { return -1; }
-#endif // GUItype
-
 // Timer interface
 
 #ifdef HOST_ONLY
@@ -292,8 +289,29 @@ VMcell_t API_Milliseconds(vm_ctx* ctx) {
 
 uint32_t g_VMbuttons;
 VMcell_t API_Buttons(vm_ctx* ctx) {
-	return g_VMbuttons; // return the button state
+    return g_VMbuttons; // return the button state
 }
 
+VMcell_t API_CRC32(vm_ctx* ctx) {
+    ctx->n = CRC32((uint8_t*)&ctx->DataMem[ctx->n], ctx->t);
+    return 0;
+}
+#else
+
+extern uint32_t msec_counter;
+
+VMcell_t API_Milliseconds(vm_ctx* ctx) {
+    return msec_counter;
+}
+
+VMcell_t API_Buttons(vm_ctx* ctx) {
+	int button = ~HAL_GPIO_ReadPin (BTN_GPIO_Port, BTN_Pin);
+    return button;
+}
+
+VMcell_t API_CRC32(vm_ctx* ctx) {
+    ctx->n = CRC32((uint8_t*)&ctx->DataMem[ctx->n], ctx->t);
+    return 0;
+}
 #endif // HOST_ONLY
 

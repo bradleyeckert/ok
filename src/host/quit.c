@@ -17,6 +17,7 @@
 #include "comm.h"
 #include "../bci/bci.h"
 
+struct QuitStruct quit_internal_state;
 static struct QuitStruct *q;
 
 #define TIB       q->tib            // location of text input buffer
@@ -561,6 +562,19 @@ static void Empty(void) {
     Halt();
 }
 
+FILE* gfile = NULL;
+static void Gild(void) {
+    ParseFilename();
+    gfile = fopenx(TOKEN, "wb");
+    uint32_t x = sizeof(quit_internal_state);
+    fwrite(&x, 1, sizeof(x), gfile);    // save q length and data
+    fwrite(&quit_internal_state, 1, sizeof(quit_internal_state), gfile);
+    x = textsp;
+    fwrite(&x, 1, sizeof(x), gfile);    // save dictionary
+    fwrite(dictspace, 1, textsp, gfile);
+    fclose(gfile);
+}
+
 static void Vocabulary(void) {
     char *name = Const(GetToken());
     int wid = AddWordlist(name);
@@ -584,6 +598,8 @@ static void AddRootKeywords(void) {
                Bye,             noCompile);
     AddKeyword("empty",         "-quit.htm#empty --",
                Empty,           noCompile);
+    AddKeyword("gild",          "-quit.htm#gild --",
+               Gild,            noCompile);
     AddKeyword("halt",          "-quit.htm#halt --",
                Halt,            noCompile);
     AddKeyword("run",           "-quit.htm#run --",

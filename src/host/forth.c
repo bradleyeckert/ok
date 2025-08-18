@@ -735,6 +735,8 @@ void AddForthKeywords(struct QuitStruct *state) {
             INST_TAG + VMI_DUPAPI   + 14);
     AddAPIcall("buttons",       "-forth.htm#buttons -- buttons",
             INST_TAG + VMI_DUPAPI   + 15);
+    AddAPIcall("crc32",         "-forth.htm#crc32 addr u -- crc32",
+            INST_TAG + VMI_APIDROP  + 16);
 
     // compile-only control words, can't be postponed
     AddKeyword("later",         "-forth.htm#later <name> --",

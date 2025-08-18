@@ -264,7 +264,7 @@ t{ table 1 + @ -> 1000 }t
 t{ table 2 + @ -> 10000 }t
 
 \ verbose_bci verbose!
-5 port!
+10 port!
 
 \. defining some words that only execute on the STM32
 hex

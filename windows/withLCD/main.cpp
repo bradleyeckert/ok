@@ -24,7 +24,6 @@ using namespace std;
 #include "gui.h"
 #endif
 
-static struct QuitStruct quit_internal_state;
 static uint8_t  responseBuf[CPUCORES][MaxBCIresponseSize];
 static uint16_t responseLen[CPUCORES];
 
@@ -66,6 +65,10 @@ void StopVMthread(vm_ctx* ctx) {
 VM state accessed in main: CodeMem, TextMem, id, status, statusNew
 */
 constexpr auto CYCLES = 5000;
+
+extern "C" {
+    extern struct QuitStruct quit_internal_state;
+}
 
 /// Tasks
 

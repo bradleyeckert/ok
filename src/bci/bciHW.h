@@ -44,6 +44,7 @@ VMcell_t API_LCDfill        (vm_ctx* ctx);
 
 VMcell_t API_Milliseconds   (vm_ctx* ctx);
 VMcell_t API_Buttons        (vm_ctx* ctx);
+VMcell_t API_CRC32          (vm_ctx* ctx);
 
 #ifdef __cplusplus
 }
