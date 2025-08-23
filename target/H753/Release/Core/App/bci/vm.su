@@ -1,0 +1,11 @@
+../Core/App/bci/vm.c:35:13:VMdupData	0	static
+../Core/App/bci/vm.c:60:17:VMpopReturn	0	static
+../Core/App/bci/vm.c:15:10:VMreadCell	0	static
+../Core/App/bci/vm.c:30:6:VMwriteCell	0	static
+../Core/App/bci/vm.c:41:6:VMpushData	8	static
+../Core/App/bci/vm.c:46:10:VMpopData	0	static
+../Core/App/bci/vm.c:87:5:VMstep	40	static
+../Core/App/bci/vm.c:82:5:VMsteps	16	static
+../Core/App/bci/vm.c:262:9:VMgetRP	0	static
+../Core/App/bci/vm.c:263:9:VMgetSP	0	static
+../Core/App/bci/vm.c:278:6:VMreset	8	static

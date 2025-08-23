@@ -8,13 +8,15 @@ Decompress font glyphs to the LCD module
 #include "gLCD.h"
 
 uint32_t fontHome;
-void LCDinit(void) {
+
+int LCDinit(void) {
     NVMbeginRead(0);                    // -> font blob's first 64K sector
 	uint16_t sector = NVMread(2);       // read sector size
     uint32_t addr0 = sector << 16;
     if (sector == 0) addr0 = 0x1000;
     NVMbeginRead(addr0 + 16);           // -> font
     fontHome = NVMread(4) + addr0;      // read font home address
+    return 0;
 }
 
 static void LCDbeginMem(void) {

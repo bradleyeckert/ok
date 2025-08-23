@@ -8,7 +8,7 @@ extern "C" {
 #define WinWidth  240
 #define WinHeight 320
 
-void LCDinit(void);
+int LCDinit(void);
 void LCDsetParm(int index, uint32_t x);
 uint32_t LCDgetParm(int index);
 void LCDchar(unsigned int xchar);

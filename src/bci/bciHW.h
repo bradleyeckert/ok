@@ -26,14 +26,16 @@ void NVMwrite (uint32_t n, int bytes);
 void NVMendRW (void);
 
 // API functions in VM's execution table
-VMcell_t API_NVMbeginRead   (vm_ctx *ctx);
-VMcell_t API_NVMbeginWrite  (vm_ctx *ctx);
-VMcell_t API_NVMread        (vm_ctx *ctx);
-VMcell_t API_NVMwrite       (vm_ctx *ctx);
-VMcell_t API_NVMendRW       (vm_ctx *ctx);
-VMcell_t API_Emit           (vm_ctx *ctx);
-VMcell_t API_umstar         (vm_ctx *ctx);
-VMcell_t API_mudivmod       (vm_ctx *ctx);
+VMcell_t API_NVMbeginRead   (vm_ctx* ctx);
+VMcell_t API_NVMbeginWrite  (vm_ctx* ctx);
+VMcell_t API_NVMread        (vm_ctx* ctx);
+VMcell_t API_NVMwrite       (vm_ctx* ctx);
+VMcell_t API_NVMendRW       (vm_ctx* ctx);
+VMcell_t API_NVMID          (vm_ctx* ctx);
+
+VMcell_t API_Emit           (vm_ctx* ctx);
+VMcell_t API_umstar         (vm_ctx* ctx);
+VMcell_t API_mudivmod       (vm_ctx* ctx);
 
 VMcell_t API_LCDraw         (vm_ctx* ctx);
 VMcell_t API_LCDparm        (vm_ctx* ctx);

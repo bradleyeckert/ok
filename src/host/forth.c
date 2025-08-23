@@ -711,32 +711,34 @@ void AddForthKeywords(struct QuitStruct *state) {
             INST_TAG + VMI_API2DROP + 3);
     AddAPIcall("]nvm",          "-forth.htm#nend --",
             INST_TAG + VMI_API      + 4);
+    AddAPIcall("nvmID",         "-forth.htm#nID -- ID24",
+            INST_TAG + VMI_DUPAPI   + 5);
     AddAPIcall("semit",         "-forth.htm#semit c --",
-            INST_TAG + VMI_APIDROP  + 5);
+            INST_TAG + VMI_APIDROP  + 6);
     AddAPIcall("um*",           "~core/UMTimes u1 u2 -- d1",
-            INST_TAG + VMI_API      + 6);
-    AddAPIcall("um/mod",        "~core/UMDivMOD ud u -- q r",
-            INST_TAG + VMI_APIDROP  + 7);
-    AddAPIcall("mu/mod",        "-forth.htm#mumod ud u -- dq r",
             INST_TAG + VMI_API      + 7);
-    AddAPIcall("LCDraw",        "-forth.htm#LCDraw n bits -- u",
+    AddAPIcall("um/mod",        "~core/UMDivMOD ud u -- q r",
             INST_TAG + VMI_APIDROP  + 8);
+    AddAPIcall("mu/mod",        "-forth.htm#mumod ud u -- dq r",
+            INST_TAG + VMI_API      + 8);
+    AddAPIcall("LCDraw",        "-forth.htm#LCDraw n bits -- u",
+            INST_TAG + VMI_APIDROP  + 9);
     AddAPIcall("LCDparm!",      "-forth.htm#LCDpsto x index --",
-            INST_TAG + VMI_API2DROP + 9);
+            INST_TAG + VMI_API2DROP + 10);
     AddAPIcall("LCDparm",       "-forth.htm#LCDp index -- x",
-            INST_TAG + VMI_API      + 10);
+            INST_TAG + VMI_API      + 11);
     AddAPIcall("LCDemit",       "-forth.htm#LCDemit xchar --",
-            INST_TAG + VMI_APIDROP  + 11);
+            INST_TAG + VMI_APIDROP  + 12);
     AddAPIcall("charwidth",     "-forth.htm#charwidth xchar -- width",
-            INST_TAG + VMI_API      + 12);
+            INST_TAG + VMI_API      + 13);
     AddAPIcall("LCDfill",       "-forth.htm#LCDfill width height --",
-            INST_TAG + VMI_API2DROP + 13);
+            INST_TAG + VMI_API2DROP + 14);
     AddAPIcall("counter",       "-forth.htm#counter -- ms",
-            INST_TAG + VMI_DUPAPI   + 14);
-    AddAPIcall("buttons",       "-forth.htm#buttons -- buttons",
             INST_TAG + VMI_DUPAPI   + 15);
+    AddAPIcall("buttons",       "-forth.htm#buttons -- buttons",
+            INST_TAG + VMI_DUPAPI   + 16);
     AddAPIcall("crc32",         "-forth.htm#crc32 addr u -- crc32",
-            INST_TAG + VMI_APIDROP  + 16);
+            INST_TAG + VMI_APIDROP  + 17);
 
     // compile-only control words, can't be postponed
     AddKeyword("later",         "-forth.htm#later <name> --",

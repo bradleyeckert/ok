@@ -4,20 +4,12 @@
 #include "bci.h"
 #include "bciHW.h"
 
-#ifndef HOST_ONLY
-#include "main.h" // STM32-specific includes
-#endif
-
-#include "../LCD/gLCD.h"
+#ifdef HOST_ONLY
 #ifdef GUItype // using simulated LCD
 #include "../../windows/withLCD/TFTsim.h"
+#endif
 #else
-
-uint32_t TFTLCDraw(uint32_t x, uint8_t mode) {
-    // This is a stub for the host VM, which does not have an LCD.
-    // The host VM does not use the LCD, so this function does nothing.
-    return 0;
-}
+#include "main.h" // STM32-specific includes
 #endif
 
 #define THIRD ctx->DataStack[ctx->sp]
@@ -177,6 +169,10 @@ void NVMwrite (uint32_t n, int bytes){
     }
 }
 
+static uint32_t NVMgetID(void) {
+    return 25128;
+}
+
 static void slurpNVM(uint8_t* dest, uint32_t bytes) {
     while (bytes--) {
         *dest++ = (uint8_t)NVMread(1);  // read one byte at a time
@@ -195,7 +191,9 @@ void BCIHWinit(vm_ctx* ctx) {
     slurpNVM((uint8_t*)ctx->CodeMem, codebytes); // read code memory
     slurpNVM((uint8_t*)ctx->TextMem, textbytes); // read text memory
     NVMendRW();                         // deselect chip
+#ifdef GUItype // using an LCD
     LCDinit();                          // initialize font rendering from NVM
+#endif
 }
 
 
@@ -214,6 +212,9 @@ void NVMwrite (uint32_t n, int bytes){
 }
 void NVMendRW (void){
 }
+uint32_t NVMgetID(void) {
+    return 0; // no ID for STM32
+}
 
 #endif
 
@@ -230,9 +231,12 @@ VMcell_t API_NVMwrite (vm_ctx *ctx){
     NVMwrite(ctx->n, ctx->t);
     return 0;
 }
-VMcell_t API_NVMendRW (vm_ctx *ctx){
+VMcell_t API_NVMendRW(vm_ctx* ctx) {
     NVMendRW();
     return 0;
+}
+VMcell_t API_NVMID(vm_ctx* ctx) {
+    return NVMgetID();
 }
 
 
@@ -258,7 +262,10 @@ void FlashWrite(uint8_t *dest, const uint8_t *src, uint16_t bytes) {
 
 // Interpreter for unpacking bitmap glyphs
 
-uint32_t API_LCDraw(vm_ctx* ctx) {
+#ifdef GUItype // using an LCD
+#include "../LCD/gLCD.h"
+
+VMcell_t API_LCDraw(vm_ctx* ctx) {
     return TFTLCDraw(ctx->n, ctx->t); // use the LCD simulator
 }
 
@@ -284,6 +291,14 @@ VMcell_t API_LCDfill(vm_ctx* ctx) {
     LCDfill(ctx->n, ctx->t);
 	return 0;
 }
+#else
+VMcell_t API_LCDraw(vm_ctx* ctx)       { return 0; }
+VMcell_t API_LCDparm(vm_ctx* ctx)      { return 0; }
+VMcell_t API_LCDparmSet(vm_ctx* ctx)   { return 0; }
+VMcell_t API_LCDchar(vm_ctx* ctx)      { return 0; }
+VMcell_t API_LCDcharWidth(vm_ctx* ctx) { return 0; }
+VMcell_t API_LCDfill(vm_ctx* ctx)      { return 0; }
+#endif
 
 // Timer interface
 
@@ -299,10 +314,6 @@ VMcell_t API_Buttons(vm_ctx* ctx) {
     return g_VMbuttons; // return the button state
 }
 
-VMcell_t API_CRC32(vm_ctx* ctx) {
-    ctx->n = CRC32((uint8_t*)&ctx->DataMem[ctx->n], ctx->t);
-    return 0;
-}
 #else
 
 extern uint32_t msec_counter;
@@ -316,9 +327,9 @@ VMcell_t API_Buttons(vm_ctx* ctx) {
     return button;
 }
 
+#endif // HOST_ONLY
+
 VMcell_t API_CRC32(vm_ctx* ctx) {
     ctx->n = CRC32((uint8_t*)&ctx->DataMem[ctx->n], ctx->t);
     return 0;
 }
-#endif // HOST_ONLY
-

@@ -1,0 +1,13 @@
+../Core/App/mole/xchacha.c:15:13:doRounds	32	static
+../Core/App/mole/xchacha.c:27:17:u8tou32	16	static
+../Core/App/mole/xchacha.c:35:13:u32tou8	16	static
+../Core/App/mole/xchacha.c:39:6:xchacha_hchacha20	104	static
+../Core/App/mole/xchacha.c:60:6:xchacha_init	72	static
+../Core/App/mole/xchacha.c:80:6:xchacha_set_counter	16	static
+../Core/App/mole/xchacha.c:85:9:xchacha_next	160	static
+../Core/App/mole/xchacha.c:104:6:xchacha_encrypt_bytes	32	static
+../Core/App/mole/xchacha.c:110:6:xchacha_decrypt_bytes	24	static
+../Core/App/mole/xchacha.c:118:6:xc_crypt_init	48	static
+../Core/App/mole/xchacha.c:124:6:xc_crypt_init_g	24	static
+../Core/App/mole/xchacha.c:128:6:xc_crypt_block	24	static
+../Core/App/mole/xchacha.c:132:6:xc_crypt_block_g	24	static

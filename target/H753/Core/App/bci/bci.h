@@ -16,7 +16,7 @@ extern "C" {
 #define HANG_LIMIT_MS           3000 /* milliseconds to wait for a response */
 
 #define BLANK_FLASH_BYTE        0xFF /* byte values after flash erase */
-#define FLASH_BLOCK_SIZE         128 /* bytes in a flash programming block */
+#define FLASH_BLOCK_SIZE          64 /* bytes in a flash programming block */
 #define BCI_CYCLE_LIMIT     10000000 /* number of cycles before VM is hung */
 
 #define BCI_STACK_OVERFLOW        -3

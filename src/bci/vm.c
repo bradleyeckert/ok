@@ -246,10 +246,10 @@ typedef VMcell_t (*APIfn) (vm_ctx *ctx);
 
 static const APIfn APIfns[] = {
     API_NVMbeginRead, API_NVMbeginWrite, API_NVMread, API_NVMwrite, // 0
-    API_NVMendRW, API_Emit, API_umstar, API_mudivmod,               // 4
-    API_LCDraw, API_LCDparmSet, API_LCDparm, API_LCDchar,           // 8
-    API_LCDcharWidth, API_LCDfill, API_Milliseconds, API_Buttons,   // C
-    API_CRC32
+    API_NVMendRW, API_NVMID, API_Emit, API_umstar,                  // 4
+    API_mudivmod, API_LCDraw, API_LCDparmSet, API_LCDparm,          // 8
+    API_LCDchar, API_LCDcharWidth, API_LCDfill, API_Milliseconds,   // C
+    API_Buttons, API_CRC32                                          // 10
 };
 
 #define APIfs (sizeof(APIfns)/sizeof(APIfns[0]))

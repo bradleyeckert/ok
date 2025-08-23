@@ -51,13 +51,13 @@ VMcell_t VMpopData(vm_ctx *ctx) {
     return r;
 }
 
-void VMpushReturn(vm_ctx *ctx, VMcell_t x) {
+static void VMpushReturn(vm_ctx *ctx, VMcell_t x) {
     ctx->rp = (ctx->rp + 1) & (VM_STACKSIZE - 1);
     ctx->ReturnStack[ctx->rp] = ctx->r;
     ctx->r = x;
 }
 
-VMcell_t VMpopReturn(vm_ctx *ctx) {
+static VMcell_t VMpopReturn(vm_ctx *ctx) {
     VMcell_t r = ctx->r;
     ctx->r = ctx->ReturnStack[ctx->rp];
     ctx->rp = (ctx->rp - 1) & (VM_STACKSIZE - 1);
@@ -245,8 +245,11 @@ static int ops0001(vm_ctx *ctx, int inst) { // instruction zoo 0110001...
 typedef VMcell_t (*APIfn) (vm_ctx *ctx);
 
 static const APIfn APIfns[] = {
-    NVMbeginRead, NVMbeginWrite, NVMread, NVMwrite, NVMendRW,
-    API_Emit, API_umstar, API_mudivmod
+    API_NVMbeginRead, API_NVMbeginWrite, API_NVMread, API_NVMwrite, // 0
+    API_NVMendRW, API_NVMID, API_Emit, API_umstar,                  // 4
+    API_mudivmod, API_LCDraw, API_LCDparmSet, API_LCDparm,          // 8
+    API_LCDchar, API_LCDcharWidth, API_LCDfill, API_Milliseconds,   // C
+    API_Buttons, API_CRC32                                          // 10
 };
 
 #define APIfs (sizeof(APIfns)/sizeof(APIfns[0]))

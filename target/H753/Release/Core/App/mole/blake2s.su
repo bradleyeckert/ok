@@ -1,0 +1,8 @@
+../Core/App/mole/blake2s.c:117:13:blake2s_compress	56	static
+../Core/App/mole/blake2s.c:147:6:b2s_hmac_putc	16	static
+../Core/App/mole/blake2s.c:155:6:b2s_hmac_putc_g	0	static
+../Core/App/mole/blake2s.c:159:5:b2s_hmac_final	48	static
+../Core/App/mole/blake2s.c:177:5:b2s_hmac_final_g	0	static
+../Core/App/mole/blake2s.c:182:5:b2s_hmac_puts	16	static
+../Core/App/mole/blake2s.c:190:5:b2s_hmac_init	120	static
+../Core/App/mole/blake2s.c:222:5:b2s_hmac_init_g	0	static
