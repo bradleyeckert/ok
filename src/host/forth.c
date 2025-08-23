@@ -547,6 +547,8 @@ void AddForthKeywords(struct QuitStruct *state) {
               (VM_MASK >> 1));
     AddEquate("MAX-U",          "~usage#table:env -- u",
               VM_MASK);
+    AddEquate("xcells",         "-forth.htm#xcells -- u",
+              RAMBUFSIZE);
     AddEquate("*host",          "-forth.htm#host -- wid",
               q->host);
     AddEquate("verbose_color",  "-forth.htm#vcolor -- mask",
@@ -739,6 +741,10 @@ void AddForthKeywords(struct QuitStruct *state) {
             INST_TAG + VMI_DUPAPI   + 16);
     AddAPIcall("crc32",         "-forth.htm#crc32 addr u -- crc32",
             INST_TAG + VMI_APIDROP  + 17);
+    AddAPIcall("x@",            "-forth.htm#xfetch addr -- x",
+            INST_TAG + VMI_API      + 18);
+    AddAPIcall("x!",            "-forth.htm#xstore x addr --",
+            INST_TAG + VMI_API2DROP + 19);
 
     // compile-only control words, can't be postponed
     AddKeyword("later",         "-forth.htm#later <name> --",

@@ -249,7 +249,7 @@ static const APIfn APIfns[] = {
     API_NVMendRW, API_NVMID, API_Emit, API_umstar,                  // 4
     API_mudivmod, API_LCDraw, API_LCDparmSet, API_LCDparm,          // 8
     API_LCDchar, API_LCDcharWidth, API_LCDfill, API_Milliseconds,   // C
-    API_Buttons, API_CRC32                                          // 10
+    API_Buttons, API_CRC32, API_BigRAMfetch, API_BigRAMstore        // 10
 };
 
 #define APIfs (sizeof(APIfns)/sizeof(APIfns[0]))

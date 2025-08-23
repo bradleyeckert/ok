@@ -23,6 +23,23 @@ well as MCU-specific equivalent functions. HOST_ONLY indicates that it is
 compiled into the host VM, not on an MCU target.
 */
 
+uint32_t BigRAMbuffer[RAMBUFSIZE];
+
+VMcell_t API_BigRAMfetch(vm_ctx* ctx) {
+    uint32_t r;
+    uint32_t addr = ctx->t;
+    if (addr >= RAMBUFSIZE) return 0;
+    memcpy(&r, &BigRAMbuffer[addr], 4);
+    return r;
+}
+
+VMcell_t API_BigRAMstore(vm_ctx* ctx) {
+    uint32_t addr = ctx->t;
+    if (addr >= RAMBUFSIZE) return 0;
+    memcpy(&ctx->n, &BigRAMbuffer[addr], 4);
+    return 0;
+}
+
 // Output to the mole output buffer with BCIsendChar.
 VMcell_t API_Emit (vm_ctx *ctx){
     uint32_t codepoint = ctx->t;
@@ -96,6 +113,47 @@ uint32_t CRC32(uint8_t *addr, uint32_t len) {
     return ~crc;
 }
 #endif
+
+// Interpreter for unpacking bitmap glyphs
+
+#ifdef GUItype // using an LCD
+#include "../LCD/gLCD.h"
+
+VMcell_t API_LCDraw(vm_ctx* ctx) {
+    return TFTLCDraw(ctx->n, ctx->t); // use the LCD simulator
+}
+
+VMcell_t API_LCDparm(vm_ctx* ctx) {
+    return LCDgetParm(ctx->t);
+}
+
+VMcell_t API_LCDparmSet(vm_ctx* ctx) {
+    LCDsetParm(ctx->t, ctx->n);
+    return 0;
+}
+
+VMcell_t API_LCDchar(vm_ctx* ctx) {
+    LCDchar(ctx->t);
+    return 0;
+}
+
+VMcell_t API_LCDcharWidth(vm_ctx* ctx) {
+    return LCDcharWidth(ctx->t);
+}
+
+VMcell_t API_LCDfill(vm_ctx* ctx) {
+    LCDfill(ctx->n, ctx->t);
+    return 0;
+}
+#else
+VMcell_t API_LCDraw(vm_ctx* ctx) { return 0; }
+VMcell_t API_LCDparm(vm_ctx* ctx) { return 0; }
+VMcell_t API_LCDparmSet(vm_ctx* ctx) { return 0; }
+VMcell_t API_LCDchar(vm_ctx* ctx) { return 0; }
+VMcell_t API_LCDcharWidth(vm_ctx* ctx) { return 0; }
+VMcell_t API_LCDfill(vm_ctx* ctx) { return 0; }
+#endif
+
 
 /***************************************************************************
 Non-volatile memory
@@ -259,46 +317,6 @@ void FlashErase(uint32_t sector) { }
 void FlashWrite(uint8_t *dest, const uint8_t *src, uint16_t bytes) {
     memcpy(dest, src, bytes);
 }
-
-// Interpreter for unpacking bitmap glyphs
-
-#ifdef GUItype // using an LCD
-#include "../LCD/gLCD.h"
-
-VMcell_t API_LCDraw(vm_ctx* ctx) {
-    return TFTLCDraw(ctx->n, ctx->t); // use the LCD simulator
-}
-
-VMcell_t API_LCDparm(vm_ctx* ctx) {
-	return LCDgetParm(ctx->t);
-}
-
-VMcell_t API_LCDparmSet(vm_ctx* ctx) {
-    LCDsetParm(ctx->t, ctx->n);
-    return 0;
-}
-
-VMcell_t API_LCDchar(vm_ctx* ctx) {
-    LCDchar(ctx->t);
-    return 0;
-}
-
-VMcell_t API_LCDcharWidth(vm_ctx* ctx) { 
-    return LCDcharWidth(ctx->t);
-}
-
-VMcell_t API_LCDfill(vm_ctx* ctx) {
-    LCDfill(ctx->n, ctx->t);
-	return 0;
-}
-#else
-VMcell_t API_LCDraw(vm_ctx* ctx)       { return 0; }
-VMcell_t API_LCDparm(vm_ctx* ctx)      { return 0; }
-VMcell_t API_LCDparmSet(vm_ctx* ctx)   { return 0; }
-VMcell_t API_LCDchar(vm_ctx* ctx)      { return 0; }
-VMcell_t API_LCDcharWidth(vm_ctx* ctx) { return 0; }
-VMcell_t API_LCDfill(vm_ctx* ctx)      { return 0; }
-#endif
 
 // Timer interface
 
