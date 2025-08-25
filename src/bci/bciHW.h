@@ -6,6 +6,10 @@ extern "C" {
 
 #include "bci.h"
 
+#define H7_SECTOR_BASE   0x08000000
+#define H7_SECTOR_NVM    2
+#define H7_HALF_FLASH	// comment out if using STM32H7xIx instead of H7xGx
+
 VMcell_t BCIVMioRead (vm_ctx *ctx, VMcell_t addr);
 void BCIVMioWrite (vm_ctx *ctx, VMcell_t addr, VMcell_t data);
 uint32_t TFTLCDraw(uint32_t n, uint8_t mode);
@@ -22,7 +26,7 @@ uint32_t CRC32(uint8_t* addr, uint32_t len);
 int NVMbeginRead (uint32_t faddr);
 int NVMbeginWrite (uint32_t faddr);
 uint32_t NVMread (int bytes);
-void NVMwrite (uint32_t n, int bytes);
+int16_t NVMwrite (uint32_t n, int bytes);
 void NVMendRW (void);
 
 // API functions in VM's execution table

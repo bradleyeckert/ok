@@ -165,10 +165,24 @@ NVMbeginWrite       Set the address for writing, return ior
 NVMread             Read the next big-endian (up to 4-byte) value
 NVMwrite            Write the next big-endian (up to 4-byte) value
 NVMendRW            Deselect chip
+NVMgetID            return 3-byte ID code
 
-The write sequence auto-erases the 4K sector before writing when the address
-is on a 4K boundary. Byte writes insert new "page write" commands as needed.
+The write sequence auto-erases the sector before writing when the address is 
+on a sector boundary. Byte writes insert new "page write" commands as needed.
+
+For internal Flash, NVMgetID returns a pseudo-ID with the following fields:
+  bits 0-7    number of sectors available for NVM
+  bits 8-15   0x11 = log2 of sector size, 17 = 128KB
+  bits 16-23  0x7 = device STM32H7
 */
+
+uint32_t NVMgetID(void) {
+#ifdef H7_HALF_FLASH
+    return (8 - H7_SECTOR_NVM) + 0x071100;
+#else
+    return (16 - H7_SECTOR_NVM) + 0x071100;
+#endif
+}
 
 #ifdef HOST_ONLY // simulate a W25Q32JVSSIQ
 #include <stdio.h>
@@ -192,22 +206,25 @@ int NVMbeginRead (uint32_t faddr){
             fclose(fp);
         }
     }
-    NVMaddress = faddr;
     NVMendRW();
+    NVMaddress = 0;
     if (faddr >= VM_FLASHSIZE) return BCI_IOR_INVALID_ADDRESS;
+    NVMaddress = faddr;
     NVMmode = 1;
     return 0;
 }
 
 int NVMbeginWrite (uint32_t faddr){
-    NVMaddress = faddr;
+    NVMaddress = 0;
     NVMmode = 0;
     if (faddr >= VM_FLASHSIZE) return BCI_IOR_INVALID_ADDRESS;
+    NVMaddress = faddr;
     NVMmode = 2;
     return 0;
 }
 
 uint32_t NVMread (int bytes){
+	if (NVMaddress == 0) return 0;
 //    printf("NVMread[%d]\n", bytes);
     if (NVMmode != 1) printf("NVM error %d: Not in READ mode\n", NVMmode);
     uint32_t r = 0;
@@ -217,18 +234,16 @@ uint32_t NVMread (int bytes){
     return r;
 }
 
-void NVMwrite (uint32_t n, int bytes){
+int16_t NVMwrite (uint32_t n, int bytes){
+    if (NVMaddress == 0) return 0;
     if (NVMmode != 2) printf("NVM error: Not in WRITE mode\n");
     while(bytes--) {
-        if ((NVMaddress & 0xFFF) == 0) {
-            memset(&NVMsimMem[NVMaddress], 0xFF, 0x1000);
+        if ((NVMaddress & 0x1FFFF) == 0) {
+            memset(&NVMsimMem[NVMaddress], 0xFF, 0x20000);
         }
         NVMsimMem[NVMaddress++] = n >> (bytes << 3);
     }
-}
-
-static uint32_t NVMgetID(void) {
-    return 25128;
+    return 0;
 }
 
 static void slurpNVM(uint8_t* dest, uint32_t bytes) {
@@ -256,22 +271,120 @@ void BCIHWinit(vm_ctx* ctx) {
 
 
 #else
+#include "stm32h7xx_hal.h"
+/* NVM is implemented in the STM32H7 internal flash memory starting at sector
+H7_SECTOR_NVM (typically sector 2, address 0x08040000). Writing is done in
+32-byte chunks, with automatic sector pre-erase on 128K boundaries.
 
-int NVMbeginRead (uint32_t faddr){
+NVMaddress is the physical address for the next read or write.
+It is set by NVMbeginRead or NVMbeginWrite, and cleared by NVMendRW.
+If it is 0, no read or write is done.
+*/
+uint32_t NVMaddress;    // physical address for next read/write
+
+uint32_t nwrbuffer[8];  // 32-byte write buffer
+uint8_t nwridx;
+
+/* The embedded flash memory implements the buffering of consecutive read
+requests in the same bank.  Section 4.3.7 of the reference manual.
+Reads are big-endian. Reads outside of the NVM area return 0.
+*/
+uint32_t NVMread(int bytes) {
+	if (NVMaddress == 0) return 0;
+#ifdef H7_HALF_FLASH
+    if (NVMaddress & 0x080000) {
+		NVMaddress = 0;
+        return 0;
+    }
+#else
+    if (NVMaddress & 0x200000) {
+        NVMaddress = 0;
+        return 0;
+    }
+#endif
+    uint32_t r = 0;
+    while (bytes--) {
+        r = (r << 8) + *(__IO uint8_t*)NVMaddress++;
+    }
+    return r;
+}
+/* convert from NVM address to physical address.Returns 0 if invalid.
+Return value: MSB = bank (1 or 2), LSBs = sector number
+faddr is byte address within the NVM area, starting at 0.
+STM32H7xGx has Bank 1 sectors 2-3 and Bank 2 sectors 0-3 available for NVM.
+STM32H7xIx has Bank 1 sectors 2-7 and Bank 2 sectors 0-7 available for NVM.
+*/
+uint32_t nphyaddr(uint32_t faddr) {
+#ifdef H7_HALF_FLASH
+    if (faddr >= (6 << 17)) return 0;
+    if (faddr >= (4 << 17)) faddr += 0x80000;     // skip to Bank 2
+#else
+    if (faddr >= (14 << 17)) return 0;
+#endif
+    return (H7_SECTOR_NVM << 17) + H7_SECTOR_BASE + faddr;
+}
+
+int NVMbeginRead(uint32_t faddr) {
+    NVMaddress = nphyaddr(faddr);
+    if (NVMaddress == 0) return BCI_IOR_INVALID_ADDRESS;
     return 0;
 }
-int NVMbeginWrite (uint32_t faddr){
+
+int NVMbeginWrite(uint32_t faddr) {
+    memset(nwrbuffer, 0xFF, sizeof(nwrbuffer));
+    nwridx = faddr & 0x1F;
+    return NVMbeginRead(faddr);
+}
+
+int16_t NVMwrite(uint32_t n, int bytes) {
+    if (NVMaddress == 0) return BCI_IOR_INVALID_ADDRESS;
+    while (bytes--) {
+        uint8_t bitpos = (nwridx & 3) << 3;
+        nwrbuffer[nwridx >> 2] &= (((n >> bitpos) & 0xFF) | ~(0xFF << bitpos));
+        nwridx++;
+        if (nwridx == sizeof(nwrbuffer)) {      // write the buffer
+#ifdef H7_HALF_FLASH
+			if (NVMaddress & 0x080000) {        // sectors 4 to 7 not available
+                NVMaddress = BCI_IOR_INVALID_ADDRESS;
+                return 0;
+            }
+#else
+			if (NVMaddress & 0x200000) {        // sectors above 15 not available
+                NVMaddress = BCI_IOR_INVALID_ADDRESS;
+                return 0;
+            }
+#endif
+            if ((NVMaddress & 0x1FFFF) == 0) {  // erase sector on 128K boundary
+                int16_t sector = (NVMaddress - H7_SECTOR_BASE) >> 17;
+                if (sector < 1) return BCI_IOR_INVALID_ADDRESS;
+                uint16_t bank = sector >> 3;
+                if (bank > 1) return BCI_IOR_INVALID_ADDRESS;
+                sector = sector & 7;
+                FLASH_EraseInitTypeDef EraseInitStruct;
+                uint32_t SectorError = 0;
+                HAL_FLASH_Unlock();
+                EraseInitStruct.TypeErase = FLASH_TYPEERASE_SECTORS;
+                EraseInitStruct.VoltageRange = FLASH_VOLTAGE_RANGE_3;
+                EraseInitStruct.Sector = sector;
+                EraseInitStruct.Banks = FLASH_BANK_1;
+                if (bank) EraseInitStruct.Banks = FLASH_BANK_2;
+                EraseInitStruct.NbSectors = 1;
+                if (HAL_FLASHEx_Erase(&EraseInitStruct, &SectorError) != HAL_OK) {
+                    HAL_FLASH_Lock();
+                    return BCI_IOR_INVALID_ADDRESS;         // erase error
+                }
+            }
+            HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, NVMaddress, (uint32_t)nwrbuffer);
+            NVMaddress += sizeof(nwrbuffer);
+            HAL_FLASH_Lock();
+            nwridx = 0;
+            memset(nwrbuffer, 0xFF, sizeof(nwrbuffer));
+        }
+    }
     return 0;
 }
-uint32_t NVMread (int bytes){
-    return 0;
-}
-void NVMwrite (uint32_t n, int bytes){
-}
-void NVMendRW (void){
-}
-uint32_t NVMgetID(void) {
-    return 0; // no ID for STM32
+void NVMendRW(void) {
+    NVMaddress = 0;
 }
 
 #endif
