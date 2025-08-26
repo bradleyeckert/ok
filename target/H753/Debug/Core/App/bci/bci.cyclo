@@ -1,9 +1,0 @@
-../Core/App/bci/bci.c:22:16:get8	2
-../Core/App/bci/bci.c:29:17:get32	2
-../Core/App/bci/bci.c:35:13:put8	1
-../Core/App/bci/bci.c:39:13:putN	2
-../Core/App/bci/bci.c:46:13:put32	1
-../Core/App/bci/bci.c:52:13:waitUntilVMready	4
-../Core/App/bci/bci.c:62:16:simulate	4
-../Core/App/bci/bci.c:82:12:ValidAddress	4
-../Core/App/bci/bci.c:88:6:BCIhandler	29

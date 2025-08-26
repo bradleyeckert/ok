@@ -1,5 +1,0 @@
-../Core/App/bci/bci.c:22:16:get8	2
-../Core/App/bci/bci.c:29:17:get32	2
-../Core/App/bci/bci.c:46:13:put32	2
-../Core/App/bci/bci.c:35:13:put8.isra	1
-../Core/App/bci/bci.c:88:6:BCIhandler	33

@@ -10,8 +10,8 @@
 #define DATASIZE              0x0800 /* cells in data space: 8KB */
 #define TEXTORIGIN            0x1000 /* base address of internal Flash data */
 #define TEXTSIZE              0x2000 /* size of internal Flash data in cells */
-#define RAMBUFSIZE            0x8040 /* size of scratchpad buffer in int32s */
-#define VM_FLASHSIZE         0x80000 /* size of external Flash in bytes, 512 KB */
+#define RAMBUFSIZE            0x8040 /* size of BigRAM buffer in cells */
+#define VM_FLASHSIZE         0xC0000 /* size of external Flash in bytes, 6*128K */
 #define VM_FLASHFILENAME  "spiflash.bin"
 #define BOILERPLATE_SIZE          16
 #define VM_MIN_USERADDRESS (DATASIZE-256)

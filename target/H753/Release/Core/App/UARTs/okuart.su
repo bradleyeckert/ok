@@ -1,8 +1,0 @@
-../Core/App/UARTs/okuart.c:16:6:UARTx_init	16	static
-../Core/App/UARTs/okuart.c:23:6:UARTx_IRQHandler	8	static
-../Core/App/UARTs/okuart.c:44:5:UARTx_headroom	0	static
-../Core/App/UARTs/okuart.c:51:6:UARTx_putc	0	static
-../Core/App/UARTs/okuart.c:60:6:UARTx_puts	16	static
-../Core/App/UARTs/okuart.c:64:5:UARTx_received	0	static
-../Core/App/UARTs/okuart.c:68:5:UARTx_getc	0	static
-../Core/App/UARTs/okuart.c:73:5:UARTx_peek	0	static

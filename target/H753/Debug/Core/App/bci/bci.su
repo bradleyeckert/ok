@@ -1,9 +1,0 @@
-../Core/App/bci/bci.c:22:16:get8	16	static
-../Core/App/bci/bci.c:29:17:get32	16	static
-../Core/App/bci/bci.c:35:13:put8	16	static
-../Core/App/bci/bci.c:39:13:putN	24	static
-../Core/App/bci/bci.c:46:13:put32	16	static
-../Core/App/bci/bci.c:52:13:waitUntilVMready	24	static
-../Core/App/bci/bci.c:62:16:simulate	24	static
-../Core/App/bci/bci.c:82:12:ValidAddress	16	static
-../Core/App/bci/bci.c:88:6:BCIhandler	136	static

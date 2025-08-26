@@ -546,6 +546,7 @@ static void Run(void) { CORE.ctx.status = BCI_STATUS_RUNNING; }
 
 static int hp0, wordlist0;
 static void Empty(void) {
+    Halt();
     memset(q->text, BLANK_FLASH_BYTE, sizeof(q->text));
     memset(q->code, BLANK_FLASH_BYTE, sizeof(q->code));
     for (int i = 0; i < CPUCORES; i++) {
@@ -559,7 +560,6 @@ static void Empty(void) {
     FILEID = 0;
     textsp = 0;
     Only(); ForthLex(); Definitions();
-    Halt();
 }
 
 FILE* gfile = NULL;

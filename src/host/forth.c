@@ -740,10 +740,12 @@ void AddForthKeywords(struct QuitStruct *state) {
     AddAPIcall("buttons",       "-forth.htm#buttons -- buttons",
             INST_TAG + VMI_DUPAPI   + 16);
     AddAPIcall("crc32",         "-forth.htm#crc32 addr u -- crc32",
-            INST_TAG + VMI_APIDROP  + 17);
-    AddAPIcall("x@",            "-forth.htm#xfetch addr -- x",
+            INST_TAG + VMI_APIDROP  + 16);
+    AddAPIcall("nvmID",         "-forth.htm#nID -- ID24",
+            INST_TAG + VMI_DUPAPI   + 17);
+    AddAPIcall("@u",            "-forth.htm#fetchu addr -- x",
             INST_TAG + VMI_API      + 18);
-    AddAPIcall("x!",            "-forth.htm#xstore x addr --",
+    AddAPIcall("!u",            "-forth.htm#storeu x addr --",
             INST_TAG + VMI_API2DROP + 19);
 
     // compile-only control words, can't be postponed

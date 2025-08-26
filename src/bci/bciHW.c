@@ -36,7 +36,7 @@ VMcell_t API_BigRAMfetch(vm_ctx* ctx) {
 VMcell_t API_BigRAMstore(vm_ctx* ctx) {
     uint32_t addr = ctx->t;
     if (addr >= RAMBUFSIZE) return 0;
-    memcpy(&ctx->n, &BigRAMbuffer[addr], 4);
+    memcpy(&BigRAMbuffer[addr], &ctx->n, 4);
     return 0;
 }
 
@@ -176,7 +176,7 @@ For internal Flash, NVMgetID returns a pseudo-ID with the following fields:
   bits 16-23  0x7 = device STM32H7
 */
 
-uint32_t NVMgetID(void) {
+static uint32_t NVMgetID(void) {
 #ifdef H7_HALF_FLASH
     return (8 - H7_SECTOR_NVM) + 0x071100;
 #else
@@ -314,7 +314,11 @@ faddr is byte address within the NVM area, starting at 0.
 STM32H7xGx has Bank 1 sectors 2-3 and Bank 2 sectors 0-3 available for NVM.
 STM32H7xIx has Bank 1 sectors 2-7 and Bank 2 sectors 0-7 available for NVM.
 */
+<<<<<<< HEAD
+static uint32_t nphyaddr(uint32_t faddr) {
+=======
 uint32_t nphyaddr(uint32_t faddr) {
+>>>>>>> 34937bb86901c38e2e0006db1d2510e52bf25a17
 #ifdef H7_HALF_FLASH
     if (faddr >= (6 << 17)) return 0;
     if (faddr >= (4 << 17)) faddr += 0x80000;     // skip to Bank 2
