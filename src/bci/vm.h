@@ -8,7 +8,7 @@
 #define VM_STACKSIZE              32 /* depth of stacks */
 #define CODESIZE              0x4000 /* insts in code space = 32KB */
 #define DATASIZE              0xA000 /* cells in data space = 160KB */
-#define NVMPADSIZE		      0x8004 /* RAM buffer for NVM sector updates */
+#define NVMPADSIZE		      0x8020 /* RAM buffer for NVM sector updates */
 #define TEXTORIGIN            0xC000 /* base address of internal Flash data */
 #define TEXTSIZE              0x2000 /* size of internal Flash data in cells */
 #define VM_FLASHSIZE         0xC0000 /* size of external Flash in bytes, 6*128K */

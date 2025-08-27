@@ -495,8 +495,8 @@ static void Hex        (void) { BASE = 16; }
 static void Decimal    (void) { BASE = 10; }
 static void BitsCell   (void) { DataPush(BitsPerCell()); }
 static void ComBitsCell(void) { CompLit (BitsPerCell()); }
-static void MemTop     (void) { DataPush(DataMemSize() - NVMPADSIZE); }
-static void ComTop     (void) { CompLit (DataMemSize() - NVMPADSIZE); }
+static void MemTop     (void) { DataPush(DataMemSize()); }
+static void ComTop     (void) { CompLit (DataMemSize()); }
 static void Literal    (void) { CompLit (DataPop()); }
 static void AddHelp    (void) { HEADER[HP].help = TIBtoEnd(); }
 static void CompStr    (void) { CommaStr(); Literal(); }
@@ -547,6 +547,8 @@ void AddForthKeywords(struct QuitStruct *state) {
               (VM_MASK >> 1));
     AddEquate("MAX-U",          "~usage#table:env -- u",
               VM_MASK);
+    AddEquate("|nvmpad|",       "-forth.htm#nvmpad -- u",
+              NVMPADSIZE);
     AddEquate("*host",          "-forth.htm#host -- wid",
               q->host);
     AddEquate("verbose_color",  "-forth.htm#vcolor -- mask",
