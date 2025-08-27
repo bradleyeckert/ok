@@ -36,8 +36,6 @@ VMcell_t API_NVMread        (vm_ctx* ctx);
 VMcell_t API_NVMwrite       (vm_ctx* ctx);
 VMcell_t API_NVMendRW       (vm_ctx* ctx);
 VMcell_t API_NVMID          (vm_ctx* ctx);
-VMcell_t API_BigRAMfetch    (vm_ctx* ctx);
-VMcell_t API_BigRAMstore    (vm_ctx* ctx);
 
 VMcell_t API_Emit           (vm_ctx* ctx);
 VMcell_t API_umstar         (vm_ctx* ctx);

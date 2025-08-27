@@ -495,8 +495,8 @@ static void Hex        (void) { BASE = 16; }
 static void Decimal    (void) { BASE = 10; }
 static void BitsCell   (void) { DataPush(BitsPerCell()); }
 static void ComBitsCell(void) { CompLit (BitsPerCell()); }
-static void MemTop     (void) { DataPush(DataMemSize()); }
-static void ComTop     (void) { CompLit (DataMemSize()); }
+static void MemTop     (void) { DataPush(DataMemSize() - NVMPADSIZE); }
+static void ComTop     (void) { CompLit (DataMemSize() - NVMPADSIZE); }
 static void Literal    (void) { CompLit (DataPop()); }
 static void AddHelp    (void) { HEADER[HP].help = TIBtoEnd(); }
 static void CompStr    (void) { CommaStr(); Literal(); }
@@ -547,8 +547,6 @@ void AddForthKeywords(struct QuitStruct *state) {
               (VM_MASK >> 1));
     AddEquate("MAX-U",          "~usage#table:env -- u",
               VM_MASK);
-    AddEquate("xcells",         "-forth.htm#xcells -- u",
-              RAMBUFSIZE);
     AddEquate("*host",          "-forth.htm#host -- wid",
               q->host);
     AddEquate("verbose_color",  "-forth.htm#vcolor -- mask",
@@ -713,40 +711,34 @@ void AddForthKeywords(struct QuitStruct *state) {
             INST_TAG + VMI_API2DROP + 3);
     AddAPIcall("]nvm",          "-forth.htm#nend --",
             INST_TAG + VMI_API      + 4);
-    AddAPIcall("nvmID",         "-forth.htm#nID -- ID24",
-            INST_TAG + VMI_DUPAPI   + 5);
     AddAPIcall("semit",         "-forth.htm#semit c --",
-            INST_TAG + VMI_APIDROP  + 6);
+            INST_TAG + VMI_APIDROP  + 5);
     AddAPIcall("um*",           "~core/UMTimes u1 u2 -- d1",
-            INST_TAG + VMI_API      + 7);
+            INST_TAG + VMI_API      + 6);
     AddAPIcall("um/mod",        "~core/UMDivMOD ud u -- q r",
-            INST_TAG + VMI_APIDROP  + 8);
+            INST_TAG + VMI_APIDROP  + 7);
     AddAPIcall("mu/mod",        "-forth.htm#mumod ud u -- dq r",
-            INST_TAG + VMI_API      + 8);
+            INST_TAG + VMI_API      + 7);
     AddAPIcall("LCDraw",        "-forth.htm#LCDraw n bits -- u",
-            INST_TAG + VMI_APIDROP  + 9);
+            INST_TAG + VMI_APIDROP  + 8);
     AddAPIcall("LCDparm!",      "-forth.htm#LCDpsto x index --",
-            INST_TAG + VMI_API2DROP + 10);
+            INST_TAG + VMI_API2DROP + 9);
     AddAPIcall("LCDparm",       "-forth.htm#LCDp index -- x",
-            INST_TAG + VMI_API      + 11);
+            INST_TAG + VMI_API      + 10);
     AddAPIcall("LCDemit",       "-forth.htm#LCDemit xchar --",
-            INST_TAG + VMI_APIDROP  + 12);
+            INST_TAG + VMI_APIDROP  + 11);
     AddAPIcall("charwidth",     "-forth.htm#charwidth xchar -- width",
-            INST_TAG + VMI_API      + 13);
+            INST_TAG + VMI_API      + 12);
     AddAPIcall("LCDfill",       "-forth.htm#LCDfill width height --",
-            INST_TAG + VMI_API2DROP + 14);
+            INST_TAG + VMI_API2DROP + 13);
     AddAPIcall("counter",       "-forth.htm#counter -- ms",
-            INST_TAG + VMI_DUPAPI   + 15);
+            INST_TAG + VMI_DUPAPI   + 14);
     AddAPIcall("buttons",       "-forth.htm#buttons -- buttons",
-            INST_TAG + VMI_DUPAPI   + 16);
+            INST_TAG + VMI_DUPAPI   + 15);
     AddAPIcall("crc32",         "-forth.htm#crc32 addr u -- crc32",
             INST_TAG + VMI_APIDROP  + 16);
     AddAPIcall("nvmID",         "-forth.htm#nID -- ID24",
             INST_TAG + VMI_DUPAPI   + 17);
-    AddAPIcall("@u",            "-forth.htm#fetchu addr -- x",
-            INST_TAG + VMI_API      + 18);
-    AddAPIcall("!u",            "-forth.htm#storeu x addr --",
-            INST_TAG + VMI_API2DROP + 19);
 
     // compile-only control words, can't be postponed
     AddKeyword("later",         "-forth.htm#later <name> --",

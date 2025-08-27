@@ -249,7 +249,7 @@ static const APIfn APIfns[] = {
     API_NVMendRW, API_Emit, API_umstar, API_mudivmod,               // 4
     API_LCDraw, API_LCDparmSet, API_LCDparm, API_LCDchar,           // 8
     API_LCDcharWidth, API_LCDfill, API_Milliseconds, API_Buttons,   // C
-	API_CRC32, API_NVMID, API_BigRAMfetch, API_BigRAMstore          // 10
+	API_CRC32, API_NVMID         // 10
 };
 
 #define APIfs (sizeof(APIfns)/sizeof(APIfns[0]))
@@ -276,8 +276,10 @@ static const uint8_t boilerplate[BOILERPLATE_SIZE] = {
 #include <stdio.h>
 
 void VMreset(vm_ctx *ctx) {
-    memset(ctx, 0, sizeof(ctx->DataMem)); // data space initializes to 0
-    memset(ctx, 0, 64);         // wipe all up to stacks
+    memset(ctx->DataMem, 0, sizeof(ctx->DataMem)); // data space initializes to 0
+	ctx->pc = 0;
+    ctx->lex = 0;
+    // all other registers may be indeterminate coming out of reset
     ctx->boilerplate = boilerplate;
     ctx->DataMem[0] = 10;
     ctx->status = BCI_STATUS_STOPPED;

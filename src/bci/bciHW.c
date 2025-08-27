@@ -23,23 +23,6 @@ well as MCU-specific equivalent functions. HOST_ONLY indicates that it is
 compiled into the host VM, not on an MCU target.
 */
 
-uint32_t BigRAMbuffer[RAMBUFSIZE];
-
-VMcell_t API_BigRAMfetch(vm_ctx* ctx) {
-    uint32_t r;
-    uint32_t addr = ctx->t;
-    if (addr >= RAMBUFSIZE) return 0;
-    memcpy(&r, &BigRAMbuffer[addr], 4);
-    return r;
-}
-
-VMcell_t API_BigRAMstore(vm_ctx* ctx) {
-    uint32_t addr = ctx->t;
-    if (addr >= RAMBUFSIZE) return 0;
-    memcpy(&BigRAMbuffer[addr], &ctx->n, 4);
-    return 0;
-}
-
 // Output to the mole output buffer with BCIsendChar.
 VMcell_t API_Emit (vm_ctx *ctx){
     uint32_t codepoint = ctx->t;

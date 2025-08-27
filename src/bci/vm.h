@@ -6,11 +6,11 @@
 #define VM_CELLBITS               32 /* simulator bits per cell: 16 to 32 */
 #define VM_INSTBITS               16 /* bits per instruction: 16, 17, 20-22 */
 #define VM_STACKSIZE              32 /* depth of stacks */
-#define CODESIZE              0x2000 /* cells in code space: 16KB */
-#define DATASIZE              0x0800 /* cells in data space: 8KB */
-#define TEXTORIGIN            0x1000 /* base address of internal Flash data */
+#define CODESIZE              0x4000 /* insts in code space = 32KB */
+#define DATASIZE              0xA000 /* cells in data space = 160KB */
+#define NVMPADSIZE		      0x8004 /* RAM buffer for NVM sector updates */
+#define TEXTORIGIN            0xC000 /* base address of internal Flash data */
 #define TEXTSIZE              0x2000 /* size of internal Flash data in cells */
-#define RAMBUFSIZE            0x8040 /* size of BigRAM buffer in cells */
 #define VM_FLASHSIZE         0xC0000 /* size of external Flash in bytes, 6*128K */
 #define VM_FLASHFILENAME  "spiflash.bin"
 #define BOILERPLATE_SIZE          16
@@ -59,11 +59,11 @@ typedef struct
     uint16_t lex;
     int16_t  ior;
     uint8_t  sp, rp, cy, admin;
+    VMcell_t* TextMem;          // Flash must have a specific address
+    VMinst_t* CodeMem;
     VMcell_t DataStack[VM_STACKSIZE];
     VMcell_t ReturnStack[VM_STACKSIZE];
     VMcell_t DataMem[DATASIZE]; // RAM can be anywhere
-    VMcell_t *TextMem;          // Flash must have a specific address
-    VMinst_t *CodeMem;
     int16_t id;                 // node id
     uint8_t status, statusNew;
     const uint8_t *boilerplate; // boilerplate info

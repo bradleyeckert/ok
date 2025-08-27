@@ -10,9 +10,9 @@ extern "C" {
 
 #define MaxBCIresponseSize      1030
 #define MOLE_PROTOCOL              0
-#define DEFAULT_BAUDRATE      115200
-#define DEFAULT_HOSTPORT           2
-#define DEFAULT_TARGETPORT         3
+#define DEFAULT_BAUDRATE     6000000
+#define DEFAULT_HOSTPORT           2 /* used by ok, not target */
+#define DEFAULT_TARGETPORT         3 /* used by target, not ok */
 #define HANG_LIMIT_MS           3000 /* milliseconds to wait for a response */
 
 #define BLANK_FLASH_BYTE        0xFF /* byte values after flash erase */
