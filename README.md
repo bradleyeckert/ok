@@ -1,7 +1,6 @@
 # ok
 This Forth is designed for embedded systems development using a host PC, serial port connection,
 and a target system based on an MCU or FPGA.
-To address modern cybersecurity requirements, the serial connection is encrypted.
 
 `ok` contains a copy of the target VM(s) and a simulated serial port. The serial connection may be redirected to real target hardware.
 
@@ -35,3 +34,16 @@ A little memory goes a long way, which is very useful in MCUs.
 COM port snooping is supported by the [ref](./target/ref) target.
 There are also commercial apps that snoop traffic on your PC's COM ports.
 Either will show the encrypted traffic flowing across the serial connection.
+## UART hardening
+To address modern cybersecurity requirements, the serial connection is encrypted.
+The thin client is inspired by that of Forth Inc's `SwiftX` but tuned to support a secure UART.
+UART hardening prevents UART snooping and/or tampering. 
+The security is only as good as key management.
+Key management is outside the scope of `ok`.
+
+Each thin client should have unique keys installed via JTAG using `STM_Programmer_CLI.exe`.
+In practice, these keys would be held in escrow and/or kept on a secure server.
+Key access should require access to multiple different servers, each serving part of the key.
+As long as keys are not leaked, the UART does not function as a hardware backdoor.
+The thin client stays in production firmware to provide the manufacturer emergency and maintenance access.
+

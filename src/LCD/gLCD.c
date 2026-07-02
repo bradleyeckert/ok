@@ -11,8 +11,8 @@ uint32_t fontHome;
 
 int LCDinit(void) {
     NVMbeginRead(0);                    // -> font blob's first 64K sector
-	uint16_t sector = NVMread(2);       // read sector size
-    uint32_t addr0 = sector << 16;
+	uint16_t sector = NVMread(4);       // read sector size
+    uint32_t addr0 = sector << 12;
     if (sector == 0) addr0 = 0x1000;
     NVMbeginRead(addr0 + 16);           // -> font
     fontHome = NVMread(4) + addr0;      // read font home address

@@ -222,7 +222,7 @@ static void BCItransmit(const uint8_t *src, int length) { // msg m from mole
     BCIhandler(ctx, src, length);
 }
 
-// [1] Accessing the VM directly should only be done when necessary.
+// [1] Accessing the VM directly should only be done when absolutely necessary.
 //     You don't know if the VM is in your computer. Here, we know it is.
 
 void get8debug(uint8_t c) {} // no debug output
@@ -514,7 +514,7 @@ static void ComEmit(void) {
     if (err) printf("~");
 }
 
-static void ComList(void) { // list available COM ports
+static void ComList(void) {             // list available COM ports
     printf("Possible serial port numbers at %d,N,8,1: ", q->baudrate);
     for (int i = 0; i < 38; i++) {
         int ior = RS232_OpenComport(i, q->baudrate, cmode, 0);

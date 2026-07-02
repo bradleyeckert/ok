@@ -8,7 +8,8 @@ Windows console apps:
 
 Windows batch files:
 
-- `makeflash.bat` Creates `spiflash.bin` from blobs
+- `makeflash.bat` Creates `spiflash.bin` from blobs, which is loaded by `ok`.
+- `oksync.bat` copies `ok.exe` from the Visual Studio Release folder
 
 ## Blobs
 

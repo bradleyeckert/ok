@@ -237,9 +237,9 @@ static void slurpNVM(uint8_t* dest, uint32_t bytes) {
 
 // Initialize the hardware, usually by reading the NVM.
 void BCIHWinit(vm_ctx* ctx) {
-    NVMbeginRead(20);                   // blob 1 = VM initialization
-    uint16_t sector = NVMread(2);       // read sector size
-    uint32_t addr0 = sector << 16;
+    NVMbeginRead(24);                   // blob 1 = VM initialization
+    uint16_t sector = NVMread(4);       // read sector ID
+    uint32_t addr0 = sector << 12;
     if (sector == 0) addr0 = 0x1000;
     NVMbeginRead(addr0 + 8);            // -> csize, tsize, data...
     uint32_t codebytes = NVMread(4);

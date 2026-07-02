@@ -15,6 +15,11 @@ For development, the SDK consists of three apps to download and install:
 Import the project into the IDE's workspace and Build it.
 Turn on the "binary output" option of you like to program by DFU drag-and-drop.
 
+## UART check
+
+Open a terminal at 115200,N,8,1.
+The 2-keystroke `^T ^J` sequence triggers a plaintext boilerplate.
+
 ## running
 
 Once it is running, you can use `ok` to connect to it. In ok's console,

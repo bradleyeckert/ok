@@ -278,9 +278,10 @@ decimal
 
 reload \ synchronize again before leaving
 1 saveblob vmblob.bin
+lcd
 
 \.
 \. Interesting things to do:
 \. Disassemble all: dasm
 \. Benchmark: mips
-\. Sanity check: counter @ u.
+\. Sanity check: counter u.
